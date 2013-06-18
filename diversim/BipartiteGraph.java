@@ -181,11 +181,19 @@ public void start() {
     services.add(new Service(++sCounter));
     numServices++;
   }
-  for (int i = 0; i < initPlatforms; i++) {
+  for (int i = 0; i < initPlatforms; i++) { // all services to all the platforms
     createPlatform(services);
   }
+  // a gaussian-distributed number of randomly selected services to each app
+  ArrayList<Service> servs = new ArrayList<Service>();
   for (int i = 0; i < initApps; i++) {
-    createApp(services);
+    int n = (int)((random.nextGaussian() + 3) / 6 * (numServices - 1) + 1);
+    n = n < 1 ? 1 : n > numServices ? numServices : n;
+    for  (int j = 0; j < n; j++) {
+      servs.add(services.get(random.nextInt(numServices)));
+    }
+    createApp(servs);
+    servs.clear();
   }
 
   fate = new Fate(this);
