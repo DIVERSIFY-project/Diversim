@@ -10,32 +10,14 @@ import sim.field.network.*;
 
 public class Platform extends Entity {
 
-int maxLoad = 4;
-int minSize = 3;
 double pressure;
 
-public int getMaxLoad() {
-  return maxLoad;
-}
 
 
 public double getPressure() {
   return pressure;
 }
 
-
-public void setMaxLoad(int newLoad) {
-  maxLoad = newLoad;
-}
-
-
-public int getMinSize() {
-  return minSize;
-}
-
-
-public void setMinSize(int minsize) {
-  minSize = minsize;
 }
 
 
@@ -51,12 +33,14 @@ public Platform(int id, List<Service> servs) {
 public void step(SimState state) {
   BipartiteGraph graph = (BipartiteGraph)state;
 
-  if (degree > maxLoad)
-    if (getSize() >= 2 * minSize)
+  if (degree > graph.platformMaxLoad)
+    if (getSize() >= 2 * graph.platformMinSize) {
       split_Part(graph);
-    else if (getSize() > minSize)
+    }
+    else if (getSize() > graph.platformMinSize) {
       clone_Mutate(graph);
-  pressure = degree / maxLoad;
+    }
+  pressure = ((double)degree) / graph.platformMaxLoad;
   if (pressure > 1.0) pressure = 1.0;
 
   System.out.println("Step " + state.schedule.getSteps() + " : " + toString());

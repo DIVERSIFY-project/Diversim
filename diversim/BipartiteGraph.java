@@ -22,6 +22,8 @@ public class BipartiteGraph extends SimState {
 static final int initPlatforms = 3;
 static final int initApps = 10;
 static final int initServices = 30;
+int platformMaxLoad = 4;
+int platformMinSize = 3;
 
 public int numPlatforms;
 public int numApps;
@@ -43,6 +45,28 @@ private void init() {
   numPlatforms = 0;
   numApps = 0;
   numServices = 0;
+
+
+public int getPlatformMaxLoad() {
+  return platformMaxLoad;
+}
+
+
+public void setPlatformMaxLoad(int newLoad) {
+  platformMaxLoad = newLoad;
+}
+
+
+public int getPlatformMinSize() {
+  return platformMinSize;
+}
+
+
+public void setPlatformMinSize(int minsize) {
+  platformMinSize = minsize;
+}
+
+
 
   bipartiteNetwork = new Network(false);
   platforms = new ArrayList<Platform>();
