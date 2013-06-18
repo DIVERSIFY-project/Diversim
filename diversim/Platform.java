@@ -61,10 +61,6 @@ private void split_Part(BipartiteGraph graph) {
   ArrayList<Service> sortedServices = sortServices(out);
 
   // split the platform and keep here only the most shared half of the services
-  for (int i = sortedServices.size() / 2; i < sortedServices.size(); i++) {
-    services.remove(sortedServices.get(i));
-  }
-  graph.updateLinks(this);
   Platform p = graph.createPlatform(
       sortedServices.subList(sortedServices.size() / 2, sortedServices.size()));
   ArrayList<Entity> ents = new ArrayList<Entity>();
@@ -73,6 +69,10 @@ private void split_Part(BipartiteGraph graph) {
   }
   graph.createLinks(p, ents);
   System.out.println("Step " + graph.schedule.getSteps() + " : NEW " + p.toString());
+  for (int i = sortedServices.size() / 2; i < sortedServices.size(); i++) {
+    services.remove(sortedServices.get(i));
+  }
+  graph.updateLinks(this);
 }
 
 
