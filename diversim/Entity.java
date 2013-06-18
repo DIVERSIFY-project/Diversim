@@ -60,7 +60,7 @@ ArrayList<Service> sortServices(Bag edges) {
   Entity ent;
   for (Edge e : (Edge[])edges.toArray(new Edge[0])) {
     //double weight = ((Number)(e.info)).doubleValue();
-    ent = (App)e.getOtherNode(this);
+    ent = (Entity)e.getOtherNode(this);
     countCommonServices(ent, counter);
   }
   int sorting[] = IndexedSortable.sortedPermutation(counter, true);
