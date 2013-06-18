@@ -1,11 +1,9 @@
 package diversim;
 
-import java.util.ArrayList;
+
 import java.util.List;
 
 import sim.engine.SimState;
-import sim.field.network.Edge;
-import sim.util.Bag;
 
 
 public class App extends Entity {
@@ -30,7 +28,7 @@ public App(int id, List<Service> servs) {
 public void step(SimState state) {
   BipartiteGraph graph = (BipartiteGraph) state;
 
-// TODO
+// TODO something
 
   degree = graph.bipartiteNetwork.getEdgesIn(this).size();
   redundancy = ((double)degree) / graph.numPlatforms;
