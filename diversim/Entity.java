@@ -12,12 +12,13 @@ import sim.util.Bag;
 
 abstract public class Entity implements Steppable {
 
-
+int ID;
 ArrayList<Service> services;
 int degree;
 
 
-Entity() {
+Entity(int id) {
+  ID = id;
   services = new ArrayList<Service>();
   degree = 0;
 }
@@ -95,8 +96,9 @@ int countCommonServices(Entity e, Integer[] counter) {
 @Override
 public String toString() {
   String res = "";
-  res += this.getClass().getSimpleName() + " : "
-      + "degree = " + degree
+  res += this.getClass().getSimpleName()
+      + " " + ID
+      + " : degree = " + degree
       + " ; size = " + getSize()
       + "\n\tcomposition = " + getComposition();
   return res;

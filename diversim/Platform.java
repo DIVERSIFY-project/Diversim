@@ -39,8 +39,8 @@ public void setMinSize(int minsize) {
 }
 
 
-public Platform(List<Service> servs) {
-  super();
+public Platform(int id, List<Service> servs) {
+  super(id);
   for (Service s : servs) {
     BipartiteGraph.addUnique(services, s);
   }

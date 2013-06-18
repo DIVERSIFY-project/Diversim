@@ -33,7 +33,9 @@ public ArrayList<App> apps;
 public ArrayList<Service> services;
 public Fate fate;
 
-private int sCounter = 0;
+private int sCounter;
+private int pCounter;
+private int aCounter;
 public boolean changed = true;
 
 
@@ -80,6 +82,9 @@ public void start() {
   apps.clear();
   services.clear();
   bipartiteNetwork.clear();
+  sCounter = 0;
+  pCounter = 0;
+  aCounter = 0;
 
   for (int i = 0; i < initServices; i++) {
     services.add(new Service(++sCounter));
@@ -119,7 +124,7 @@ public static void main(String[] args) {
 
 
 public Platform createPlatform(List<Service> servs) {
-  Platform platform = new Platform(servs);
+  Platform platform = new Platform(++pCounter, servs);
   bipartiteNetwork.addNode(platform);
   platforms.add(platform);
   numPlatforms++;
@@ -130,7 +135,7 @@ public Platform createPlatform(List<Service> servs) {
 
 
 public App createApp(List<Service> servs) {
-  App app = new App(servs);
+  App app = new App(++aCounter, servs);
   bipartiteNetwork.addNode(app);
   apps.add(app);
   numApps++;

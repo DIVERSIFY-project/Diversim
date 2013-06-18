@@ -18,8 +18,8 @@ public double getRedundancy() {
 }
 
 
-public App(List<Service> servs) {
-  super();
+public App(int id, List<Service> servs) {
+  super(id);
   for (Service s : servs) {
     BipartiteGraph.addUnique(services, s);
   }
