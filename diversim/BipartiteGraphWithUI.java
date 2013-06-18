@@ -19,7 +19,7 @@ import java.awt.*;
 
 public class BipartiteGraphWithUI extends GUIState {
 
-public Continuous2D sysSpace = new Continuous2D(1.0,100,100);
+public Continuous2D sysSpace = new Continuous2D(1.0,1000,300);
 public Display2D display;
 public JFrame displayFrame;
 ContinuousPortrayal2D entitiesPortrayal = new ContinuousPortrayal2D();
@@ -32,20 +32,19 @@ public BipartiteGraphWithUI(SimState state) {
 }
 
 
-public BipartiteGraphWithUI() { 
+public BipartiteGraphWithUI() {
   super(new BipartiteGraph(System.currentTimeMillis())); 
 }
 
 
-public static void main(String[] args)
-{
+public static void main(String[] args) {
   BipartiteGraphWithUI vid = new BipartiteGraphWithUI();
   Console c = new Console(vid);
   c.setVisible(true);
 }
 
 
-public static String getName() { 
+public static String getName() {
   return "Platforms/Apps bipartite graph.";
 }
 
@@ -53,21 +52,16 @@ public static String getName() {
 private void setPositions() {
   BipartiteGraph graph = (BipartiteGraph)state;
   int i = 1;
-//  for (Object obj : graph.bipartiteNetwork.allNodes) {
-//    sysSpace.setObjectLocation(obj,
-//        new Double2D(sysSpace.getWidth() * 0.5 + state.random.nextDouble() - 0.5, sysSpace
-//            .getHeight() * ((obj instanceof Platform ? 0.35 : 0.65))));
-//  }
   Double2D pos;
-  double dist = sysSpace.getWidth() / (graph.apps.size() + 1);
-  for (Object obj : graph.apps) {// TODO: consider entity size/2 ?
-    pos = new Double2D(dist * i++, sysSpace.getHeight() * (0.35 + state.random.nextInt(2) * 0.10));
+  double dist = sysSpace.getWidth() / (graph.numApps + 1);
+  for (Object obj : graph.apps) {
+    pos = new Double2D((dist * i++), sysSpace.getHeight() * 0.35);
     sysSpace.setObjectLocation(obj, pos);
   }
   i = 1;
-  dist = sysSpace.getWidth() / (graph.platforms.size() + 1);
+  dist = sysSpace.getWidth() / (graph.numPlatforms + 1);
   for (Object obj : graph.platforms) {
-    pos = new Double2D(dist * i++, sysSpace.getHeight() * (0.65 + state.random.nextInt(2) * 0.10));
+    pos = new Double2D((dist * i++), sysSpace.getHeight() * 0.65);
     sysSpace.setObjectLocation(obj, pos);
   }
 }
@@ -75,7 +69,6 @@ private void setPositions() {
 
 public void start() {
   super.start();
-  // clear the space
   sysSpace.clear();
 
   setPositions();
@@ -100,9 +93,11 @@ private void setupPortrayals() {
         public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {
           App app = (App)object;
           paint = new Color(0, 0, (int)(255 * app.getRedundancy()));
-          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).apps.size() + 1);
-          scale = 2;
-          info.draw.width = (app.getSize() * scale) >= (dist - 1) ? dist - 1 : app.getSize();
+          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).numApps + 1);
+          info.draw.width = ((double)app.getSize()) / ((BipartiteGraph)state).numServices * dist;
+          if (info.draw.width >= dist) info.draw.width = dist * 0.9;
+          if (info.draw.width < (dist * 0.2)) info.draw.width = dist * 0.25;
+          info.draw.height = 50;
           super.draw(object, graphics, info);
         }
       });
@@ -111,9 +106,11 @@ private void setupPortrayals() {
         public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {
           Platform plat = (Platform)object;
           paint = new Color((int)(255 * plat.getPressure()), 0, 0);
-          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).apps.size() + 1);
-          scale = 2;
-          info.draw.width = (plat.getSize() * scale) >= (dist - 1) ? dist - 1 : plat.getSize();
+          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).numPlatforms + 1);
+          info.draw.width = ((double)plat.getSize()) / ((BipartiteGraph)state).numServices * dist;
+          if (info.draw.width >= dist) info.draw.width = dist * 0.9;
+          if (info.draw.width < (dist * 0.2)) info.draw.width = dist * 0.25;
+          info.draw.height = 50;
           super.draw(object, graphics, info);
         }
       });
@@ -129,7 +126,7 @@ private void setupPortrayals() {
 
 public void init(Controller c) {
   super.init(c);
-  display = new Display2D(600, 600, this);
+  display = new Display2D(1200, 400, this);
   display.setClipping(false);
   displayFrame = display.createFrame();
   displayFrame.setTitle("Bipartite graph Display");
@@ -156,6 +153,10 @@ public void quit() {
 }
 
 
+@Override
+public Object getSimulationInspectedObject() {
+  return state;
+}
 
 
 }
