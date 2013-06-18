@@ -81,6 +81,7 @@ private void split_Part(BipartiteGraph graph) {
     ents.add((Entity)e.getOtherNode(this));
   }
   graph.createLinks(p, ents);
+  System.out.println("Step " + graph.schedule.getSteps() + " : NEW " + p.toString());
 }
 
 

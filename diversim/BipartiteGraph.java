@@ -104,6 +104,7 @@ public void start() {
   // link every platform to all apps that use at least one of its services
   for (App app : apps) {
     createLinks(app, platforms);
+    System.out.println("Step " + schedule.getSteps() + " : NEW " + app.toString());
   }
 
   Steppable print = new Steppable() {
