@@ -33,7 +33,7 @@ public void step(SimState state) {
 // TODO
 
   degree = graph.bipartiteNetwork.getEdgesIn(this).size();
-  redundancy = degree / graph.numPlatforms;
+  redundancy = ((double)degree) / graph.numPlatforms;
   System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
 }
 
