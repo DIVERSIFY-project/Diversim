@@ -19,9 +19,9 @@ import sim.field.network.*;
 
 public class BipartiteGraph extends SimState {
 
-static final int initPlatforms = 3;
-static final int initApps = 10;
-static final int initServices = 30;
+int initPlatforms = 3;
+int initApps = 10;
+int initServices = 30;
 int platformMaxLoad = 4;
 int platformMinSize = 3;
 
@@ -38,13 +38,37 @@ public Fate fate;
 private int sCounter;
 private int pCounter;
 private int aCounter;
-public boolean changed = true;
+public boolean changed;
 
 
-private void init() {
-  numPlatforms = 0;
-  numApps = 0;
-  numServices = 0;
+public int getInitPlatforms() {
+  return initPlatforms;
+}
+
+
+public void setInitPlatforms(int p) {
+  initPlatforms = p;
+}
+
+
+public int getInitApps() {
+  return initApps;
+}
+
+
+public void setInitApps(int p) {
+  initApps = p;
+}
+
+
+public int getInitServices() {
+  return initServices;
+}
+
+
+public void setInitServices(int p) {
+  initServices = p;
+}
 
 
 public int getPlatformMaxLoad() {
@@ -67,7 +91,46 @@ public void setPlatformMinSize(int minsize) {
 }
 
 
+public int getNumPlatforms() {
+  return numPlatforms;
+}
 
+
+public int getNumApps() {
+  return numApps;
+}
+
+
+public int getNumServices() {
+  return numServices;
+}
+
+
+public double getAvgPlatformDegree() {
+  int sum = 0;
+  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
+    return 0.0;
+  for (Platform p : platforms) {
+    sum += bipartiteNetwork.getEdgesIn(p).size();
+  }
+  return sum / numPlatforms;
+}
+
+
+public double getAvgAppDegree() {
+  int sum = 0;
+  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
+    return 0.0;
+  for (App a : apps) {
+    sum += bipartiteNetwork.getEdgesIn(a).size();
+  }
+  return sum / numApps;
+}
+
+
+private void init() {
+  // create fields (executed only once).
+  // After stop or deserialization from checkpoint, only start() is called.
   bipartiteNetwork = new Network(false);
   platforms = new ArrayList<Platform>();
   apps = new ArrayList<App>();
@@ -101,14 +164,18 @@ public BipartiteGraph(long seed, Schedule schedule) {
 
 public void start() {
   super.start();
-  // clear the lists of entities
+  // reset all parameters and fields
   platforms.clear();
   apps.clear();
   services.clear();
   bipartiteNetwork.clear();
+  numPlatforms = 0;
+  numApps = 0;
+  numServices = 0;
   sCounter = 0;
   pCounter = 0;
   aCounter = 0;
+  changed = true;
 
   for (int i = 0; i < initServices; i++) {
     services.add(new Service(++sCounter));
