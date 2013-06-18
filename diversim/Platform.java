@@ -113,9 +113,7 @@ private void clone_Mutate(BipartiteGraph graph) {
 @Override
 public String toString() {
   String res = super.toString();
-  res += "\n\tmaxLoad = " + maxLoad
-      + " ; minSize = " + minSize
-      + " ; pressure = " + pressure;
+  res += " ; pressure = " + pressure
   return res;
 }
 

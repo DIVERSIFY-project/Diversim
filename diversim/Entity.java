@@ -100,7 +100,7 @@ public String toString() {
       + " " + ID
       + " : degree = " + degree
       + " ; size = " + getSize()
-      + "\n\tcomposition = " + getComposition();
+      + " ; composition = " + getComposition();
   return res;
 }
 }

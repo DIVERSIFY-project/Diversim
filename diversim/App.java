@@ -41,7 +41,7 @@ public void step(SimState state) {
 @Override
 public String toString() {
   String res = super.toString();
-  res += "\n\tredundancy = " + redundancy;
+  res += " ; redundancy = " + redundancy;
   return res;
 }
 
