@@ -10,14 +10,17 @@ import sim.field.network.*;
 
 public class Platform extends Entity {
 
-double pressure;
 
+double pressure = 0;
+String action;
 
 
 public double getPressure() {
   return pressure;
 }
 
+public String getAction() {
+  return action;
 }
 
 
@@ -26,6 +29,7 @@ public Platform(int id, List<Service> servs) {
   for (Service s : servs) {
     BipartiteGraph.addUnique(services, s);
   }
+  action = "none";
 }
 
 
@@ -33,12 +37,15 @@ public Platform(int id, List<Service> servs) {
 public void step(SimState state) {
   BipartiteGraph graph = (BipartiteGraph)state;
 
+  action = "none";
   if (degree > graph.platformMaxLoad)
     if (getSize() >= 2 * graph.platformMinSize) {
       split_Part(graph);
+      action = "split_part";
     }
     else if (getSize() > graph.platformMinSize) {
       clone_Mutate(graph);
+      action = "clone_mutate";
     }
   pressure = ((double)degree) / graph.platformMaxLoad;
   if (pressure > 1.0) pressure = 1.0;
@@ -99,6 +106,7 @@ private void clone_Mutate(BipartiteGraph graph) {
 public String toString() {
   String res = super.toString();
   res += " ; pressure = " + pressure
+      + " ; action = " + action;
   return res;
 }
 
