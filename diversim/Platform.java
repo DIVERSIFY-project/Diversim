@@ -1,64 +1,122 @@
 package diversim;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import sim.engine.SimState;
 import sim.util.Bag;
-import sim.util.Double2D;
-import sim.util.MutableDouble2D;
 import sim.field.network.*;
 
 
 public class Platform extends Entity {
 
+int maxLoad = 4;
+int minSize = 3;
+double pressure;
 
-
-
-public Platform() {
-  // TODO Auto-generated constructor stub
+public int getMaxLoad() {
+  return maxLoad;
 }
+
+
+public double getPressure() {
+  return pressure;
+}
+
+
+public void setMaxLoad(int newLoad) {
+  maxLoad = newLoad;
+}
+
+
+public int getMinSize() {
+  return minSize;
+}
+
+
+public void setMinSize(int minsize) {
+  minSize = minsize;
+}
+
+
+public Platform(List<Service> servs) {
+  super();
+  for (Service s : servs) {
+    BipartiteGraph.addUnique(services, s);
+  }
+}
+
 
 @Override
 public void step(SimState state) {
-  BipartiteGraph graph = (BipartiteGraph) state;
-  Double2D me = graph.sysSpace.getObjectLocation(this);
-  MutableDouble2D sumForces = new MutableDouble2D();
-  friendsClose = enemiesCloser = 0.0;
+  BipartiteGraph graph = (BipartiteGraph)state;
 
-  // Go through my partners and determine how much I want to be near them
-  MutableDouble2D forceVector = new MutableDouble2D();
+  if (degree > maxLoad)
+    if (getSize() >= 2 * minSize)
+      split_Part(graph);
+    else if (getSize() > minSize)
+      clone_Mutate(graph);
+  pressure = degree / maxLoad;
+  if (pressure > 1.0) pressure = 1.0;
+
+  System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
+}
+
+
+private void split_Part(BipartiteGraph graph) {
   Bag out = graph.bipartiteNetwork.getEdges(this, null);
-  int len = out.size();
-  for (int buddy = 0; buddy < len; buddy++) {
-    Edge e = (Edge)(out.get(buddy));
-    double buddiness = ((Double)(e.info)).doubleValue();
-    // I could be in the to() end or the from() end. getOtherNode is a cute function
-    // getOtherNode is a cute function which grabs the guy at the opposite end from me.
-    Double2D him = graph.sysSpace.getObjectLocation(e.getOtherNode(this));
-    if (buddiness >= 0) { // the further I am from him the more I want to go to him
-      forceVector.setTo((him.x - me.x) * buddiness, (him.y - me.y) * buddiness);
-      if (forceVector.length() > MAX_FORCE) // I’m far enough away
-        forceVector.resize(MAX_FORCE);
-      friendsClose += forceVector.length();
-    } else {// the nearer I am to him the more I want to get away from him, up to a limit
-      forceVector.setTo((him.x - me.x) * buddiness, (him.y - me.y) * buddiness);
-      if (forceVector.length() > MAX_FORCE) // I’m far enough away
-        forceVector.resize(0.0);
-      else if (forceVector.length() > 0)
-        forceVector.resize(MAX_FORCE - forceVector.length()); // invert the distance
-      enemiesCloser += forceVector.length();
-    }
-    sumForces.addIn(forceVector);
+  Edge[] edges = (Edge[])out.toArray(new Edge[0]);
+  // get the services used by the apps, sorted from the most to the least common
+  ArrayList<Service> sortedServices = sortServices(out);
+
+  // split the platform and keep here only the most shared half of the services
+  for (int i = sortedServices.size() / 2; i < sortedServices.size(); i++) {
+    services.remove(sortedServices.get(i));
+  }
+  graph.updateLinks(this);
+  Platform p = graph.createPlatform(
+      sortedServices.subList(sortedServices.size() / 2, sortedServices.size()));
+  ArrayList<Entity> ents = new ArrayList<Entity>();
+  for (Edge e : edges) {
+    ents.add((Entity)e.getOtherNode(this));
+  }
+  graph.createLinks(p, ents);
+}
+
+
+private void clone_Mutate(BipartiteGraph graph) {
+  int r1, r2;
+  Bag out = graph.bipartiteNetwork.getEdges(this, null);
+  Edge[] edges = (Edge[])out.toArray(new Edge[0]);
+  ArrayList<Entity> ents = new ArrayList<Entity>();
+  for (Edge e : edges) {
+    ents.add((Entity)e.getOtherNode(this));
   }
 
-  
-  // add in a vector to the center of the space, so we don’t go too far away
-  sumForces.addIn(new Double2D((graph.sysSpace.width * 0.5 - me.x) * graph.getIn,
-  (graph.sysSpace.height * 0.5 - me.y) * graph.getIn));
-  // add a bit of randomness
-  sumForces.addIn(new Double2D(graph.getOut * (graph.random.nextDouble() * 1.0 - 0.5),
-      graph.getOut * (graph.random.nextDouble() * 1.0 - 0.5)));
-  sumForces.addIn(me);
-  graph.sysSpace.setObjectLocation(this, new Double2D(sumForces));
+  r1 = graph.random.nextInt(services.size());
+  do
+    r2 = graph.random.nextInt(services.size());
+  while (r1 == r2);
 
+  // generate a clone that has all the services of this platform but one.
+  ArrayList<Service> servs = new ArrayList<Service>(services);
+  servs.remove(r2);
+  Platform p = graph.createPlatform(servs);
+  graph.createLinks(p, ents);
+
+  // remove a service from this platform
+  services.remove(r1);
+  graph.updateLinks(p);
+}
+
+
+@Override
+public String toString() {
+  String res = super.toString();
+  res += "\n\tmaxLoad = " + maxLoad
+      + " ; minSize = " + minSize
+      + " ; pressure = " + pressure;
+  return res;
 }
 
 }
