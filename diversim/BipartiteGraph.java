@@ -206,16 +206,8 @@ public void start() {
   for (int i = 0; i < initPlatforms; i++) { // all services to all the platforms
     createPlatform(services);
   }
-  // a gaussian-distributed number of randomly selected services to each app
-  ArrayList<Service> servs = new ArrayList<Service>();
   for (int i = 0; i < initApps; i++) {
-    int n = (int)((random.nextGaussian() + 3) / 6 * (numServices - 1) + 1);
-    n = n < 1 ? 1 : n > numServices ? numServices : n;
-    for  (int j = 0; j < n; j++) {
-      servs.add(services.get(random.nextInt(numServices)));
-    }
-    createApp(servs);
-    servs.clear();
+    createApp(selectServices());
   }
 
   fate = new Fate(this);
@@ -242,6 +234,21 @@ public void start() {
 public static void main(String[] args) {
   doLoop(BipartiteGraph.class, args);
   System.exit(0);
+}
+
+
+/**
+ * A gaussian-distributed number of randomly selected services
+ */
+public ArrayList<Service> selectServices() {
+  ArrayList<Service> servs = new ArrayList<Service>();
+  int n = (int)((random.nextGaussian() + 3) / 6 * (numServices - 1) + 1);
+  n = n < 1 ? 1 : n > numServices ? numServices : n;
+  for (int j = 0; j < n; j++) {
+    servs.add(services.get(random.nextInt(numServices)));
+  }
+
+  return servs;
 }
 
 
