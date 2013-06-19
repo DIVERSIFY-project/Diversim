@@ -111,7 +111,7 @@ public double getAvgPlatformDegree() {
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
     return 0.0;
   for (Platform p : platforms) {
-    sum += bipartiteNetwork.getEdgesIn(p).size();
+    sum += p.getDegree();
   }
   return sum / numPlatforms;
 }
@@ -122,7 +122,7 @@ public double getAvgAppDegree() {
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
     return 0.0;
   for (App a : apps) {
-    sum += bipartiteNetwork.getEdgesIn(a).size();
+    sum += a.getDegree();
   }
   return sum / numApps;
 }
