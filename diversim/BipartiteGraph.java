@@ -128,6 +128,28 @@ public double getAvgAppDegree() {
 }
 
 
+public double getAvgPlatformSize() {
+  int sum = 0;
+  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
+    return 0.0;
+  for (Platform p : platforms) {
+    sum += p.getSize();
+  }
+  return sum / numPlatforms;
+}
+
+
+public double getAvgAppSize() {
+  int sum = 0;
+  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
+    return 0.0;
+  for (App a : apps) {
+    sum += a.getSize();
+  }
+  return sum / numApps;
+}
+
+
 private void init() {
   // create fields (executed only once).
   // After stop or deserialization from checkpoint, only start() is called.
