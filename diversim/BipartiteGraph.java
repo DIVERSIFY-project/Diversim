@@ -17,29 +17,97 @@ import sim.util.*;
 import sim.field.network.*;
 
 
+/**
+ * Build a bipartite graph of platforms and apps linked by services provided/used.
+ * Create and schedule entities (platforms and apps) as independent agents.
+ * Maintain the network topology in a single data structure and takes care of its
+ * consistent updating (see comments about the start() method).
+ * More info in the comments of the methods.
+ *
+ * @author Marco Biazzini
+ *
+ */
 public class BipartiteGraph extends SimState {
 
+/**
+ * Initial number of platforms.
+ */
 int initPlatforms = 3;
+
+/**
+ * Initial number of apps.
+ */
 int initApps = 10;
+
+/**
+ * Initial total number of services
+ */
 int initServices = 30;
+
+/**
+ * Max number of links a platform bears without triggering some diversification rule.
+ */
 int platformMaxLoad = 4;
+
+/**
+ * Min number of services a platform shall host.
+ */
 int platformMinSize = 3;
 
+/**
+ * Current number of platforms.
+ */
 public int numPlatforms;
+
+/**
+ * Current number of apps.
+ */
 public int numApps;
+
+/**
+ * Current number of services.
+ */
 public int numServices;
 
-public Network bipartiteNetwork;
+
+/**
+ * All the platforms currently in the simulation must be in this array.
+ */
 public ArrayList<Platform> platforms;
+
+/**
+ * All the apps currently in the simulation must be in this array.
+ */
 public ArrayList<App> apps;
+
+/**
+ * All the services currently in the simulation must be in this array.
+ */
 public ArrayList<Service> services;
+
+/**
+ * The bipartite graph. An edge links a platform to an app.
+ * Edges are weighed according to the number of services in common between the two entities.
+ */
+public Network bipartiteNetwork;
+
+/**
+ * Invisible agent that can affect the history of the simulation by injecting external events.
+ */
 public Fate fate;
+
 
 private int sCounter;
 private int pCounter;
 private int aCounter;
 public boolean changed;
 
+
+/**
+ * Getters and setters.
+ * Any Java Bean getter/setter is auto-magically included in the GUI.
+ * If a variable has an associated setter here, it can be modify at runtime via the Model tab of the GUI.
+ */
 
 public int getInitPlatforms() {
   return initPlatforms;
@@ -150,6 +218,9 @@ public double getAvgAppSize() {
 }
 
 
+/**
+ * Dynamic persistent data structures should be created here.
+ */
 private void init() {
   // create fields (executed only once).
   // After stop or deserialization from checkpoint, only start() is called.
@@ -184,6 +255,10 @@ public BipartiteGraph(long seed, Schedule schedule) {
 }
 
 
+/**
+ * This method is called ONCE at the beginning of every simulation.
+ * EVERY field, parameter, structure etc. MUST be initialized here (and not in the constructor).
+ */
 public void start() {
   super.start();
   // reset all parameters and fields
@@ -199,27 +274,38 @@ public void start() {
   aCounter = 0;
   changed = true;
 
+  // create services
   for (int i = 0; i < initServices; i++) {
     services.add(new Service(++sCounter));
     numServices++;
   }
-  for (int i = 0; i < initPlatforms; i++) { // all services to all the platforms
+
+  // create platforms
+  for (int i = 0; i < initPlatforms; i++) { // all services to each platform
     createPlatform(services);
   }
+
+  // create apps
   for (int i = 0; i < initApps; i++) {
     createApp(selectServices());
   }
 
-  fate = new Fate(this);
 
-  // define initial network: a link weight is the number of services in common
-  // between the app and the platform
+  // create the fate agent
+  fate = new Fate(random);
+  schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
+
+  // define initial network:
   // link every platform to all apps that use at least one of its services
   for (App app : apps) {
     createLinks(app, platforms);
     System.out.println("Step " + schedule.getSteps() + " : NEW " + app.toString());
   }
 
+  // An invisible agent will printout the state of the graph after all the entities
+  // (platform and apps) have done one step, but before the fate might do something.
+  // Thus at each epoch the order of the events is: all the entities (randomly shuffled),
+  // then the network printout, then fate.
   Steppable print = new Steppable() {
     public void step(SimState state) {
       if (changed)
@@ -252,6 +338,13 @@ public ArrayList<Service> selectServices() {
 }
 
 
+/**
+ * This method should always be used by an entity to create a new platform in the simulation.
+ * It takes care of adding the platform to the global arrays, to the network and
+ * to schedule it with the other entities.
+ * @param servs
+ * @return
+ */
 public Platform createPlatform(List<Service> servs) {
   Platform platform = new Platform(++pCounter, servs);
   bipartiteNetwork.addNode(platform);
@@ -263,6 +356,13 @@ public Platform createPlatform(List<Service> servs) {
 }
 
 
+/**
+ * This method should always be used by an entity to create a new app in the simulation.
+ * It takes care of adding the app to the global arrays, to the network and
+ * to schedule it with the other entities.
+ * @param servs
+ * @return
+ */
 public App createApp(List<Service> servs) {
   App app = new App(++aCounter, servs);
   bipartiteNetwork.addNode(app);
@@ -274,7 +374,13 @@ public App createApp(List<Service> servs) {
 }
 
 
-// update existing links that have the argument at one end.
+/**
+ * Update existing links that have the argument at one end.
+ * This method should always be used by an entity after triggering
+ * some diversification rule that affect the network topology in the
+ * portion of the graph that include the entity.
+ * @param e
+ */
 public void updateLinks(Entity e) {
   // the graph is undirected, thus EdgesIn = EdgesOut
   Bag edges = bipartiteNetwork.getEdgesIn(e); // read-only!
@@ -296,8 +402,13 @@ public void updateLinks(Entity e) {
 }
 
 
-// it can works with 1 platform vs all apps or viceversa.
-// to be used ONLY to associate links to/from a NEWLY created Entity
+/**
+ * Associate links to/from a NEWLY created entity.
+ * To be used always and only for a new entity.
+ * The second argument is a list of existing entities to consider linking with.
+ * @param e New entity to be introduced in the network.
+ * @param entities The entities to establish links with.
+ */
 public void createLinks(Entity e, ArrayList<? extends Entity> entities) {
   int l, r, weight, count = 0;
   for (Entity remote : entities) {
@@ -324,7 +435,10 @@ public void createLinks(Entity e, ArrayList<? extends Entity> entities) {
 }
 
 
-private void printoutNetwork() {
+/**
+ * Textual printout of the network
+ */
+private void printoutNetwork() { // TODO
   System.out.println("Step " + schedule.getSteps() + " : " + bipartiteNetwork.toString());
   System.out.flush();
 }
