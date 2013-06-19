@@ -5,7 +5,12 @@ import java.util.List;
 
 import sim.engine.SimState;
 
-
+/**
+ * Apps must be injected in the simulation via the createApp() method in the BipartiteGraph class.
+ *
+ * @author Marco Biazzini
+ *
+ */
 public class App extends Entity {
 
 double redundancy = 0;
@@ -24,13 +29,16 @@ public App(int id, List<Service> servs) {
 }
 
 
+/*
+ * (non-Javadoc)
+ * @see diversim.Entity#step(sim.engine.SimState)
+ */
 @Override
 public void step(SimState state) {
   BipartiteGraph graph = (BipartiteGraph) state;
 
 // TODO something
 
-  degree = graph.bipartiteNetwork.getEdgesIn(this).size();
   redundancy = ((double)degree) / graph.numPlatforms;
   System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
 }

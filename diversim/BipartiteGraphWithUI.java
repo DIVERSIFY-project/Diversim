@@ -17,6 +17,12 @@ import sim.util.Double2D;
 import java.awt.*;
 
 
+/**
+ * GUI of the BipartiteGraph simulation model.
+ *
+ * @author Marco Biazzini
+ *
+ */
 public class BipartiteGraphWithUI extends GUIState {
 
 public Continuous2D sysSpace = new Continuous2D(1.0,1000,300);

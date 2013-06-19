@@ -9,11 +9,32 @@ import sim.engine.Steppable;
 import sim.field.network.Edge;
 import sim.util.Bag;
 
-
+/**
+ * Superclass of any agent that
+ * -- has some services;
+ * -- is part of the bipartite graph.
+ * Thus, for instance platforms and apps extend this class.
+ * Any Java Bean getter/setter enables read/write access to the correspondent field
+ * by double clicking the entity portrayal in the GUI.
+ *
+ * @author Marco Biazzini
+ *
+ */
 abstract public class Entity implements Steppable {
 
+/**
+ * See BipartiteGraph.start().
+ */
 int ID;
+
+/**
+ * All services hosted by the entity.
+ */
 ArrayList<Service> services;
+
+/**
+ * The number of link touching the entity in the bipartite graph.
+ */
 int degree;
 
 
@@ -42,7 +63,13 @@ public String getComposition() {
   return res;
 }
 
-
+/**
+ * This method is called at any scheduled step by the simulation engine
+ * and must contain all the "intelligence" of the agent.
+ * By including here some diversification rule in a given order, the agent can
+ * affect its state and the network topology.
+ *
+ */
 @Override
 abstract public void step(SimState state);
 

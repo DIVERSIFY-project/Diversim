@@ -2,7 +2,13 @@ package diversim;
 
 import java.util.Arrays;
 
-
+/**
+ * A way to obtain, given an array of comparable objects, the permutation of its indexes that gives
+ * its element in ascending or descending order.
+ *
+ * @author Marco Biazzini
+ *
+ */
 public class IndexedSortable implements Comparable<IndexedSortable> {
 Object[] data;
 

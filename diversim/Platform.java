@@ -8,6 +8,15 @@ import sim.util.Bag;
 import sim.field.network.*;
 
 
+/**
+ * Platforms are agents pro-actively modifying their state according to
+ * some diversification rules to be included in their step() method.
+ * By modifying their state they may also affect the network topology,
+ * which should be updated accordingly.
+ *
+ * @author Marco Biazzini
+ *
+ */
 public class Platform extends Entity {
 
 
@@ -33,6 +42,10 @@ public Platform(int id, List<Service> servs) {
 }
 
 
+/*
+ * (non-Javadoc)
+ * @see diversim.Entity#step(sim.engine.SimState)
+ */
 @Override
 public void step(SimState state) {
   BipartiteGraph graph = (BipartiteGraph)state;
@@ -54,8 +67,16 @@ public void step(SimState state) {
 }
 
 
+/**
+ * Split this platform in two and partition the services, so that
+ * the most common services among the linked application are kept in this
+ * instance and the other half of the services are removed and assigned
+ * to the newly created platform.
+ *
+ * @param graph
+ */
 private void split_Part(BipartiteGraph graph) {
-  Bag out = graph.bipartiteNetwork.getEdges(this, null);
+  Bag out = graph.bipartiteNetwork.getEdges(this, null); // read-only!
   Edge[] edges = (Edge[])out.toArray(new Edge[0]);
   // get the services used by the apps, sorted from the most to the least common
   ArrayList<Service> sortedServices = sortServices(out);
@@ -76,9 +97,16 @@ private void split_Part(BipartiteGraph graph) {
 }
 
 
+/**
+ * Clone this instance and mutate both this instance and the clone, so that
+ * one randomly chosen service in each instance (not the same in both) is removed.
+ * Then update the network so that the apps link to the proper instance(s).
+ *
+ * @param graph
+ */
 private void clone_Mutate(BipartiteGraph graph) {
   int r1, r2;
-  Bag out = graph.bipartiteNetwork.getEdges(this, null);
+  Bag out = graph.bipartiteNetwork.getEdges(this, null); // read-only!
   Edge[] edges = (Edge[])out.toArray(new Edge[0]);
   ArrayList<Entity> ents = new ArrayList<Entity>();
   for (Edge e : edges) {
