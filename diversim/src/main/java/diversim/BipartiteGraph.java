@@ -24,7 +24,26 @@ import sim.field.network.*;
  * consistent updating (see comments about the start() method).
  * More info in the comments of the methods.
  *
+ * In a nutshell:
+ * We have a two communities of species: platforms and apps
+ * Each specie of platform is description of the set of services it supports.  
+ * Each individual platform-instance is an individual of a particular specie.  
+ * There can be many species, but a specie with no individual 
+ * platform-instances is extinct.
+ *
+ * Each specie of app is a description of the set of services it needs. Each 
+ * app-instance is an individual of a particular specie. If an app-instance 
+ * cannot find a platform-instance that supports at least its required set of 
+ * services, it dies. 
+ *
+ * Each platform-instance supports one app-instance.
+ *
+ * For visualization purposes:
+ * We need to show specie-level interactions, perhaps(?) instead of individual 
+ * level interactions.
+ *
  * @author Marco Biazzini
+ * @author Vivek Nallur
  *
  */
 public class BipartiteGraph extends SimState {
