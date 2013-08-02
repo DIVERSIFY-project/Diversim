@@ -1,7 +1,8 @@
 #!/bin/bash
 
-binDir=$HOME/workspace/diversim/bin # where are the binaries
-libDir=$HOME/Diversify/mason # where are the libs
+binDir=$HOME/ownCloud/neutral_model/diversify/diversim/src/main/java # where 
+are the binaries
+libDir=$HOME/ownCloud/tcd/mason # where are the libs
 
 libs=$libDir/jmf.jar:$libDir/itext-1.2.jar:$libDir/portfolio.jar:$libDir/jcommon-1.0.16.jar:$libDir/jfreechart-1.0.13.jar:$libDir/jar/mason.17.jar
 
