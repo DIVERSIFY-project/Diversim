@@ -125,7 +125,6 @@ public String toString() {
   String res = "";
   res += this.getClass().getSimpleName()
       + " " + ID
-      + " : degree = " + degree
       + " ; size = " + getSize()
       + " ; composition = " + getComposition();
   return res;

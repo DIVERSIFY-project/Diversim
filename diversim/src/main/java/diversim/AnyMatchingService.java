@@ -4,7 +4,7 @@ import java.util.*;
 
 /**
  * An implementation of the MatchingStrategy interface, this concrete 
- * implementation returns true, if any of the services required by the source, 
+ * implementation returns true, if any of the services in the source, 
  * are found in the target.
  *
  * @author Vivek Nallur
