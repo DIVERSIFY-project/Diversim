@@ -22,46 +22,56 @@ import sim.util.Bag;
  */
 abstract public class Entity implements Steppable {
 
-/**
- * See BipartiteGraph.start().
- */
-int ID;
+	/**
+	 * See BipartiteGraph.start().
+	 */
+	int ID;
+	
+	/**
+	 * All services hosted by the entity.
+	 */
+	ArrayList<Service> services;
+	
+	/**
+	 * The number of link touching the entity in the bipartite graph.
+	 */
+	int degree;
+	
+	/**
+	 * The matching strategy employed by this entity
+	 */
+	MatchingStrategy matcher;
+		
 
-/**
- * All services hosted by the entity.
- */
-ArrayList<Service> services;
+	Entity(int id) {
+	  ID = id;
+	  services = new ArrayList<Service>();
+	  degree = 0;
+	}
 
-/**
- * The number of link touching the entity in the bipartite graph.
- */
-int degree;
-
-
-Entity(int id) {
-  ID = id;
-  services = new ArrayList<Service>();
-  degree = 0;
-}
-
-
-public int getDegree() {
-  return degree;
-}
-
-
-public int getSize() {
-  return services.size();
-}
-
-
-public String getComposition() {
-  String res = "";
-  for (Service s : services) {
-    res += s.ID + "-";
-  }
-  return res;
-}
+	public boolean matches(Entity target){
+		return this.matcher.matches(this, target);
+	}
+	public void setMatchingStrategy(MatchingStrategy ms){
+			this.matcher = ms;
+	}	
+	public int getDegree() {
+	  return degree;
+	}
+	
+	
+	public int getSize() {
+	  return services.size();
+	}
+	
+	
+	public String getComposition() {
+	  String res = "";
+	  for (Service s : services) {
+	    res += s.ID + "-";
+	  }
+	  return res;
+	}
 
 /**
  * This method is called at any scheduled step by the simulation engine

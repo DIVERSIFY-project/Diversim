@@ -16,7 +16,7 @@ public class ExtensionSpeciation implements SpeciationStrategy{
         public List<Service> speciate(List<Service> current_dna, List<Service> all_services){
 		Set<Service> current_services = new HashSet<Service>(current_dna);
 		Service new_service;
-		MersenneTwisterFast rnd = new MersenneTwisterFast();
+		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
 		do {
 			new_service = all_services.get(rnd.nextInt(all_services.size()));
 		}while(!current_services.add(new_service));

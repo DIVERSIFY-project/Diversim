@@ -13,7 +13,7 @@ import sim.util.Bag;
 public class ReductionSpeciation implements SpeciationStrategy{
         public List<Service> speciate(List<Service> current_dna, List<Service> all_services){
 		ArrayList<Service> current_services = new ArrayList<Service> (current_dna);
-		MersenneTwisterFast rnd = new MersenneTwisterFast();
+		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
 		current_services.remove(rnd.nextInt(current_services.size()));
 		return new ArrayList<Service> (current_services);
         }

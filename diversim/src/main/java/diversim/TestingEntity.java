@@ -23,23 +23,18 @@ public class TestingEntity extends Entity {
 
 	MatchingStrategy matcher;
 	SpeciationStrategy mutator;
+	ArrayList<Service> services;
 
 	public TestingEntity(int id, List<Service> servs, MatchingStrategy ms) {
-	  super(id);
-	  for (Service s : servs) {
-		 BipartiteGraph.addUnique(services, s);
-	  }
-	this.matcher = ms;
-	}
-
-	public boolean matches(Entity target){
-		return this.matcher.matches(this, target);
+	  	super(id);
+		this.matcher = ms;
+		this.services = new ArrayList<Service>(servs);
 	}
 
 	public void addSpeciationStrategy(SpeciationStrategy ss){
 		this.mutator = ss;
 	}
-	
+
 
 	/*
 	 * (non-Javadoc)
@@ -58,7 +53,7 @@ public class TestingEntity extends Entity {
 	}
 
 	public void reproduce(List<Service> all_services){
-		MersenneTwisterFast rnd = new MersenneTwisterFast();
+		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
 		if (rnd.nextBoolean()){
 			System.out.println(this.getClass().getSimpleName() + "speciating using Reduction strategy");
 			this.addSpeciationStrategy(new ReductionSpeciation());
@@ -87,20 +82,31 @@ public class TestingEntity extends Entity {
 		diffServices.add(b);
 		diffServices.add(a);
 
-		TestingEntity platform = new TestingEntity(10, allServices, anyMatcher);
-		TestingEntity app = new TestingEntity(20, someServices, allMatcher);
+		AppReproductionStrategy ars = new AppClonalReproduction();
+		PlatformReproductionStrategy prs = new PlatformClonalReproduction();
+
+		Platform platform = new Platform(10, allServices);
+		platform.setMatchingStrategy(anyMatcher);
+		platform.setReproductionStrategy(prs);
+
+		App app = new App(20, someServices);
+		app.setMatchingStrategy(allMatcher);
+		app.setReproductionStrategy(ars);
+
 		System.out.println("Platform matches app?: " + platform.matches(app));
 		System.out.println("App matches Platform?: " + app.matches(platform));
 		System.out.println("Platform always matches platform: " + platform.matches(platform));
 		System.out.println("App always matches app: " + app.matches(app));
 
-		TestingEntity another_app = new TestingEntity(30, someServices, allMatcher);
-		TestingEntity yet_a_app = new TestingEntity(40, diffServices, allMatcher);
-		another_app.reproduce(allServices);
-		yet_a_app.reproduce(allServices);
+		List<App> child_apps = app.reproduce();
+		List<Platform> child_platforms = platform.reproduce();
 
-		System.out.println(another_app);
-		System.out.println(yet_a_app);
+		for (App child: child_apps){
+			System.out.println(child);
+		}
+		for (Platform child: child_platforms){
+			System.out.println(child);
+		}
 
 	}
 	
