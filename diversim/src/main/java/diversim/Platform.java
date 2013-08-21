@@ -32,8 +32,8 @@ public class Platform extends Entity {
 		this.reproducer = rs;
 	}
 	
-	public List<Platform> reproduce(){
-		return this.reproducer.reproduce(this, null);
+	public List<Platform> reproduce(List<Platform> possible_mates){
+		return this.reproducer.reproduce(this, possible_mates);
 	}
 	
 	public void setLoadingFactor(int load){

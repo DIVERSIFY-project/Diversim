@@ -69,20 +69,28 @@ public class TestingEntity extends Entity {
 		Service a = new Service(1);	
 		Service b = new Service(2);
 		Service c = new Service(3);
+		Service d = new Service(4);
+		Service e = new Service(5);
 		MatchingStrategy allMatcher = new AllMatchingService();
 		MatchingStrategy anyMatcher = new AnyMatchingService();
 		ArrayList allServices = new ArrayList();
 		allServices.add(a);
 		allServices.add(b);
 		allServices.add(c);
+		allServices.add(d);
+		allServices.add(e);
 		ArrayList someServices = new ArrayList();
 		someServices.add(a);
 		someServices.add(c);
 		ArrayList diffServices = new ArrayList();
 		diffServices.add(b);
-		diffServices.add(a);
+		diffServices.add(d);
+      ArrayList moreServices = new ArrayList();
+      moreServices.add(e);
+      moreServices.add(c);
 
 		AppReproductionStrategy ars = new AppClonalReproduction();
+		AppReproductionStrategy asr = new AppSpeciationReproduction();
 		PlatformReproductionStrategy prs = new PlatformClonalReproduction();
 
 		Platform platform = new Platform(10, allServices);
@@ -93,18 +101,42 @@ public class TestingEntity extends Entity {
 		app.setMatchingStrategy(allMatcher);
 		app.setReproductionStrategy(ars);
 
+      App app1 = new App(30, diffServices);
+		app1.setMatchingStrategy(allMatcher);
+		app1.setReproductionStrategy(asr);
+
+      App app2 = new App(40, moreServices);
+		app2.setMatchingStrategy(allMatcher);
+		app2.setReproductionStrategy(asr);
+
+      List<App> all_apps = new ArrayList<App>(3);
+      all_apps.add(app);
+      all_apps.add(app1);
+      all_apps.add(app2);
+
 		System.out.println("Platform matches app?: " + platform.matches(app));
 		System.out.println("App matches Platform?: " + app.matches(platform));
 		System.out.println("Platform always matches platform: " + platform.matches(platform));
 		System.out.println("App always matches app: " + app.matches(app));
 
-		List<App> child_apps = app.reproduce();
-		List<Platform> child_platforms = platform.reproduce();
+		List<App> child_apps = app.reproduce(all_apps);
+		List<Platform> child_platforms = platform.reproduce(null);
 
 		for (App child: child_apps){
 			System.out.println(child);
 		}
 		for (Platform child: child_platforms){
+			System.out.println(child);
+		}
+
+      List<App> children_app1 = app1.reproduce(all_apps);
+      List<App> children_app2 = app2.reproduce(all_apps);
+
+		for (App child: children_app1){
+			System.out.println(child);
+		}
+
+		for (App child: children_app2){
 			System.out.println(child);
 		}
 

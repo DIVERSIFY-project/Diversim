@@ -49,9 +49,9 @@ public class App extends Entity {
 		this.reproducer = rs;
 	}
 	
-	public List<App> reproduce(){
-		return this.reproducer.reproduce(this, null);
-	}
+	public List<App> reproduce(List<App> possible_mates){
+	   return this.reproducer.reproduce(this, possible_mates);
+   }
 	
 	
 	public App(int id, List<Service> service_dependencies) {
