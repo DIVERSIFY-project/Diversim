@@ -10,10 +10,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import ec.util.MersenneTwisterFast;
+import fr.inria.diversim.strategy.application.LinkStrategy;
+import fr.inria.diversim.strategy.fate.FateStrategy;
+import fr.inria.diversim.strategy.platform.MarcoStrategy;
+import sim.engine.RandomSequence;
+import sim.engine.Sequence;
 import sim.engine.Schedule;
 import sim.engine.SimState;
 import sim.engine.Steppable;
-import sim.util.*;
 import sim.field.network.*;
 
 
@@ -74,16 +78,22 @@ public int numServices;
  * All the platforms currently in the simulation must be in this array.
  */
 public ArrayList<Platform> platforms;
+    protected RandomSequence platformSequence;
 
 /**
  * All the apps currently in the simulation must be in this array.
  */
 public ArrayList<App> apps;
-
+    protected RandomSequence appSequence;
 /**
  * All the services currently in the simulation must be in this array.
  */
 public ArrayList<Service> services;
+
+    /**
+     * All the id services currently in the simulation must be in this array.
+     */
+    public ArrayList<Integer> servicesId;
 
 /**
  * The bipartite graph. An edge links a platform to an app.
@@ -92,7 +102,7 @@ public ArrayList<Service> services;
 public Network bipartiteNetwork;
 
 /**
- * Invisible agent that can affect the history of the simulation by injecting external events.
+ * Invisible model that can affect the history of the simulation by injecting external events.
  */
 public Fate fate;
 
@@ -100,7 +110,7 @@ public Fate fate;
 private int sCounter;
 private int pCounter;
 private int aCounter;
-public boolean changed;
+protected boolean changed;
 
 
 /**
@@ -274,7 +284,13 @@ public void start() {
   aCounter = 0;
   changed = true;
 
-  // create services
+    //init the scheduler for apps and platforms
+    platformSequence = new RandomSequence(new ArrayList());
+    appSequence = new RandomSequence(new ArrayList());
+    schedule.scheduleRepeating(new Sequence(new RandomSequence[]{platformSequence,appSequence}));
+
+
+    // create services
   for (int i = 0; i < initServices; i++) {
     services.add(new Service(++sCounter));
     numServices++;
@@ -291,18 +307,12 @@ public void start() {
   }
 
 
-  // create the fate agent
-  fate = new Fate(random);
+  // create the fate model
+  fate = new Fate(new FateStrategy(random));
   schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
 
-  // define initial network:
-  // link every platform to all apps that use at least one of its services
-  for (App app : apps) {
-    createLinks(app, platforms);
-    System.out.println("Step " + schedule.getSteps() + " : NEW " + app.toString());
-  }
 
-  // An invisible agent will printout the state of the graph after all the entities
+  // An invisible model will printout the state of the graph after all the entities
   // (platform and apps) have done one step, but before the fate might do something.
   // Thus at each epoch the order of the events is: all the entities (randomly shuffled),
   // then the network printout, then fate.
@@ -346,12 +356,13 @@ public ArrayList<Service> selectServices() {
  * @return
  */
 public Platform createPlatform(List<Service> servs) {
-  Platform platform = new Platform(++pCounter, servs);
+  Platform platform = new Platform(++pCounter, servs, new MarcoStrategy());
   bipartiteNetwork.addNode(platform);
   platforms.add(platform);
   numPlatforms++;
   changed = true;
-  schedule.scheduleRepeating(platform);
+//  schedule.scheduleRepeating(platform);
+    platformSequence.addSteppable(platform);
   return platform;
 }
 
@@ -364,74 +375,14 @@ public Platform createPlatform(List<Service> servs) {
  * @return
  */
 public App createApp(List<Service> servs) {
-  App app = new App(++aCounter, servs);
+  App app = new App(++aCounter, servs, new LinkStrategy());
   bipartiteNetwork.addNode(app);
   apps.add(app);
   numApps++;
   changed = true;
-  schedule.scheduleRepeating(app);
+//  schedule.scheduleRepeating(app);
+    appSequence.addSteppable(app);
   return app;
-}
-
-
-/**
- * Update existing links that have the argument at one end.
- * This method should always be used by an entity after triggering
- * some diversification rule that affect the network topology in the
- * portion of the graph that include the entity.
- * @param e
- */
-public void updateLinks(Entity e) {
-  // the graph is undirected, thus EdgesIn = EdgesOut
-  Bag edges = bipartiteNetwork.getEdgesIn(e); // read-only!
-  int w; Entity rem;
-  for (Edge edge : (Edge[])edges.toArray(new Edge[0])) {
-    rem = (Entity)edge.getOtherNode(e);
-    w = e.countCommonServices(rem, null);
-    if (((Number)edge.info).intValue() != w) {
-      bipartiteNetwork.removeEdge(edge);
-      if (w > 0) {
-        bipartiteNetwork.addEdge(e, rem, new Integer(w));
-      } else {
-        e.degree--;
-        rem.degree--;
-      }
-      changed = true;
-    }
-  }
-}
-
-
-/**
- * Associate links to/from a NEWLY created entity.
- * To be used always and only for a new entity.
- * The second argument is a list of existing entities to consider linking with.
- * @param e New entity to be introduced in the network.
- * @param entities The entities to establish links with.
- */
-public void createLinks(Entity e, ArrayList<? extends Entity> entities) {
-  int l, r, weight, count = 0;
-  for (Entity remote : entities) {
-    weight = l = r = 0; // services are sorted according to their ID...
-    while (l < e.services.size() && r < remote.services.size()) {
-      if (e.services.get(l).ID == remote.services.get(r).ID) {
-        weight++;
-        l++;
-        r++;
-      } else if (e.services.get(l).ID > remote.services.get(r).ID) {
-        r++;
-      } else {
-        l++;
-      }
-    }
-    if (weight > 0) {
-      bipartiteNetwork.addEdge(e, remote, new Integer(weight));
-      e.degree++;
-      remote.degree++;
-      changed = true;
-    }
-  }
-
 }
 
 
@@ -458,7 +409,7 @@ private void printoutNetwork() { // TODO
  * @return The [0, set.size()) index of the item in the List.
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public static int addUnique(List set, Comparable item) {
+public static int addUnique(List set, Service item) {
   int i = Collections.binarySearch(set, item);
   if (i < 0) {
     i = -i - 1;
@@ -521,4 +472,14 @@ static public void printAny(Object data, String trailer, PrintStream out) {
 }
 
 
+    public void changed() {
+        changed = true;
+    }
+
+    public void removeEntity(Entity entity) {
+        System.out.println("remove entity: "+entity);
+       apps.remove(entity);
+       appSequence.removeSteppable(entity);
+       bipartiteNetwork.removeNode(entity);
+    }
 }
