@@ -1,4 +1,4 @@
-package diversim;
+package fr.inria.diversim.model;
 
 
 import java.util.List;

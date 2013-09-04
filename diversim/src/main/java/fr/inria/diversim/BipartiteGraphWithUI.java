@@ -1,4 +1,6 @@
-package diversim;
+package fr.inria.diversim;
+
+import fr.inria.diversim.model.*;
 
 import sim.display.Console;
 import sim.display.Controller;
@@ -39,7 +41,7 @@ public BipartiteGraphWithUI(SimState state) {
 
 
 public BipartiteGraphWithUI() {
-  super(new BipartiteGraph(System.currentTimeMillis())); 
+  super(new BipartiteGraph(System.currentTimeMillis()));
 }
 
 

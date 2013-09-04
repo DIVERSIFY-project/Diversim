@@ -1,4 +1,6 @@
-package diversim;
+package fr.inria.diversim.model;
+
+import fr.inria.diversim.util.IndexedSortable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
