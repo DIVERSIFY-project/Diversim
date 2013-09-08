@@ -41,7 +41,7 @@ protected int degree;
 
     protected Strategy strategy;
 
-Entity(int id, Strategy strategy) {
+Entity(int id, Strategy<? extends Entity> strategy) {
   ID = id;
   services = new ArrayList<Service>();
   degree = 0;
@@ -62,7 +62,7 @@ public int getSize() {
 public String getComposition() {
   String res = "";
   for (Service s : services) {
-    res += s.getID() + "-";
+    res += "s" + s.getName() + "-";
   }
   return res;
 }
@@ -111,14 +111,13 @@ public ArrayList<Service> sortServices(Bag edges) {
  * @param counter
  * @return The number of services in common.
  */
-int countCommonServices(Entity e, Integer[] counter) {
+private int countCommonServices(Entity e, Integer[] counter) {
   int indx, res = 0;
   for (Service s : e.services) {
     indx = Collections.binarySearch(services, s);
-//   indx = services.indexOf(s);
     if (indx >= 0) {
       res++;
-      if (counter != null) counter[indx]++;
+      counter[indx]++;
     }
   }
   return res;

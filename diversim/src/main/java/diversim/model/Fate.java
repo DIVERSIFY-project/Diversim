@@ -32,17 +32,7 @@ public class Fate implements Steppable {
     public void step(SimState state) {
 
         strategy.evolve((BipartiteGraph) state, this);
-        System.out.flush();
 
-    }
-
-    protected void attackServices(BipartiteGraph graph) {
-    }
-
-    protected void killPlatform(BipartiteGraph graph) {
-    }
-
-    protected void addApplication(BipartiteGraph graph) {
     }
 
 

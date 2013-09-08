@@ -389,7 +389,7 @@ public App createApp(List<Service> servs) {
 /**
  * Textual printout of the network
  */
-private void printoutNetwork() { // TODO
+private void printoutNetwork() {
   System.out.println("Step " + schedule.getSteps() + " : " + bipartiteNetwork.toString());
   System.out.flush();
 }
