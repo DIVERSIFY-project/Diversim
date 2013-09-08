@@ -409,7 +409,7 @@ private void printoutNetwork() {
  * @return The [0, set.size()) index of the item in the List.
  */
 @SuppressWarnings({ "unchecked", "rawtypes" })
-public static int addUnique(List set, Service item) {
+public static int addUnique(List set, Comparable item) {
   int i = Collections.binarySearch(set, item);
   if (i < 0) {
     i = -i - 1;
