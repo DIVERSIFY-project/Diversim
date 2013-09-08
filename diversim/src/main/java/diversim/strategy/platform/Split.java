@@ -4,7 +4,7 @@ import diversim.model.BipartiteGraph;
 import diversim.model.Entity;
 import diversim.model.Platform;
 import diversim.model.Service;
-import diversim.strategy.Strategy;
+import diversim.strategy.AbstractStrategy;
 import sim.field.network.Edge;
 import sim.util.Bag;
 
@@ -15,7 +15,13 @@ import java.util.ArrayList;
  * Date: 7/8/13
  * Time: 10:21 AM
  */
-public class Split implements Strategy<Platform> {
+public class Split extends AbstractStrategy<Platform> {
+
+public Split(String n) {
+  super(n);
+}
+
+
     @Override
     public void evolve(BipartiteGraph graph, Platform platform) {
         split_Part(graph,platform);

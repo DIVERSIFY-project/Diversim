@@ -3,7 +3,7 @@ package diversim.strategy.fate;
 import diversim.model.BipartiteGraph;
 import diversim.model.App;
 import diversim.model.Fate;
-import diversim.strategy.Strategy;
+import diversim.strategy.AbstractStrategy;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +13,12 @@ import java.util.List;
  * Date: 7/8/13
  * Time: 2:20 PM
  */
-public class KillApp implements Strategy<Fate> {
+public class KillApp extends AbstractStrategy<Fate> {
+    protected KillApp(String n) {
+    super(n);
+    // TODO Auto-generated constructor stub
+  }
+
     @Override
     public void evolve(BipartiteGraph graph, Fate agent) {
         List<App> appToKill = new ArrayList<App>();

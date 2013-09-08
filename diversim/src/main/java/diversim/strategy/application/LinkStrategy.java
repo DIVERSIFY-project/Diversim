@@ -1,7 +1,7 @@
 package diversim.strategy.application;
 
 import diversim.model.*;
-import diversim.strategy.Strategy;
+import diversim.strategy.AbstractStrategy;
 import sim.field.network.Edge;
 import sim.util.Bag;
 
@@ -15,7 +15,12 @@ import java.util.List;
  * Date: 7/8/13
  * Time: 10:59 AM
  */
-public class LinkStrategy implements Strategy<App> {
+public class LinkStrategy extends AbstractStrategy<App> {
+
+    public LinkStrategy(String n) {
+    super(n);
+    // TODO Auto-generated constructor stub
+  }
 
     public void evolve(BipartiteGraph graph, App app) {
         removeLinkFor(graph,app);
