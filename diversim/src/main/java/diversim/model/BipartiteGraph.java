@@ -334,11 +334,17 @@ public static void main(String[] args) {
 
 
 /**
- * A gaussian-distributed number of randomly selected services
+ * Returns a random selection of services. The number of services returned is specified by the given argument.
+ * If the argument is <= 0, a gaussian-distributed number of randomly selected services is returned.
+ * The number of services returned is always at least 1 and at most {@link #numServices}.
+ *
+ * @param n
+ *          Number of services to return.
+ * @return A random selection of services.
  */
-public ArrayList<Service> selectServices() {
+public ArrayList<Service> selectServices(int n) {
   ArrayList<Service> servs = new ArrayList<Service>();
-  int n = (int)((random.nextGaussian() + 3) / 6 * (numServices - 1) + 1);
+  if (n < 1) n = (int)((random.nextGaussian() + 3) / 6 * (numServices - 1) + 1);
   n = n < 1 ? 1 : n > numServices ? numServices : n;
   for (int j = 0; j < n; j++) {
     servs.add(services.get(random.nextInt(numServices)));
