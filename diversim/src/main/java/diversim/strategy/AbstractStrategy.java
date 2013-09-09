@@ -22,8 +22,8 @@ protected AbstractStrategy(String n) {
  */
 @Override
 public int compareTo(Object o) {
-  if (o instanceof AbstractStrategy)
-    return name.compareTo(((AbstractStrategy)o).name);
+  if (o instanceof AbstractStrategy<?>)
+    return name.compareTo(((AbstractStrategy<?>)o).name);
   else if (o instanceof String)
     return name.compareTo((String)o);
   return 0;

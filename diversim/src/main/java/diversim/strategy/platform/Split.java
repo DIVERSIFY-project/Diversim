@@ -1,11 +1,9 @@
 package diversim.strategy.platform;
 
 import diversim.model.BipartiteGraph;
-import diversim.model.Entity;
 import diversim.model.Platform;
 import diversim.model.Service;
 import diversim.strategy.AbstractStrategy;
-import sim.field.network.Edge;
 import sim.util.Bag;
 
 import java.util.ArrayList;
@@ -17,8 +15,11 @@ import java.util.ArrayList;
  */
 public class Split extends AbstractStrategy<Platform> {
 
-public Split(String n) {
+double ratio;
+
+public Split(String n, double r) {
   super(n);
+  ratio = r;
 }
 
 
@@ -38,20 +39,22 @@ public Split(String n) {
      */
     private void split_Part(BipartiteGraph graph, Platform platform) {
         Bag out = graph.bipartiteNetwork.getEdges(this, null); // read-only!
-        Edge[] edges = (Edge[])out.toArray(new Edge[0]);
+//        Edge[] edges = (Edge[])out.toArray(new Edge[0]);
+//        ArrayList<Entity> ents = new ArrayList<Entity>();
+//        for (Edge e : edges) {
+//            ents.add((Entity)e.getOtherNode(this));
+//        }
         // get the services used by the apps, sorted from the most to the least common
         ArrayList<Service> sortedServices = platform.sortServices(out);
+        int splitIndex = (int)Math.round(sortedServices.size() * ratio);
 
         // split the platform and keep here only the most shared half of the services
         Platform p = graph.createPlatform(
-                sortedServices.subList(sortedServices.size() / 2, sortedServices.size()));
-        ArrayList<Entity> ents = new ArrayList<Entity>();
-        for (Edge e : edges) {
-            ents.add((Entity)e.getOtherNode(this));
+                sortedServices.subList(splitIndex, sortedServices.size()), this);
+        System.out.println("\tStep " + graph.schedule.getSteps() + " : NEW " + p.toString());
+        for (int i = splitIndex; i < sortedServices.size(); i++) {
+            platform.getServices().remove(sortedServices.get(i)); // FIXME : make it O(log(services)) !!!
         }
-        System.out.println("Step " + graph.schedule.getSteps() + " : NEW " + p.toString());
-        for (int i = sortedServices.size() / 2; i < sortedServices.size(); i++) {
-            platform.getServices().remove(sortedServices.get(i));
-        }
+        platform.action = "split_part";
     }
 }

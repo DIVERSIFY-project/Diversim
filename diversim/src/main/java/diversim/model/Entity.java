@@ -3,6 +3,8 @@ package diversim.model;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import diversim.util.IndexedSortable;
 import diversim.strategy.Strategy;
@@ -78,10 +80,56 @@ public String getComposition() {
 abstract public void step(SimState state);
 
 
+static public <T extends Entity> List<T> findEntityWithAllServices(List<T> ens, List<Service> services) {
+  List<T> list = new ArrayList<T>();
+  for (T en : ens) {
+    if (en.getServices().containsAll(services)) list.add(en);
+  }
+  Collections.sort(list, new Comparator<Entity>() {
+
+    @Override
+    public int compare(Entity e, Entity e2) {
+      return e.getDegree() - e2.getDegree();
+    }
+  });
+  return list;
+}
+
+
+static public <T extends Entity> List<T> findEntityWithServices(List<T> ens, List<Service> services) {
+  List<T> list = new ArrayList<T>();
+  for (T en : ens) {
+    for (Service service : services) {
+      if (en.getServices().contains(service)) {
+        list.add(en);
+        break;
+      }
+    }
+  }
+  Collections.sort(list, new Comparator<Entity>() {
+
+    @Override
+    public int compare(Entity e, Entity e2) {
+      return e.getDegree() - e2.getDegree();
+    }
+  });
+  return list;
+}
+
+
+static public void addEdge(BipartiteGraph graph, Entity e, Entity rem, Object info) {
+  graph.bipartiteNetwork.addEdge(e, rem, info);
+  e.incDegree();
+  rem.incDegree();
+  graph.changed();
+}
+
+
 /**
- * Returns an array with the services of this entity sorted w.r.t. the number
- * of apps that use them.
- * @param edges The edges involving this entity in the current network topology.
+ * Returns an array with the services of this entity sorted w.r.t. the number of apps that use them.
+ *
+ * @param edges
+ *          The edges involving this entity in the current network topology.
  * @return Sorted array of services.
  */
 public ArrayList<Service> sortServices(Bag edges) {
@@ -111,13 +159,13 @@ public ArrayList<Service> sortServices(Bag edges) {
  * @param counter
  * @return The number of services in common.
  */
-private int countCommonServices(Entity e, Integer[] counter) {
+public int countCommonServices(Entity e, Integer[] counter) {
   int indx, res = 0;
   for (Service s : e.services) {
     indx = Collections.binarySearch(services, s);
     if (indx >= 0) {
       res++;
-      counter[indx]++;
+      if (counter != null) counter[indx]++;
     }
   }
   return res;

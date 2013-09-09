@@ -1,5 +1,6 @@
 package diversim.model;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -10,9 +11,16 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import ec.util.MersenneTwisterFast;
+import diversim.strategy.AbstractStrategy;
+import diversim.strategy.NullStrategy;
+import diversim.strategy.Strategy;
 import diversim.strategy.application.LinkStrategy;
 import diversim.strategy.fate.FateStrategy;
-import diversim.strategy.platform.MarcoStrategy;
+import diversim.strategy.platform.CloneMutate;
+import diversim.strategy.platform.Split;
+import diversim.strategy.platform.SplitOrClone;
+import diversim.util.config.Configuration;
+
 import sim.engine.RandomSequence;
 import sim.engine.Sequence;
 import sim.engine.Schedule;
@@ -36,27 +44,43 @@ public class BipartiteGraph extends SimState {
 /**
  * Initial number of platforms.
  */
-int initPlatforms = 3;
+int initPlatforms;
 
 /**
  * Initial number of apps.
  */
-int initApps = 10;
+int initApps;
 
 /**
  * Initial total number of services
  */
-int initServices = 30;
+int initServices;
+
+
+/**
+ * Maximum number of platforms.
+ */
+int maxPlatforms;
+
+/**
+ * Maximum number of apps.
+ */
+int maxApps;
+
+/**
+ * Maximum total number of services.
+ */
+int maxServices;
 
 /**
  * Max number of links a platform bears without triggering some diversification rule.
  */
-int platformMaxLoad = 4;
+int platformMaxLoad;
 
 /**
  * Min number of services a platform shall host.
  */
-int platformMinSize = 3;
+int platformMinSize;
 
 /**
  * Current number of platforms.
@@ -72,6 +96,12 @@ public int numApps;
  * Current number of services.
  */
 public int numServices;
+
+
+/**
+ * All the platforms' strategies must be in this array.
+ */
+public ArrayList<Strategy<? extends Steppable>> entityStrategies;
 
 
 /**
@@ -111,6 +141,8 @@ private int sCounter;
 private int pCounter;
 private int aCounter;
 protected boolean changed;
+protected boolean centralized;
+private boolean manualConf;
 
 
 /**
@@ -146,6 +178,36 @@ public int getInitServices() {
 
 public void setInitServices(int p) {
   initServices = p;
+}
+
+
+public int getMaxPlatforms() {
+  return maxPlatforms;
+}
+
+
+public void setMaxPlatforms(int p) {
+  maxPlatforms = p;
+}
+
+
+public int getMaxApps() {
+  return maxApps;
+}
+
+
+public void setMaxApps(int p) {
+  maxApps = p;
+}
+
+
+public int getMaxServices() {
+  return maxServices;
+}
+
+
+public void setMaxServices(int p) {
+  maxServices = p;
 }
 
 
@@ -238,6 +300,16 @@ private void init() {
   platforms = new ArrayList<Platform>();
   apps = new ArrayList<App>();
   services = new ArrayList<Service>();
+  entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
+  try {
+    String path = System.getenv().get("PWD");
+    if (path == null) path = "/root"; // XXX ugly but effective to bypass problems with UI...
+    Configuration.setConfig(path + "/diversim.conf");
+      manualConf = false;
+  } catch (IOException e) {
+    System.err.println("WARNING : Configuration file not found. Please proceed with manual configuration.");
+    manualConf = true;
+  }
 }
 
 
@@ -265,6 +337,105 @@ public BipartiteGraph(long seed, Schedule schedule) {
 }
 
 
+@SuppressWarnings("unchecked")
+<T extends Steppable> Strategy<T> setStrategy(String s) {
+  s = s.toLowerCase();
+  @SuppressWarnings("rawtypes")
+  AbstractStrategy res = getElement(entityStrategies, s);
+  if (res == null) {
+    if (s.startsWith("combo")) {
+      AbstractStrategy<T> sp = (AbstractStrategy<T>)setStrategy(Configuration.getString(s + ".split"));
+      AbstractStrategy<T> cl = (AbstractStrategy<T>)setStrategy(Configuration.getString(s + ".clone"));
+      res = new SplitOrClone(Configuration.getString(s),
+          (Split)sp, Configuration.getDouble(s + ".split_factor", 1.0),
+          (CloneMutate)cl, Configuration.getDouble(s + ".clone_factor", 2.0));
+    } else if (s.startsWith("clone")) {
+      res = new CloneMutate(Configuration.getString(s), Configuration.getDouble(s + ".mutation", 0.1));
+    } else if (s.startsWith("split")) {
+      res = new Split(Configuration.getString(s), Configuration.getDouble(s + ".keep", 2.0));
+    } else
+      res = new NullStrategy<Entity>();
+    addUnique(entityStrategies, res);
+  }
+  return res;
+}
+
+
+private void readConfig() {
+  String[] species;
+  long size;
+  int i, nSer;
+  Strategy st;
+  int seed = Configuration.getInt("seed", 0);
+  if (seed != 0) {
+    random.setSeed(seed);
+  }
+  System.err.println("Config : seed = " + seed);
+
+  initApps = Configuration.getInt("init_apps");
+  initPlatforms = Configuration.getInt("init_platforms");
+  initServices = Configuration.getInt("init_services");
+  maxApps = Configuration.getInt("max_apps", 0);
+  if (maxApps == 0) maxApps = Integer.MAX_VALUE;
+  maxPlatforms = Configuration.getInt("max_platforms", 0);
+  if (maxPlatforms == 0) maxPlatforms = Integer.MAX_VALUE;
+  maxServices = Configuration.getInt("max_services", 0);
+  if (maxServices == 0) maxServices = Integer.MAX_VALUE;
+  platformMaxLoad = Configuration.getInt("p_max_load");
+  platformMinSize = Configuration.getInt("p_min_size");
+  centralized = Configuration.getBoolean("centralized");
+
+  // create services
+  species = Configuration.getSpecies("service");
+  ServiceState ser;
+  int ver;
+  for (String s : species) {
+    size = Math.round(initServices * Configuration.getDouble(s, 1));
+    ser = ServiceState.valueOf(Configuration.getString(s + ".state", "OK"));
+    ver = Configuration.getInt(s + ".version", 1);
+    for (i = 0; i < size && numServices < initServices; i++) {
+      ++sCounter;
+      services.add(new Service(sCounter, sCounter, ver, ser));
+      numServices++;
+    }
+    System.err.println("Config : INFO : created " + i + " new services of type " + s);
+    //printAny(services.subList((numServices - i), numServices), "\n", System.err);
+  }
+
+  // create platforms
+  species = Configuration.getSpecies("platform");
+  for (String s : species) {
+    size = Math.round(initPlatforms * Configuration.getDouble(s, 1));
+    st = setStrategy(Configuration.getString(s + ".strategy", "null"));
+    for (i = 0; i < size && numPlatforms < initPlatforms; i++) {
+      //System.err.println("Config : INFO : NEW platform : " +
+      createPlatform(services, st);//);
+    }
+    System.err.println("Config : INFO : created " + i + " new platforms of type " + s);
+  }
+
+  // create apps
+  // XXX What are strategy for apps ??? (LinkStrategy is not correct: platforms re-link after applying strategies...)
+  species = Configuration.getSpecies("app");
+  for (String s : species) {
+    size = Math.round(initApps * Configuration.getDouble(s, 1));
+    nSer = Configuration.getInt(s + ".services", 0);
+    for (i = 0; i < size && numApps < initApps; i++) {
+      //System.err.println("Config : INFO : NEW app : " +
+      createApp(selectServices(nSer));//);
+    }
+    System.err.println("Config : INFO : created " + i + " new apps of type " + s);
+  }
+
+  // create the fate model
+  fate = new Fate(new FateStrategy("Fate"));
+
+  System.err.println("Config : INFO : the following strategies have been initialized :");
+  printAny(entityStrategies, "\n", System.err);
+
+}
+
+
 /**
  * This method is called ONCE at the beginning of every simulation.
  * EVERY field, parameter, structure etc. MUST be initialized here (and not in the constructor).
@@ -276,6 +447,7 @@ public void start() {
   apps.clear();
   services.clear();
   bipartiteNetwork.clear();
+  entityStrategies.clear();
   numPlatforms = 0;
   numApps = 0;
   numServices = 0;
@@ -283,34 +455,37 @@ public void start() {
   pCounter = 0;
   aCounter = 0;
   changed = true;
+  centralized = false;
 
     //init the scheduler for apps and platforms
     platformSequence = new RandomSequence(new ArrayList());
     appSequence = new RandomSequence(new ArrayList());
     schedule.scheduleRepeating(new Sequence(new RandomSequence[]{platformSequence,appSequence}));
 
-
+  if (manualConf) {
     // create services
-  for (int i = 0; i < initServices; i++) {
-    services.add(new Service(++sCounter));
-    numServices++;
-  }
+    for (int i = 0; i < initServices; i++) {
+      services.add(new Service(++sCounter));
+      numServices++;
+    }
 
-  // create platforms
-  for (int i = 0; i < initPlatforms; i++) { // all services to each platform
-    createPlatform(services);
-  }
+    // create platforms
+    for (int i = 0; i < initPlatforms; i++) { // all services to each platform
+      createPlatform(services, new SplitOrClone("Combo", new Split("Split", 0.5), 2.0,
+          new CloneMutate("Clone", 0.1), 1.1));
+    }
 
-  // create apps
-  for (int i = 0; i < initApps; i++) {
-    createApp(selectServices());
-  }
+    // create apps
+    for (int i = 0; i < initApps; i++) {
+      createApp(selectServices(0));
+    }
 
+    // create the fate model
+    fate = new Fate(new FateStrategy("Fate"));
+  } else
+    readConfig();
 
-  // create the fate model
-  fate = new Fate(new FateStrategy(random));
   schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
-
 
   // An invisible model will printout the state of the graph after all the entities
   // (platform and apps) have done one step, but before the fate might do something.
@@ -361,8 +536,8 @@ public ArrayList<Service> selectServices(int n) {
  * @param servs
  * @return
  */
-public Platform createPlatform(List<Service> servs) {
-  Platform platform = new Platform(++pCounter, servs, new MarcoStrategy());
+public Platform createPlatform(List<Service> servs, Strategy strategy) {
+  Platform platform = new Platform(++pCounter, servs, strategy);
   bipartiteNetwork.addNode(platform);
   platforms.add(platform);
   numPlatforms++;
@@ -381,7 +556,7 @@ public Platform createPlatform(List<Service> servs) {
  * @return
  */
 public App createApp(List<Service> servs) {
-  App app = new App(++aCounter, servs, new LinkStrategy());
+  App app = new App(++aCounter, servs, new LinkStrategy("Link"));
   bipartiteNetwork.addNode(app);
   apps.add(app);
   numApps++;
@@ -395,7 +570,7 @@ public App createApp(List<Service> servs) {
 /**
  * Textual printout of the network
  */
-private void printoutNetwork() {
+private void printoutNetwork() { // TODO
   System.out.println("Step " + schedule.getSteps() + " : " + bipartiteNetwork.toString());
   System.out.flush();
 }
