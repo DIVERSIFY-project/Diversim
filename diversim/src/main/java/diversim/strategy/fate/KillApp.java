@@ -6,7 +6,10 @@ import diversim.model.Fate;
 import diversim.strategy.AbstractStrategy;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Collections;
+
+
+import sim.util.distribution.Distributions;
 
 /**
  * User: Simon
@@ -14,20 +17,37 @@ import java.util.List;
  * Time: 2:20 PM
  */
 public class KillApp extends AbstractStrategy<Fate> {
-    protected KillApp(String n) {
-    super(n);
-    // TODO Auto-generated constructor stub
-  }
 
-    @Override
-    public void evolve(BipartiteGraph graph, Fate agent) {
-        List<App> appToKill = new ArrayList<App>();
-        for(App app: graph.apps) {
-            if(app.getDegree() == 0)
-                appToKill.add(app);
-        }
-        for (App app : appToKill) {
-            graph.removeEntity(app);
-        }
+private ArrayList<Integer> timing;
+
+double eta; // expected time unit for 63,2% failures
+double beta; // shape of the ditribution (> 1 incresing, < 1 decreasing failure rate)
+
+
+public KillApp(String s) {
+  super(s);
+  timing = new ArrayList<Integer>(); // zipf-distributed sequence of timesteps.
+}
+
+
+@Override
+public void evolve(BipartiteGraph graph, Fate agent) {
+
+    double n;
+    do {
+      n = Distributions.nextWeibull(eta, beta, graph.random);
     }
+    while (n <= graph.schedule.getSteps());
+    timing.add((int)Math.round(n));
+    Collections.sort(timing);
+    System.err.println("Fate : INFO : next app failure will occur at step " + timing.get(0));
+
+  if (timing.size() > 0 && graph.schedule.getSteps() > timing.get(0)) {
+    timing.remove(0);
+    App a = graph.apps.get(graph.random.nextInt(graph.numApps));
+    graph.removeEntity(a);
+    System.out.println("Step " + graph.schedule.getSteps() + " " + a + " has been removed.");
+  }
+}
+
 }

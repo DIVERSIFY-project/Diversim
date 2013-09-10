@@ -2,6 +2,7 @@ package diversim.strategy.fate;
 
 import diversim.model.BipartiteGraph;
 import diversim.model.Fate;
+import diversim.strategy.Strategy;
 import diversim.strategy.AbstractStrategy;
 
 
@@ -12,14 +13,14 @@ import diversim.strategy.AbstractStrategy;
  */
 public class FateStrategy extends AbstractStrategy<Fate> {
 
-AbstractStrategy<Fate> killAppStrategy;
-AbstractStrategy<Fate> addAppStrategy;
+Strategy<Fate> killAppStrategy;
+Strategy<Fate> addAppStrategy;
 
 
-    public FateStrategy(String n) {
+    public FateStrategy(String n, Strategy<Fate> add, Strategy<Fate> kill) {
       super(n);
-        killAppStrategy = new KillApp("Kill");
-        addAppStrategy = new AddApp("Add");
+        killAppStrategy = new diversim.strategy.NullStrategy<Fate>(); //kill;
+        addAppStrategy = add;
     }
 
     @Override

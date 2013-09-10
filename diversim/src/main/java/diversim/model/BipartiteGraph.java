@@ -15,7 +15,9 @@ import diversim.strategy.AbstractStrategy;
 import diversim.strategy.NullStrategy;
 import diversim.strategy.Strategy;
 import diversim.strategy.application.LinkStrategy;
+import diversim.strategy.fate.AddApp;
 import diversim.strategy.fate.FateStrategy;
+import diversim.strategy.fate.KillApp;
 import diversim.strategy.platform.CloneMutate;
 import diversim.strategy.platform.Split;
 import diversim.strategy.platform.SplitOrClone;
@@ -99,6 +101,12 @@ public int numServices;
 
 
 /**
+ * Maximum number of scheduled events per agent.
+ */
+double maxCycles;
+
+
+/**
  * All the platforms' strategies must be in this array.
  */
 public ArrayList<Strategy<? extends Steppable>> entityStrategies;
@@ -143,6 +151,7 @@ private int aCounter;
 protected boolean changed;
 protected boolean centralized;
 private boolean manualConf;
+private boolean supervised;
 
 
 /**
@@ -246,6 +255,11 @@ public int getNumServices() {
 }
 
 
+public double getMaxCycles() {
+  return maxCycles;
+}
+
+
 public double getAvgPlatformDegree() {
   int sum = 0;
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
@@ -309,6 +323,7 @@ private void init() {
   } catch (IOException e) {
     System.err.println("WARNING : Configuration file not found. Please proceed with manual configuration.");
     manualConf = true;
+    supervised = true;
   }
 }
 
@@ -343,16 +358,33 @@ public BipartiteGraph(long seed, Schedule schedule) {
   @SuppressWarnings("rawtypes")
   AbstractStrategy res = getElement(entityStrategies, s);
   if (res == null) {
-    if (s.startsWith("combo")) {
-      AbstractStrategy<T> sp = (AbstractStrategy<T>)setStrategy(Configuration.getString(s + ".split"));
-      AbstractStrategy<T> cl = (AbstractStrategy<T>)setStrategy(Configuration.getString(s + ".clone"));
+    if (s.startsWith("fate")) {
+      AbstractStrategy<T> add = (AbstractStrategy<T>)setStrategy(
+          Configuration.getString(s + ".add_app", "add"));
+      AbstractStrategy<T> kill = (AbstractStrategy<T>)setStrategy(
+          Configuration.getString(s + ".kill_app", "kill"));
+      res = new FateStrategy(Configuration.getString(s), (Strategy<Fate>)add, (Strategy<Fate>)kill);
+    } else if (s.startsWith("combo")) {
+      AbstractStrategy<T> sp = (AbstractStrategy<T>)setStrategy(
+          Configuration.getString(s + ".split"));
+      AbstractStrategy<T> cl = (AbstractStrategy<T>)setStrategy(
+          Configuration.getString(s + ".clone"));
       res = new SplitOrClone(Configuration.getString(s),
           (Split)sp, Configuration.getDouble(s + ".split_factor", 1.0),
           (CloneMutate)cl, Configuration.getDouble(s + ".clone_factor", 2.0));
-    } else if (s.startsWith("clone")) {
+    } else if (s.startsWith("add")) {
+      AbstractStrategy<App> st = getElement(entityStrategies,
+          Configuration.getString(s + ".new_app_strategy", "Link"));
+      res = new AddApp(Configuration.getString(s, "Add"), st);
+    } else if (s.startsWith("kill")) {
+      res = new KillApp(Configuration.getString(s, "Kill"));
+    }
+    else if (s.startsWith("clone")) {
       res = new CloneMutate(Configuration.getString(s), Configuration.getDouble(s + ".mutation", 0.1));
     } else if (s.startsWith("split")) {
       res = new Split(Configuration.getString(s), Configuration.getDouble(s + ".keep", 2.0));
+    } else if (s.equals("link")) {
+      res = new LinkStrategy("Link");
     } else
       res = new NullStrategy<Entity>();
     addUnique(entityStrategies, res);
@@ -365,16 +397,19 @@ private void readConfig() {
   String[] species;
   long size;
   int i, nSer;
-  Strategy st;
+  Strategy<? extends Steppable> st;
   int seed = Configuration.getInt("seed", 0);
   if (seed != 0) {
     random.setSeed(seed);
   }
   System.err.println("Config : seed = " + seed);
-
-  initApps = Configuration.getInt("init_apps");
-  initPlatforms = Configuration.getInt("init_platforms");
-  initServices = Configuration.getInt("init_services");
+  supervised = Configuration.getBoolean("supervised");
+  maxCycles = Configuration.getDouble("max_cycles", Schedule.MAXIMUM_INTEGER - 1);
+  if (!supervised) {
+    initApps = Configuration.getInt("init_apps");
+    initPlatforms = Configuration.getInt("init_platforms");
+    initServices = Configuration.getInt("init_services");
+  }
   maxApps = Configuration.getInt("max_apps", 0);
   if (maxApps == 0) maxApps = Integer.MAX_VALUE;
   maxPlatforms = Configuration.getInt("max_platforms", 0);
@@ -415,20 +450,21 @@ private void readConfig() {
   }
 
   // create apps
-  // XXX What are strategy for apps ??? (LinkStrategy is not correct: platforms re-link after applying strategies...)
   species = Configuration.getSpecies("app");
   for (String s : species) {
     size = Math.round(initApps * Configuration.getDouble(s, 1));
     nSer = Configuration.getInt(s + ".services", 0);
+    st = setStrategy(Configuration.getString(s + ".strategy", "Link"));
     for (i = 0; i < size && numApps < initApps; i++) {
       //System.err.println("Config : INFO : NEW app : " +
-      createApp(selectServices(nSer));//);
+      createApp(selectServices(nSer), st);//);
     }
     System.err.println("Config : INFO : created " + i + " new apps of type " + s);
   }
 
   // create the fate model
-  fate = new Fate(new FateStrategy("Fate"));
+  st = setStrategy(Configuration.getString("fate"));
+  fate = new Fate((FateStrategy)st);
 
   System.err.println("Config : INFO : the following strategies have been initialized :");
   printAny(entityStrategies, "\n", System.err);
@@ -469,6 +505,8 @@ public void start() {
       numServices++;
     }
 
+    Strategy<App> sApp;
+
     // create platforms
     for (int i = 0; i < initPlatforms; i++) { // all services to each platform
       createPlatform(services, new SplitOrClone("Combo", new Split("Split", 0.5), 2.0,
@@ -477,11 +515,12 @@ public void start() {
 
     // create apps
     for (int i = 0; i < initApps; i++) {
-      createApp(selectServices(0));
+      createApp(selectServices(0), new LinkStrategy("Link"));
     }
 
     // create the fate model
-    fate = new Fate(new FateStrategy("Fate"));
+    sApp = new LinkStrategy("Link");
+    fate = new Fate(new FateStrategy("Fate", new AddApp("Add", sApp), new KillApp("Kill")));
   } else
     readConfig();
 
@@ -555,8 +594,8 @@ public Platform createPlatform(List<Service> servs, Strategy strategy) {
  * @param servs
  * @return
  */
-public App createApp(List<Service> servs) {
-  App app = new App(++aCounter, servs, new LinkStrategy("Link"));
+public App createApp(List<Service> servs, Strategy s) {
+  App app = new App(++aCounter, servs, s);
   bipartiteNetwork.addNode(app);
   apps.add(app);
   numApps++;

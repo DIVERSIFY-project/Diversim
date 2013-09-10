@@ -13,14 +13,14 @@ import java.util.List;
  * Date: 7/8/13
  * Time: 10:59 AM
  */
-public class LinkStrategy extends AbstractStrategy<Entity> {
+public class LinkStrategy extends AbstractStrategy<App> {
 
     public LinkStrategy(String n) {
     super(n);
     // TODO Auto-generated constructor stub
   }
 
-    public void evolve(BipartiteGraph graph, Entity e) {
+    public void evolve(BipartiteGraph graph, App e) {
         removeLinkFor(graph,e);
 
         Platform p = getBestPlatform(graph,e.getServices());
@@ -31,7 +31,7 @@ public class LinkStrategy extends AbstractStrategy<Entity> {
               Entity.addEdge(graph, e, platform, platform.countCommonServices(e, null));
     }
 
-    protected void removeLinkFor(BipartiteGraph graph, Entity e) {
+    protected void removeLinkFor(BipartiteGraph graph, App e) {
         // the graph is undirected, thus EdgesIn = EdgesOut
         Bag edges = graph.bipartiteNetwork.getEdgesIn(e); // read-only!
 

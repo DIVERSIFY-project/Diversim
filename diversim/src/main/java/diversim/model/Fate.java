@@ -20,7 +20,8 @@ import sim.util.distribution.*;
  * @author Marco Biazzini
  */
 public class Fate implements Steppable {
-    protected Strategy strategy;
+
+protected Strategy<Fate> strategy;
 
     public Fate(FateStrategy fateStrategy) {
         strategy = fateStrategy;
