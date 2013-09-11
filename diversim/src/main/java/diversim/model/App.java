@@ -21,7 +21,7 @@ public class App extends Entity {
     }
 
 
-    public App(int id, List<Service> servs, Strategy strategy) {
+    public App(int id, List<Service> servs, Strategy<App> strategy) {
         super(id,strategy);
         for (Service s : servs) {
             BipartiteGraph.addUnique(services, s);

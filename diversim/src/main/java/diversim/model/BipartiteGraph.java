@@ -444,7 +444,7 @@ private void readConfig() {
     st = setStrategy(Configuration.getString(s + ".strategy", "null"));
     for (i = 0; i < size && numPlatforms < initPlatforms; i++) {
       //System.err.println("Config : INFO : NEW platform : " +
-      createPlatform(services, st);//);
+      createPlatform(services, (Strategy<Platform>)st);//);
     }
     System.err.println("Config : INFO : created " + i + " new platforms of type " + s);
   }
@@ -457,7 +457,7 @@ private void readConfig() {
     st = setStrategy(Configuration.getString(s + ".strategy", "Link"));
     for (i = 0; i < size && numApps < initApps; i++) {
       //System.err.println("Config : INFO : NEW app : " +
-      createApp(selectServices(nSer), st);//);
+      createApp(selectServices(nSer), (Strategy<App>)st);//);
     }
     System.err.println("Config : INFO : created " + i + " new apps of type " + s);
   }
@@ -575,7 +575,7 @@ public ArrayList<Service> selectServices(int n) {
  * @param servs
  * @return
  */
-public Platform createPlatform(List<Service> servs, Strategy strategy) {
+public Platform createPlatform(List<Service> servs, Strategy<Platform> strategy) {
   Platform platform = new Platform(++pCounter, servs, strategy);
   bipartiteNetwork.addNode(platform);
   platforms.add(platform);
@@ -594,7 +594,7 @@ public Platform createPlatform(List<Service> servs, Strategy strategy) {
  * @param servs
  * @return
  */
-public App createApp(List<Service> servs, Strategy s) {
+public App createApp(List<Service> servs, Strategy<App> s) {
   App app = new App(++aCounter, servs, s);
   bipartiteNetwork.addNode(app);
   apps.add(app);

@@ -31,9 +31,8 @@ protected Strategy<Fate> strategy;
     // add apps timing their injection according to a zipf distribution
     @Override
     public void step(SimState state) {
-
-        strategy.evolve((BipartiteGraph) state, this);
-
+      BipartiteGraph graph = (BipartiteGraph)state;
+        strategy.evolve(graph, this);
     }
 
 
