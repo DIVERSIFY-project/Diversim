@@ -19,7 +19,7 @@ Strategy<Fate> addAppStrategy;
 
     public FateStrategy(String n, Strategy<Fate> add, Strategy<Fate> kill) {
       super(n);
-        killAppStrategy = new diversim.strategy.NullStrategy<Fate>(); //kill;
+        killAppStrategy = kill; //new diversim.strategy.NullStrategy<Fate>()
         addAppStrategy = add;
     }
 

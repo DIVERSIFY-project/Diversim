@@ -31,24 +31,27 @@ public class AddApp extends AbstractStrategy<Fate> {
 
     @Override
     public void evolve(BipartiteGraph graph, Fate agent) {
-  if (counter < Math.min((graph.getMaxApps() - graph.getInitApps()),
-      Math.min(graph.getMaxCycles(), Integer.MAX_VALUE))) {
+  if (counter < Math.min(graph.getMaxCycles(), Integer.MAX_VALUE) - 1
+      && timing.size() < 1000) {
     int n;
     do {
-      n = Distributions.nextZipfInt(1.1, graph.random);
+      n = graph.random.nextInt((int)(graph.getMaxCycles())) * 3;
+      //n = Distributions.nextZipfInt(1.1, graph.random);
     } while (n <= graph.schedule.getSteps());
     timing.add(n);
     Collections.sort(timing);
     counter++;
   }
 
-        if (timing.size() > 0 && graph.schedule.getSteps() >= timing.get(0)) {
+        if (graph.schedule.getSteps() >= timing.get(0)) {
             timing.remove(0);
-            App app = graph.createApp(graph.selectServices(0), newAppStrategy);
-            //app.step(graph); // this is mandatory if Fate kills apps with 0 degree at each cycle
-            System.out.println(graph.getPrintoutHeader() + "Fate : NEW " + app.toString());
+            if (graph.getNumApps() < graph.getMaxApps()) {
+              App app = graph.createApp(graph.selectServices(0), newAppStrategy);
+              //app.step(graph); // this is mandatory if Fate kills apps with 0 degree at each cycle
+              System.out.println(graph.getPrintoutHeader() + "Fate : ADDED " + app.toString());
+            }
         }
         System.err.println(graph.getPrintoutHeader()
-            + "Fate : INFO : next new app will come in at cycle " + (int)(timing.get(0) / 3));
+          + "Fate : INFO : next new app will come in at cycle " + (int)(timing.get(0) / 3));
     }
 }

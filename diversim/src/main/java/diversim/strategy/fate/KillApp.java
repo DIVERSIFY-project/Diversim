@@ -19,6 +19,7 @@ import sim.util.distribution.Distributions;
 public class KillApp extends AbstractStrategy<Fate> {
 
 private ArrayList<Integer> timing;
+long counter;
 
 double eta; // expected time unit for 63,2% failures
 double beta; // shape of the ditribution (> 1 incresing, < 1 decreasing failure rate)
@@ -26,6 +27,7 @@ double beta; // shape of the ditribution (> 1 incresing, < 1 decreasing failure 
 
 public KillApp(String s) {
   super(s);
+  counter = 0;
   timing = new ArrayList<Integer>(); // zipf-distributed sequence of timesteps.
 }
 
@@ -33,19 +35,23 @@ public KillApp(String s) {
 @Override
 public void evolve(BipartiteGraph graph, Fate agent) {
 
+  if (counter < Math.min(graph.getMaxCycles(), Integer.MAX_VALUE) - 1
+      && timing.size() < 1000) {
     double n;
     do {
-      n = Distributions.nextWeibull(eta, beta, graph.random);
+      n = graph.random.nextInt((int)(graph.getMaxCycles())) * 3;
+      //n = Distributions.nextWeibull(eta > 0 ? eta : graph.getMaxCycles() * 2, beta, graph.random);
     }
     while (n <= graph.schedule.getSteps());
-    timing.add((int)Math.round(n));
+    timing.add((int)Math.ceil(n));
     Collections.sort(timing);
-
-  if (timing.size() > 0 && graph.schedule.getSteps() >= timing.get(0)) {
+    counter++;
+  }
+  if (graph.schedule.getSteps() >= timing.get(0)) {
     timing.remove(0);
     App a = graph.apps.get(graph.random.nextInt(graph.getNumApps()));
     graph.removeEntity(graph.apps, a);
-    System.out.println("Step " + graph.schedule.getSteps() + " " + a + " has been removed.");
+    System.out.println(graph.getPrintoutHeader() + "Fate : REMOVED " + a);
   }
   System.err.println(graph.getPrintoutHeader()
       + "Fate : INFO : next app failure will occur at cycle " + (int)(timing.get(0) / 3));
