@@ -23,8 +23,6 @@ import diversim.strategy.platform.Split;
 import diversim.strategy.platform.SplitOrClone;
 import diversim.util.config.Configuration;
 
-import sim.engine.RandomSequence;
-import sim.engine.Sequence;
 import sim.engine.Schedule;
 import sim.engine.SimState;
 import sim.engine.Steppable;
@@ -116,22 +114,19 @@ public ArrayList<Strategy<? extends Steppable>> entityStrategies;
  * All the platforms currently in the simulation must be in this array.
  */
 public ArrayList<Platform> platforms;
-    protected RandomSequence platformSequence;
+
 
 /**
  * All the apps currently in the simulation must be in this array.
  */
 public ArrayList<App> apps;
-    protected RandomSequence appSequence;
+
+
 /**
  * All the services currently in the simulation must be in this array.
  */
 public ArrayList<Service> services;
 
-    /**
-     * All the id services currently in the simulation must be in this array.
-     */
-    public ArrayList<Integer> servicesId;
 
 /**
  * The bipartite graph. An edge links a platform to an app.
@@ -498,11 +493,6 @@ public void start() {
   changed = true;
   centralized = false;
 
-    //init the scheduler for apps and platforms
-    platformSequence = new RandomSequence(new ArrayList());
-    appSequence = new RandomSequence(new ArrayList());
-    schedule.scheduleRepeating(new Sequence(new RandomSequence[]{platformSequence,appSequence}));
-
   if (manualConf) {
     // create services
     for (int i = 0; i < initServices; i++) {
@@ -588,7 +578,7 @@ public Platform createPlatform(List<Service> servs, Strategy<Platform> strategy)
   addUnique(platforms, platform);
   numPlatforms++;
   changed = true;
-    platformSequence.addSteppable(platform);
+  if (!centralized) platform.setStoppable(schedule.scheduleRepeating(platform));
   return platform;
 }
 
@@ -606,8 +596,7 @@ public App createApp(List<Service> servs, Strategy<App> s) {
   addUnique(apps, app);
   numApps++;
   changed = true;
-//  schedule.scheduleRepeating(app);
-    appSequence.addSteppable(app);
+  if (!centralized) app.setStoppable(schedule.scheduleRepeating(app));
   return app;
 }
 
@@ -737,11 +726,12 @@ static public void printAny(Object data, String trailer, PrintStream out) {
 
     public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
        eList.remove(Collections.binarySearch(eList, entity));
-       appSequence.removeSteppable(entity);
+       if (!centralized) entity.stop();
        bipartiteNetwork.removeNode(entity);
        if (entity instanceof App)
          numApps--;
        else if (entity instanceof Platform)
          numPlatforms--;
     }
+
 }

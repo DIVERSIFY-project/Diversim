@@ -10,6 +10,7 @@ import diversim.util.IndexedSortable;
 import diversim.strategy.Strategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;
+import sim.engine.Stoppable;
 import sim.field.network.Edge;
 import sim.util.Bag;
 
@@ -41,6 +42,11 @@ protected ArrayList<Service> services;
  */
 protected int degree;
 
+/**
+ * Internal object to be used to kill this entity (i.e. to delete it from the simulator's schedule)
+ */
+private Stoppable stoppable;
+
     protected Strategy strategy;
 
 Entity(int id, Strategy<? extends Entity> strategy) {
@@ -68,6 +74,17 @@ public String getComposition() {
   }
   return res;
 }
+
+
+protected void setStoppable(Stoppable s) {
+  stoppable = s;
+}
+
+
+protected void stop() {
+  stoppable.stop();
+}
+
 
 protected void printoutCurStep(BipartiteGraph g) {
   System.out.println(g.getPrintoutHeader() + toString());
