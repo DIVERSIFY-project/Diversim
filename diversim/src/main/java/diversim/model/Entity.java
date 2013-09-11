@@ -47,6 +47,7 @@ protected int degree;
  */
 private Stoppable stoppable;
 
+    @SuppressWarnings("rawtypes")
     protected Strategy strategy;
 
 Entity(int id, Strategy<? extends Entity> strategy) {

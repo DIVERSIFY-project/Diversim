@@ -48,14 +48,15 @@ int maxSize; // TODO
      * (non-Javadoc)
      * @see diversim.model.Entity#step(sim.engine.SimState)
      */
+    @SuppressWarnings("unchecked")
     @Override
     public void step(SimState state) {
         BipartiteGraph graph = (BipartiteGraph) state;
         action = "none";
-        if (getDegree() >= graph.getPlatformMaxLoad()
-            && getSize() > graph.getPlatformMinSize()) {
+      if (getDegree() >= graph.getPlatformMaxLoad()
+          && getSize() > graph.getPlatformMinSize()) {
         strategy.evolve(graph, this);
-        }
+      }
         pressure = ((double) degree) / graph.getPlatformMaxLoad();
         if (pressure > 1.0) pressure = 1.0;
 

@@ -33,6 +33,7 @@ public class App extends Entity {
      * (non-Javadoc)
      * @see diversim.model.Entity#step(sim.engine.SimState)
      */
+    @SuppressWarnings("unchecked")
     @Override
     public void step(SimState state) {
         BipartiteGraph graph = (BipartiteGraph) state;
