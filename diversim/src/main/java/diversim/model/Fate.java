@@ -2,7 +2,6 @@ package diversim.model;
 
 import java.util.Arrays;
 
-
 import diversim.strategy.Strategy;
 import diversim.strategy.fate.FateStrategy;
 import sim.engine.SimState;
@@ -39,26 +38,40 @@ protected Strategy<Fate> strategy;
 // just to quickly try out how values from some distribution look like...
 public static void main(String[] args) {
   ec.util.MersenneTwisterFast random = new ec.util.MersenneTwisterFast();
-  double sum = 0, val[] = new double[1000000], xAxis[] = new double[1000];
+  double sum1 = 0, sum2 = 0, val1[] = new double[1000000],
+      val2[] = new double[1000000], xAxis[] = new double[1000];
   for (int i = 0, j = 0; i < 1000000; i++) {
-    val[i] = Distributions.nextWeibull(1.1, 1, random);
-    sum += val[i];
+    val1[i] = Distributions.nextWeibull(400, 1, random);
+    val2[i] = Distributions.nextZipfInt(1.3, random);
+    sum1 += val1[i];
+    sum2 += val2[i];
     if (i == 999) {
-      Arrays.sort(val, 0, 1000);
-      System.out.println("Over 1000 : min=" + val[0] + " ; med=" + val[499] + " ; max=" + val[999]
-          + " ; avg=" + (sum / 1000));
+      Arrays.sort(val1, 0, 1000);
+      Arrays.sort(val2, 0, 1000);
+      System.out.println("Over 1000 [1] : min=" + val1[0] + " ; med=" + val1[499] + " ; max=" + val1[999]
+          + " ; avg=" + (sum1 / 1000));
+      System.out.println("Over 1000 [2] : min=" + val2[0] + " ; med=" + val2[499] + " ; max=" + val2[999]
+          + " ; avg=" + (sum2 / 1000));
     }
     if (i % 1000 == 0) xAxis[j++] = i + 1;
   }
-  Arrays.sort(val);
-  System.out.println("Over 1000000 : min=" + val[0] + " ; med=" + val[499999] + " ; max="
-      + val[999999] + " ; avg=" + (sum / 1000000));
+  Arrays.sort(val1);
+  Arrays.sort(val2);
+  System.out.println("Over 1000000 [1] : min=" + val1[0] + " ; med=" + val1[499999] + " ; max="
+      + val1[999999] + " ; avg=" + (sum1 / 1000000));
+  System.out.println("Over 1000000 [2] : min=" + val2[0] + " ; med=" + val2[499999] + " ; max="
+      + val2[999999] + " ; avg=" + (sum2 / 1000000));
   System.out.flush();
   try {
-    org.jfree.data.xy.XYSeries data = new org.jfree.data.xy.XYSeries("Dataset", true, true);
+    org.jfree.data.xy.XYSeriesCollection series = new org.jfree.data.xy.XYSeriesCollection();
+    org.jfree.data.xy.XYSeries data = new org.jfree.data.xy.XYSeries("Weibull", true, true);
     for (int i = 0, j = 0; i < 1000000; i += 1000)
-      data.add(xAxis[j++], val[i]);
-    org.jfree.data.xy.XYSeriesCollection series = new org.jfree.data.xy.XYSeriesCollection(data);
+      data.add(xAxis[j++], val1[i]);
+    series.addSeries(data);
+    data = new org.jfree.data.xy.XYSeries("Zipf", true, true);
+    for (int i = 0, j = 0; i < 1000000; i += 1000)
+      data.add(xAxis[j++], val2[i]);
+    series.addSeries(data);
     org.jfree.chart.JFreeChart chart = org.jfree.chart.ChartFactory.createXYLineChart("", "step",
         "distr. value", series, org.jfree.chart.plot.PlotOrientation.VERTICAL, true, true, false);
     javax.swing.JFrame plotWindow = new javax.swing.JFrame();
