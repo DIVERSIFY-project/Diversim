@@ -3,6 +3,7 @@ package diversim.strategy.reproduction;
 import java.util.List;
 import java.util.ArrayList;
 
+import diversim.BipartiteGraph;
 import diversim.Platform;
 import ec.util.MersenneTwisterFast;
 
@@ -12,7 +13,7 @@ import ec.util.MersenneTwisterFast;
  * @author Vivek Nallur
  */
 public class PlatformClonalReproduction implements PlatformReproductionStrategy{
-        public List<Platform> reproduce(Platform parent, List<Platform> other_platforms){
+        public List<Platform> reproduce(Platform parent, BipartiteGraph state){
 			MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
 		  	Platform child = new Platform(rnd.nextInt(), parent.getSupportedServices());
 			child.setLoadingFactor(parent.getLoadingFactor());

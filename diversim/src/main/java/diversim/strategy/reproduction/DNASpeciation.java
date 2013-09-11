@@ -10,7 +10,7 @@ import diversim.Service;
  *
  * This is the base interface for all speciation strategies
  */
-public interface SpeciationStrategy{
+public interface DNASpeciation{
         public List<Service> speciate(List<Service> current_dna, List<Service> all_services);
 }
 

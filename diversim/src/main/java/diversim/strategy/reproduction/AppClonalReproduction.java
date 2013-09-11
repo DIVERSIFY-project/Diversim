@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.ArrayList;
 
 import diversim.App;
+import diversim.BipartiteGraph;
 import ec.util.MersenneTwisterFast;
 
 /**
@@ -15,11 +16,14 @@ import ec.util.MersenneTwisterFast;
  * @author Vivek Nallur
  */
 public class AppClonalReproduction implements AppReproductionStrategy{
-        public List<App> reproduce(App parent, List<App> other_apps){
+        
+		@Override
+		public List<App> reproduce(App parent, BipartiteGraph state) {
 			MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
 		  	App child = new App(rnd.nextInt(), parent.getDependencies());
+		  	child.initStrategies(state);
 			ArrayList<App> children = new ArrayList<App>();
 			children.add(child);
 			return children;
-	}
+		}
 }

@@ -2,6 +2,7 @@ package diversim.strategy.reproduction;
 
 import java.util.List;
 
+import diversim.BipartiteGraph;
 import diversim.Platform;
 import ec.util.MersenneTwisterFast;
 
@@ -10,5 +11,5 @@ import ec.util.MersenneTwisterFast;
  * @author Vivek Nallur
  */
 public interface PlatformReproductionStrategy{
-        public List<Platform> reproduce(Platform parent, List<Platform> other_platforms);
+        public List<Platform> reproduce(Platform parent, BipartiteGraph state);
 }

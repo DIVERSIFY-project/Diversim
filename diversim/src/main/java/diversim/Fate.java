@@ -17,8 +17,11 @@ import sim.util.distribution.*;
  * This agent can be used to inject in the simulation all the events that are
  * 'external' to the other entities. E.g.: arrival of new apps, failure of apps or services,
  * runtime change of some configuration parameter, etc.
+ * 
+ * Now, as apps and platforms evolve themselves, fate is not really useful.
  *
  * @author Marco Biazzini
+ * @author Hui Song
  *
  */
 public class Fate implements Steppable {

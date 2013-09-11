@@ -5,6 +5,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 
+import diversim.strategy.extinction.AppExtinctionStrategy;
+import diversim.strategy.extinction.PlatformExtinctionStrategy;
+import diversim.strategy.reproduction.PlatformReproductionStrategy;
+import ec.util.MersenneTwisterFast;
 import sim.engine.SimState;
 import sim.util.Bag;
 import sim.field.network.*;
@@ -18,6 +22,10 @@ import sim.field.network.*;
  *
  * @author Marco Biazzini
  * @author Vivek Nallur
+ * 
+ * Platforms reproduce or kill themselves in the same way as Apps, controlled
+ * by the corresponding strategies stored in {@ #reproducers} and {@ #killers},
+ * respectively.
  *
  */
 public class Platform extends Entity {
@@ -25,15 +33,21 @@ public class Platform extends Entity {
 	// how many apps can one service on this platform  support.
 	private int APP_PER_SERVICE = 1; 
 	
-	PlatformReproductionStrategy reproducer;
+	public boolean dead = false;
+	
+	public List<App> app = new ArrayList<App>();
+	
+	List<PlatformReproductionStrategy> reproducers;
+	List<PlatformExtinctionStrategy> killers;
 	// ArrayList<Service> supportedServices;
 
-	public void setReproductionStrategy(PlatformReproductionStrategy rs){
-		this.reproducer = rs;
-	}
 	
-	public List<Platform> reproduce(List<Platform> possible_mates){
-		return this.reproducer.reproduce(this, possible_mates);
+	public List<Platform> reproduce(BipartiteGraph state){
+		List<Platform> result = new ArrayList<Platform>();
+		for(PlatformReproductionStrategy reproducer : reproducers){
+			result.addAll(reproducer.reproduce(this, state));
+		}
+		return result;
 	}
 	
 	public void setLoadingFactor(int load){
@@ -78,9 +92,22 @@ public class Platform extends Entity {
 	 */
 	@Override
 	public void step(SimState state) {
+		
+	  
 	  BipartiteGraph graph = (BipartiteGraph)state;
-	
+	  
+	  if(dieOrNot(graph))
+		  return;
+	  
+	  MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
+	  List<Platform> pltfs = reproduce(graph);
+	  for(Platform pltf : pltfs){
+		  graph.addPlatform(pltf);			  
 	  }
+	  
+	  
+	  System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
+	}
 	
 
 	@Override
@@ -88,5 +115,25 @@ public class Platform extends Entity {
 	  String res = super.toString();
 	  return res;
 	}
+	
+	public void initStategies(BipartiteGraph graph){
+		this.reproducers = StrategyFactory.fINSTANCE
+				.createPlatformReproductionStrategy(this, graph);
+		this.killers = StrategyFactory.fINSTANCE
+				.createPlatformExtinctionStrategies(this, graph);
+	}
+	
+	public boolean dieOrNot(BipartiteGraph graph){
+		if(dead)
+			return true;
+		for(PlatformExtinctionStrategy killer : killers){
+			if( killer.die(this, graph)){
+				this.dead = true;
+				return true;
+			}
+		}
+		return false;
+	}
+	
 	
 }

@@ -44,6 +44,7 @@ import sim.field.network.*;
  *
  * @author Marco Biazzini
  * @author Vivek Nallur
+ * @author Hui Song
  *
  */
 public class BipartiteGraph extends SimState {
@@ -61,7 +62,7 @@ int initApps = 10;
 /**
  * Initial total number of services
  */
-int initServices = 30;
+public static int initServices = 30;
 
 /**
  * Max number of links a platform bears without triggering some diversification rule.
@@ -72,6 +73,12 @@ int platformMaxLoad = 4;
  * Min number of services a platform shall host.
  */
 int platformMinSize = 3;
+
+/**
+ * x out of 100 possibility to allow an App to reproduce itself.
+ */
+int percentAppReproduce = 1;  // 1%
+int percentPlatformReproduce = 1; // 1%
 
 /**
  * Current number of platforms.
@@ -120,6 +127,9 @@ private int sCounter;
 private int pCounter;
 private int aCounter;
 public boolean changed;
+
+public static BipartiteGraph INSTANCE = null;
+
 
 
 /**
@@ -253,24 +263,28 @@ private void init() {
 public BipartiteGraph(long seed) {
   super(seed);
   init();
+  INSTANCE = this;
 }
 
 
 public BipartiteGraph(MersenneTwisterFast random) {
   super(random);
   init();
+  INSTANCE = this;
 }
 
 
 public BipartiteGraph(MersenneTwisterFast random, Schedule schedule) {
   super(random, schedule);
   init();
+  INSTANCE = this;
 }
 
 
 public BipartiteGraph(long seed, Schedule schedule) {
   super(seed, schedule);
   init();
+  INSTANCE = this;
 }
 
 
@@ -298,21 +312,25 @@ public void start() {
     services.add(new Service(++sCounter));
     numServices++;
   }
+  
+ 
 
   // create platforms
   for (int i = 0; i < initPlatforms; i++) { // all services to each platform
-    createPlatform(services);
+    Platform pltf = createPlatform(services);
+    pltf.initStategies(this);
   }
 
   // create apps
   for (int i = 0; i < initApps; i++) {
-    createApp(selectServices());
+    App app = createApp(selectServices());
+    app.initStrategies(this);
   }
 
 
   // create the fate agent
-  fate = new Fate(random);
-  schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
+  //fate = new Fate(random);
+  //schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
 
   // define initial network:
   // link every platform to all apps that use at least one of its services
@@ -327,12 +345,15 @@ public void start() {
   // then the network printout, then fate.
   Steppable print = new Steppable() {
     public void step(SimState state) {
+    	//System.out.println("Step " + state.schedule.getSteps() + " : " + "what happened?");
       if (changed)
         printoutNetwork();
       changed = false;
     }
   };
   schedule.scheduleRepeating(schedule.getTime() + 1.1, print, 1.0);
+  schedule.scheduleRepeating(schedule.getTime()+1, new ReConnect());
+  
 }
 
 
@@ -390,6 +411,21 @@ public App createApp(List<Service> servs) {
   changed = true;
   schedule.scheduleRepeating(app);
   return app;
+}
+
+/**
+ * Same as above, but the App instance is created somewhere else
+ * @param app
+ * @return
+ */
+public App addApp(App app){
+	bipartiteNetwork.addNode(app);
+	apps.add(app);
+	numApps++;
+	changed = true;
+	schedule.scheduleRepeating(app);
+	
+	return app;
 }
 
 
@@ -451,6 +487,13 @@ public void createLinks(Entity e, ArrayList<? extends Entity> entities) {
     }
   }
 
+}
+
+public void setLink(App app, Platform pltf){
+	bipartiteNetwork.addEdge(app, pltf, 1);
+	app.degree ++;
+	pltf.degree ++;
+	changed = true;
 }
 
 
@@ -538,6 +581,18 @@ static public void printAny(Object data, String trailer, PrintStream out) {
   out.print(trailer);
   out.flush();
 }
+
+public Platform addPlatform(Platform platform) {
+	  bipartiteNetwork.addNode(platform);
+	  platforms.add(platform);
+	  numPlatforms++;
+	  changed = true;
+	  schedule.scheduleRepeating(platform);
+	  return platform;
+	
+}
+
+
 
 
 }

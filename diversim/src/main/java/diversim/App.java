@@ -6,24 +6,41 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set; // Interface
 
+import diversim.strategy.extinction.AppExtinctionStrategy;
+import diversim.strategy.reproduction.AppReproductionStrategy;
+import ec.util.MersenneTwisterFast;
 import sim.engine.SimState;
 
 /**
- * Apps rely on specific services to function, and if an App cannot find a 
- * Platform that provides at least these services, then it dies.
+ * Apps rely on specific services to function
  * @author Vivek Nallur
+ * 
+ * In each step, an App has the authority may choose to reproduce itself, either via clone or 
+ * speciation, decided by the {@link #reproducers}, which are all instances of 
+ * {@ AppReproductionStrategy}.
+ * 
+ * An App dies if a instance of {@ AppExtinctionStrategy} in {@link #killers} suggests so. A
+ * {@link #dead} app will not reproduce, and will also be removed from the bipartite graph.
  *
+ * @author Hui Song
  */
 public class App extends Entity {
-
+	
+	
 	double redundancy = 0;
+	
+	public boolean dead = false;
+	
+	public List<Platform> platforms = new ArrayList<Platform>();
 	
 	
 	public double getRedundancy() {
 	  return redundancy;
 	}
 	
-	AppReproductionStrategy reproducer;
+	List<AppReproductionStrategy> reproducers;
+	List<AppExtinctionStrategy> killers;
+	
 	
 	public List<Service> getDependencies(){
 	        return this.services;
@@ -45,18 +62,31 @@ public class App extends Entity {
 	        this.services.removeAll(new HashSet(obs_deps));
 	}
 	
-	public void setReproductionStrategy(AppReproductionStrategy rs){
-		this.reproducer = rs;
-	}
 	
-	public List<App> reproduce(List<App> possible_mates){
-	   return this.reproducer.reproduce(this, possible_mates);
+	
+	
+	public List<App> reproduce(BipartiteGraph state){
+	  List<App> result = new ArrayList<App>();
+	  for(AppReproductionStrategy reproducer : reproducers){
+		  result.addAll(reproducer.reproduce(this, state));
+	  }
+	  return result;
    }
 	
 	
 	public App(int id, List<Service> service_dependencies) {
 	        super(id);
 	        this.services = new ArrayList<Service> (service_dependencies);
+	        
+	        // TODO: Now only use AppSpeciationReproduction, may need to include others
+	        //Not initialized from 0, so that new Apps will always survice to their first
+	        // steps.
+	        degree = -1;
+	}
+	
+	public void initStrategies(BipartiteGraph graph){
+		this.reproducers = StrategyFactory.fINSTANCE.createAppReproductionStrategy(this, graph);
+		this.killers = StrategyFactory.fINSTANCE.createAppExtinctionStrategies(this, graph);
 	}
 	
 	
@@ -72,8 +102,21 @@ public class App extends Entity {
 	  BipartiteGraph graph = (BipartiteGraph) state;
 	
 	// TODO something
-	
+	  
+	  if(dieOrNot(graph)){
+		  return;
+	  }
+	  
+	  MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
+	 
+	  
+	  List<App> newApps = reproduce(graph);
+	  for(App app : newApps){
+		  graph.addApp(app);
+	  }
+	  
 	  redundancy = ((double)degree) / graph.numPlatforms;
+	  if(redundancy < 0) redundancy = 0;
 	  System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
 	}
 	
@@ -83,6 +126,23 @@ public class App extends Entity {
 	  String res = super.toString();
 	  res += " ; redundancy = " + redundancy;
 	  return res;
+	}
+	
+	/**
+	 * Many killers, any of them could kill an App
+	 * 
+	 * TODO: should introduce a "Die Strategy"
+	 */
+	public boolean dieOrNot(BipartiteGraph graph){
+		if(dead)
+			return true;
+		for(AppExtinctionStrategy killer : killers){
+			if( killer.die(this, graph)){
+				this.dead = true;
+				return true;
+			}
+		}
+		return false;
 	}
 	
 }

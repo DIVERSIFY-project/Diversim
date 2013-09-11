@@ -1,6 +1,9 @@
-package diversim;
+package diversim.strategy.matching;
 
 import java.util.*;
+
+import diversim.Entity;
+import diversim.Service;
 
 /**
  * An implementation of the MatchingStrategy interface, this concrete 

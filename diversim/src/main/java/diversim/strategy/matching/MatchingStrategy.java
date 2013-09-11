@@ -1,4 +1,6 @@
-package diversim;
+package diversim.strategy.matching;
+
+import diversim.Entity;
 
 /**
  * This interface defines the basic method for determining whether an entity 

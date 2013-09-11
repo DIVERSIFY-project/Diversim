@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
+import diversim.strategy.matching.MatchingStrategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.field.network.Edge;
@@ -30,12 +31,12 @@ abstract public class Entity implements Steppable {
 	/**
 	 * All services hosted by the entity.
 	 */
-	ArrayList<Service> services;
+	public ArrayList<Service> services;
 	
 	/**
 	 * The number of link touching the entity in the bipartite graph.
 	 */
-	int degree;
+	public int degree;
 	
 	/**
 	 * The matching strategy employed by this entity
@@ -52,9 +53,11 @@ abstract public class Entity implements Steppable {
 	public boolean matches(Entity target){
 		return this.matcher.matches(this, target);
 	}
+	
 	public void setMatchingStrategy(MatchingStrategy ms){
 			this.matcher = ms;
-	}	
+	}
+
 	public int getDegree() {
 	  return degree;
 	}

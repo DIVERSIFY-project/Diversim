@@ -3,11 +3,22 @@ package diversim;
 import java.util.ArrayList;
 import java.util.List;
 
+import diversim.strategy.matching.AllMatchingService;
+import diversim.strategy.matching.MatchingStrategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 
+/**
+ * 
+ * ReConnect-ing happens before the re-drawing of the GUI, which remove dead
+ * Apps and Platforms, and calculate the links between them based on the matching
+ * Strategies.
+ * 
+ * @author Hui Song
+ *
+ */
 public class ReConnect implements Steppable {
-	MatchingStrategy matcher = new AllMatchingService(); 
+	MatchingStrategy matcher = StrategyFactory.fINSTANCE.createMatchingStrategy();
 
 	@Override
 	public void step(SimState state) {
@@ -18,15 +29,25 @@ public class ReConnect implements Steppable {
 			if(a.dead){
 				dead.add(a);
 				graph.bipartiteNetwork.removeNode(a);
-				//graph.schedule
+				
 			}
 		}
 		
-		System.out.println(String.format("apps: %d",graph.apps.size()));
 		graph.apps.removeAll(dead);
 		
+		List<Platform> deadp = new ArrayList<Platform>();
+		for(Platform p : graph.platforms){
+			if(p.dead){
+				deadp.add(p);
+				graph.bipartiteNetwork.removeNode(p);
+			}
+		}
 		
-		System.out.println(String.format("apps: %d",graph.apps.size()));
+		graph.platforms.removeAll(deadp);
+		System.out.println(String.format("Step %d : apps: %d, platforms: %d", 
+				graph.schedule.getSteps(), graph.apps.size(), graph.platforms.size()));
+		
+		
 		
 		
 		for(App app:graph.apps)
