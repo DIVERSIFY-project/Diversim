@@ -585,10 +585,9 @@ public ArrayList<Service> selectServices(int n) {
 public Platform createPlatform(List<Service> servs, Strategy<Platform> strategy) {
   Platform platform = new Platform(++pCounter, servs, strategy);
   bipartiteNetwork.addNode(platform);
-  platforms.add(platform);
+  addUnique(platforms, platform);
   numPlatforms++;
   changed = true;
-//  schedule.scheduleRepeating(platform);
     platformSequence.addSteppable(platform);
   return platform;
 }
@@ -604,7 +603,7 @@ public Platform createPlatform(List<Service> servs, Strategy<Platform> strategy)
 public App createApp(List<Service> servs, Strategy<App> s) {
   App app = new App(++aCounter, servs, s);
   bipartiteNetwork.addNode(app);
-  apps.add(app);
+  addUnique(apps, app);
   numApps++;
   changed = true;
 //  schedule.scheduleRepeating(app);
@@ -736,10 +735,13 @@ static public void printAny(Object data, String trailer, PrintStream out) {
         changed = true;
     }
 
-    public void removeEntity(Entity entity) {
-        System.out.println("remove entity: "+entity);
-       apps.remove(entity);
+    public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
+       eList.remove(Collections.binarySearch(eList, entity));
        appSequence.removeSteppable(entity);
        bipartiteNetwork.removeNode(entity);
+       if (entity instanceof App)
+         numApps--;
+       else if (entity instanceof Platform)
+         numPlatforms--;
     }
 }

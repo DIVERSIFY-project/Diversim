@@ -24,7 +24,7 @@ import sim.util.Bag;
  * @author Marco Biazzini
  *
  */
-abstract public class Entity implements Steppable {
+abstract public class Entity implements Steppable, Comparable<Entity> {
 
 /**
  * See BipartiteGraph.start().
@@ -199,4 +199,16 @@ public String toString() {
     public void decDegree() {
         degree--;
     }
+
+
+public int compareTo(Entity e) {
+  return ID - e.ID;
+}
+
+
+public boolean equals(Object o) {
+  if (o instanceof Entity)
+    return compareTo((Entity)o) == 0;
+  return false;
+}
 }

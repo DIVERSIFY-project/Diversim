@@ -43,8 +43,8 @@ public void evolve(BipartiteGraph graph, Fate agent) {
 
   if (timing.size() > 0 && graph.schedule.getSteps() >= timing.get(0)) {
     timing.remove(0);
-    App a = graph.apps.get(graph.random.nextInt(graph.numApps));
-    graph.removeEntity(a);
+    App a = graph.apps.get(graph.random.nextInt(graph.getNumApps()));
+    graph.removeEntity(graph.apps, a);
     System.out.println("Step " + graph.schedule.getSteps() + " " + a + " has been removed.");
   }
   System.err.println(graph.getPrintoutHeader()
