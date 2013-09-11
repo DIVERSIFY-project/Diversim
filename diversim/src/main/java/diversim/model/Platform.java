@@ -59,7 +59,7 @@ int maxSize; // TODO
         pressure = ((double) degree) / graph.getPlatformMaxLoad();
         if (pressure > 1.0) pressure = 1.0;
 
-        System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
+        printoutCurStep(graph);
     }
 
 

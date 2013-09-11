@@ -39,15 +39,16 @@ public class AddApp extends AbstractStrategy<Fate> {
     } while (n <= graph.schedule.getSteps());
     timing.add(n);
     Collections.sort(timing);
-    System.err.println("Fate : INFO : next new app will come at step " + timing.get(0));
     counter++;
   }
 
-        if (timing.size() > 0 && graph.schedule.getSteps() > timing.get(0)) {
+        if (timing.size() > 0 && graph.schedule.getSteps() >= timing.get(0)) {
             timing.remove(0);
             App app = graph.createApp(graph.selectServices(0), newAppStrategy);
             //app.step(graph); // this is mandatory if Fate kills apps with 0 degree at each cycle
-            System.out.println("Step " + graph.schedule.getSteps() + " : NEW " + app.toString());
+            System.out.println(graph.getPrintoutHeader() + "Fate : NEW " + app.toString());
         }
+        System.err.println(graph.getPrintoutHeader()
+            + "Fate : INFO : next new app will come in at cycle " + (int)(timing.get(0) / 3));
     }
 }

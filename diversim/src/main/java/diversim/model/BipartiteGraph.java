@@ -260,6 +260,11 @@ public double getMaxCycles() {
 }
 
 
+public void setMaxCycles(double d) {
+  maxCycles = d;
+}
+
+
 public double getAvgPlatformDegree() {
   int sum = 0;
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
@@ -535,6 +540,8 @@ public void start() {
       if (changed)
         printoutNetwork();
       changed = false;
+      if ((state.schedule.getSteps() + 2) >= getMaxCycles() * 3)
+        state.schedule.seal();
     }
   };
   schedule.scheduleRepeating(schedule.getTime() + 1.1, print, 1.0);
@@ -610,8 +617,17 @@ public App createApp(List<Service> servs, Strategy<App> s) {
  * Textual printout of the network
  */
 private void printoutNetwork() { // TODO
-  System.out.println("Step " + schedule.getSteps() + " : " + bipartiteNetwork.toString());
+  System.out.println(getPrintoutHeader() + bipartiteNetwork.toString());
   System.out.flush();
+}
+
+
+/**
+ * Standard header for all printout lines.
+ * @return The standard printout header.
+ */
+public String getPrintoutHeader() {
+  return "Cycle " + (int)schedule.getTime() + " [" + schedule.getSteps() + "] : ";
 }
 
 

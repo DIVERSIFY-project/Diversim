@@ -69,6 +69,11 @@ public String getComposition() {
   return res;
 }
 
+protected void printoutCurStep(BipartiteGraph g) {
+  System.out.println(g.getPrintoutHeader() + toString());
+}
+
+
 /**
  * This method is called at any scheduled step by the simulation engine
  * and must contain all the "intelligence" of the model.
@@ -178,8 +183,8 @@ public String toString() {
   res += this.getClass().getSimpleName()
       + " " + ID
       + " : degree = " + degree
-      + " ; size = " + getSize()
-      + " ; composition = " + getComposition();
+      + " ; size = " + getSize();
+      //+ " ; composition = " + getComposition();
   return res;
 }
 

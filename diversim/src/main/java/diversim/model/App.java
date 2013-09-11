@@ -39,7 +39,7 @@ public class App extends Entity {
         strategy.evolve(graph,this);
 
         redundancy = ((double) degree) / graph.numPlatforms;
-        System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
+        printoutCurStep(graph);
     }
 
     @Override

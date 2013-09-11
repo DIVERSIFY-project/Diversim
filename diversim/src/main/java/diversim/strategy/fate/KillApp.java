@@ -40,14 +40,15 @@ public void evolve(BipartiteGraph graph, Fate agent) {
     while (n <= graph.schedule.getSteps());
     timing.add((int)Math.round(n));
     Collections.sort(timing);
-    System.err.println("Fate : INFO : next app failure will occur at step " + timing.get(0));
 
-  if (timing.size() > 0 && graph.schedule.getSteps() > timing.get(0)) {
+  if (timing.size() > 0 && graph.schedule.getSteps() >= timing.get(0)) {
     timing.remove(0);
     App a = graph.apps.get(graph.random.nextInt(graph.numApps));
     graph.removeEntity(a);
     System.out.println("Step " + graph.schedule.getSteps() + " " + a + " has been removed.");
   }
+  System.err.println(graph.getPrintoutHeader()
+      + "Fate : INFO : next app failure will occur at cycle " + (int)(timing.get(0) / 3));
 }
 
 }
