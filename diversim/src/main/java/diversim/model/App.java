@@ -40,6 +40,7 @@ public class App extends Entity {
         strategy.evolve(graph,this);
 
         redundancy = ((double) degree) / graph.numPlatforms;
+        if (redundancy > 1.0) redundancy = 1.0;
         printoutCurStep(graph);
     }
 
