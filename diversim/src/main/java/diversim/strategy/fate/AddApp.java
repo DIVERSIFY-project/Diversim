@@ -35,7 +35,7 @@ public class AddApp extends AbstractStrategy<Fate> {
       && timing.size() < 1000) {
     int n;
     do {
-      n = graph.random.nextInt((int)(graph.getMaxCycles())) * 3;
+      n = graph.random.nextInt((int)(graph.getMaxCycles())) * graph.stepsPerCycle;
       //n = Distributions.nextZipfInt(1.1, graph.random);
     } while (n <= graph.schedule.getSteps());
     timing.add(n);
@@ -52,6 +52,6 @@ public class AddApp extends AbstractStrategy<Fate> {
             }
         }
         System.err.println(graph.getPrintoutHeader()
-          + "Fate : INFO : next new app will come in at cycle " + (int)(timing.get(0) / 3));
+          + "Fate : INFO : next new app will come in at cycle " + (int)(timing.get(0) / graph.stepsPerCycle));
     }
 }

@@ -16,6 +16,7 @@ import diversim.strategy.NullStrategy;
 import diversim.strategy.Strategy;
 import diversim.strategy.application.LinkStrategy;
 import diversim.strategy.fate.AddApp;
+import diversim.strategy.fate.FateAlmighty;
 import diversim.strategy.fate.FateStrategy;
 import diversim.strategy.fate.KillApp;
 import diversim.strategy.platform.CloneMutate;
@@ -149,6 +150,7 @@ protected boolean centralized;
 private boolean manualConf;
 private boolean supervised;
 private static String configPath;
+public int stepsPerCycle;
 
 /**
  * Getters and setters.
@@ -323,12 +325,15 @@ private void init() {
   try {
     configPath = System.getenv().get("PWD");
     if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
-    Configuration.setConfig(configPath + "/diversim.conf");
+    configPath += "/diversim.conf";
+    Configuration.setConfig(configPath);
     manualConf = false;
+    stepsPerCycle = centralized ? 2 : 3;
   } catch (IOException e) {
     System.err.println("WARNING : Configuration file not found. Please proceed with manual configuration.");
     manualConf = true;
     supervised = true;
+    stepsPerCycle = 3;
   }
 }
 
@@ -390,6 +395,9 @@ public BipartiteGraph(long seed, Schedule schedule) {
       res = new Split(Configuration.getString(s), Configuration.getDouble(s + ".keep", 2.0));
     } else if (s.equals("link")) {
       res = new LinkStrategy("Link");
+    } else if (s.equals("almighty")) {
+      AbstractStrategy<T> all = (AbstractStrategy<T>)setStrategy("fate");
+      res = new FateAlmighty("Almighty", (Strategy<Fate>)all);
     } else
       res = new NullStrategy<Entity>();
     addUnique(entityStrategies, res);
@@ -474,8 +482,14 @@ private void readConfig() {
   }
 
   // create the fate model
-  st = setStrategy(Configuration.getString("fate"));
-  fate = new Fate((FateStrategy)st);
+  if (centralized) {
+    stepsPerCycle = 2;
+    st = setStrategy("Almighty");
+  } else {
+    stepsPerCycle = 3;
+    st = setStrategy(Configuration.getString("fate"));
+  }
+  fate = new Fate((Strategy<Fate>)st);
 
   System.err.println("Config : INFO : the following strategies have been initialized :");
   printAny(entityStrategies, "\n", System.err);
@@ -505,6 +519,8 @@ public void start() {
   centralized = false;
 
   if (manualConf) {
+    stepsPerCycle = 2;
+
     // create services
     for (int i = 0; i < initServices; i++) {
       services.add(new Service(++sCounter));
@@ -552,7 +568,7 @@ public void start() {
       if (changed)
         printoutNetwork();
       changed = false;
-      if ((state.schedule.getSteps() + 2) >= getMaxCycles() * 3)
+      if ((state.schedule.getSteps() + 2) >= getMaxCycles() * stepsPerCycle)
         state.schedule.seal();
     }
   };

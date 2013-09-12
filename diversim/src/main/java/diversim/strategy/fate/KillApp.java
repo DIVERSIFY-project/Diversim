@@ -22,7 +22,7 @@ private ArrayList<Integer> timing;
 long counter;
 
 double eta; // expected time unit for 63,2% failures
-double beta; // shape of the ditribution (> 1 incresing, < 1 decreasing failure rate)
+double beta = 1.0; // shape of the ditribution (> 1 increasing, < 1 decreasing failure rate)
 
 
 public KillApp(String s) {
@@ -39,10 +39,10 @@ public void evolve(BipartiteGraph graph, Fate agent) {
       && timing.size() < 1000) {
     double n;
     do {
-      n = graph.random.nextInt((int)(graph.getMaxCycles())) * 3;
-      //n = Distributions.nextWeibull(eta > 0 ? eta : graph.getMaxCycles() * 2, beta, graph.random);
-    }
-    while (n <= graph.schedule.getSteps());
+      n = graph.random.nextInt((int)(graph.getMaxCycles())) * graph.stepsPerCycle;
+      //n = Distributions.nextWeibull(eta > 0 ? eta
+      //      : graph.getMaxCycles() * graph.stepsPerCycle * 2 / 3, beta, graph.random);
+    } while (n <= graph.schedule.getSteps());
     timing.add((int)Math.ceil(n));
     Collections.sort(timing);
     counter++;
@@ -56,7 +56,7 @@ public void evolve(BipartiteGraph graph, Fate agent) {
     }
   }
   System.err.println(graph.getPrintoutHeader()
-      + "Fate : INFO : next app failure will occur at cycle " + (int)(timing.get(0) / 3));
+      + "Fate : INFO : next app failure will occur at cycle " + (int)(timing.get(0) / graph.stepsPerCycle));
 }
 
 }

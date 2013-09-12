@@ -3,7 +3,6 @@ package diversim.model;
 import java.util.Arrays;
 
 import diversim.strategy.Strategy;
-import diversim.strategy.fate.FateStrategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.util.distribution.*;
@@ -22,7 +21,7 @@ public class Fate implements Steppable {
 
 protected Strategy<Fate> strategy;
 
-    public Fate(FateStrategy fateStrategy) {
+    public Fate(Strategy<Fate> fateStrategy) {
         strategy = fateStrategy;
     }
 
