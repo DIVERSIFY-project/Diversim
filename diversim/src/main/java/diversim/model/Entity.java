@@ -50,6 +50,13 @@ private Stoppable stoppable;
     @SuppressWarnings("rawtypes")
     protected Strategy strategy;
 
+
+@SuppressWarnings("rawtypes")
+public Strategy getStrategy() {
+  return strategy;
+}
+
+
 Entity(int id, Strategy<? extends Entity> strategy) {
   ID = id;
   services = new ArrayList<Service>();

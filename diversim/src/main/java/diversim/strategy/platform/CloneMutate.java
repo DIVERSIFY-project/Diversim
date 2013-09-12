@@ -59,7 +59,8 @@ public CloneMutate(String n, double m) {
         Arrays.sort(set, 0, csize);
         for (i = csize - 1; i >= 0; i--)
           servs.remove(((Integer)set[i]).intValue());
-        Platform p = graph.createPlatform(servs, this);
+        @SuppressWarnings("unchecked")
+        Platform p = graph.createPlatform(servs, platform.getStrategy());
         graph.createLinks(p, ents);
 
         // remove different size * factor services from this platform

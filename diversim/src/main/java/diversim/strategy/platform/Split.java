@@ -5,6 +5,7 @@ import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
 import diversim.strategy.AbstractStrategy;
+import diversim.strategy.Strategy;
 import sim.field.network.Edge;
 import sim.util.Bag;
 
@@ -50,8 +51,9 @@ public Split(String n, double r) {
         int splitIndex = (int)Math.round(sortedServices.size() * ratio);
 
         // split the platform and keep here only the most shared half of the services
-        Platform p = graph.createPlatform(
-                sortedServices.subList(splitIndex, sortedServices.size()), this);
+  @SuppressWarnings("unchecked")
+  Platform p = graph.createPlatform(sortedServices.subList(splitIndex, sortedServices.size()),
+      (Strategy<Platform>)platform.getStrategy());
         graph.createLinks(p, ents);
 
         for (int i = splitIndex; i < sortedServices.size(); i++) {
