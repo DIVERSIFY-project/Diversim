@@ -62,13 +62,13 @@ private void setPositions() {
   BipartiteGraph graph = (BipartiteGraph)state;
   int i = 1;
   Double2D pos;
-  double dist = sysSpace.getWidth() / (graph.numApps + 1);
+  double dist = sysSpace.getWidth() / (graph.getNumApps() + 1);
   for (Object obj : graph.apps) {
     pos = new Double2D((dist * i++), sysSpace.getHeight() * 0.35);
     sysSpace.setObjectLocation(obj, pos);
   }
   i = 1;
-  dist = sysSpace.getWidth() / (graph.numPlatforms + 1);
+  dist = sysSpace.getWidth() / (graph.getNumPlatforms() + 1);
   for (Object obj : graph.platforms) {
     pos = new Double2D((dist * i++), sysSpace.getHeight() * 0.65);
     sysSpace.setObjectLocation(obj, pos);
@@ -102,8 +102,8 @@ private void setupPortrayals() {
         public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {
           App app = (App)object;
           paint = new Color(0, 0, (int)(255 * app.getRedundancy()));
-          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).numApps + 1);
-          info.draw.width = ((double)app.getSize()) / ((BipartiteGraph)state).numServices * dist;
+          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).getNumApps() + 1);
+          info.draw.width = ((double)app.getSize()) / ((BipartiteGraph)state).getNumServices() * dist;
           if (info.draw.width >= dist) info.draw.width = dist * 0.9;
           if (info.draw.width < (dist * 0.2)) info.draw.width = dist * 0.25;
           info.draw.height = 50;
@@ -115,8 +115,8 @@ private void setupPortrayals() {
         public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {
           Platform plat = (Platform)object;
           paint = new Color((int)(255 * plat.getPressure()), 0, 0);
-          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).numPlatforms + 1);
-          info.draw.width = ((double)plat.getSize()) / ((BipartiteGraph)state).numServices * dist;
+          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).getNumPlatforms() + 1);
+          info.draw.width = ((double)plat.getSize()) / ((BipartiteGraph)state).getNumServices() * dist;
           if (info.draw.width >= dist) info.draw.width = dist * 0.9;
           if (info.draw.width < (dist * 0.2)) info.draw.width = dist * 0.25;
           info.draw.height = 50;
@@ -139,8 +139,7 @@ public void init(Controller c) {
   display.setClipping(false);
   displayFrame = display.createFrame();
   displayFrame.setTitle("Bipartite graph Display");
-  c.registerFrame(displayFrame);
-  // so the frame appears in the "Display" list
+  c.registerFrame(displayFrame); // so the frame appears in the "Display" list
   displayFrame.setVisible(true);
   display.attach(linksPortrayal, "Links");
   display.attach(entitiesPortrayal, "Graph");
@@ -149,6 +148,7 @@ public void init(Controller c) {
 
 public boolean step() {
   super.step();
+  sysSpace.clear();
   setPositions();
   return !state.schedule.scheduleComplete();
 }
