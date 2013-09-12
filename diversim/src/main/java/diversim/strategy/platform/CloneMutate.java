@@ -1,9 +1,11 @@
 package diversim.strategy.platform;
 
+import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
 import diversim.strategy.AbstractStrategy;
+import sim.field.network.Edge;
 import sim.util.Bag;
 
 import java.util.ArrayList;
@@ -40,19 +42,15 @@ public CloneMutate(String n, double m) {
     private void clone_Mutate(BipartiteGraph graph, Platform platform) {
         int csize, i;
         Bag temp = new Bag();
-//        Bag out = graph.bipartiteNetwork.getEdges(this, null); // read-only!
-//        Edge[] edges = (Edge[]) out.toArray(new Edge[0]);
-//        ArrayList<Entity> ents = new ArrayList<Entity>();
-//        for (Edge e : edges) {
-//            ents.add((Entity) e.getOtherNode(this));
-//        }
+        Bag edges = graph.bipartiteNetwork.getEdges(this, null); // read-only!
+        ArrayList<App> ents = new ArrayList<App>();
+        for (Object o : edges) {
+            ents.add((App)((Edge)o).getOtherNode(this));
+        }
         for (i = 0; i < platform.getSize(); i++)
           temp.add(i);
         temp.shuffle(graph.random);
         Object[] set = temp.toArray();
-//        System.err.println(platform);
-//        for (Object o : temp)
-//        System.err.println(o);
         csize = (int)Math.round(platform.getSize() * factor);
         csize = csize < 1 ? 1 : csize;
 
@@ -62,12 +60,14 @@ public CloneMutate(String n, double m) {
         for (i = csize - 1; i >= 0; i--)
           servs.remove(((Integer)set[i]).intValue());
         Platform p = graph.createPlatform(servs, this);
+        graph.createLinks(p, ents);
 
         // remove different size * factor services from this platform
         Arrays.sort(set, csize, csize * 2);
         for (i = (csize * 2) - 1; i >= csize; i--)
           platform.getServices().remove(((Integer)set[i]).intValue());
+        graph.updateLinks(platform);
         platform.action = "clone_mutate";
-        System.out.println("\tStep " + graph.schedule.getSteps() + " : NEW " + p.toString());
+        System.err.println(graph.getPrintoutHeader() + "CloneMutate : INFO : ADDED " + p.toString());
     }
 }

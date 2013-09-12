@@ -17,7 +17,6 @@ public class LinkStrategy extends AbstractStrategy<App> {
 
     public LinkStrategy(String n) {
     super(n);
-    // TODO Auto-generated constructor stub
   }
 
     public void evolve(BipartiteGraph graph, App e) {
@@ -25,23 +24,22 @@ public class LinkStrategy extends AbstractStrategy<App> {
 
         Platform p = getBestPlatform(graph,e.getServices());
         if(p != null)
-          Entity.addEdge(graph, e, p, e.getSize());
+          graph.addEdge(e, p, e.getSize());
         else
             for(Platform platform : getPlatform(graph, e.getServices()))
-              Entity.addEdge(graph, e, platform, platform.countCommonServices(e, null));
+              graph.addEdge(e, platform, platform.countCommonServices(e, null));
     }
 
-    protected void removeLinkFor(BipartiteGraph graph, App e) {
-        // the graph is undirected, thus EdgesIn = EdgesOut
-        Bag edges = graph.bipartiteNetwork.getEdgesIn(e); // read-only!
 
-        for (Edge edge : (Edge[]) edges.toArray(new Edge[edges.size()])) {
-            graph.bipartiteNetwork.removeEdge(edge);
-            Entity rem = (Entity) edge.getOtherNode(e);
-            rem.decDegree();
-            e.decDegree();
-        }
-    }
+protected void removeLinkFor(BipartiteGraph graph, App e) {
+  // the graph is undirected, thus EdgesIn = EdgesOut
+  Bag edges = graph.bipartiteNetwork.getEdgesIn(e); // read-only!
+
+  for (Object edge : edges) {
+    graph.removeEdge(e, (Edge)edge);
+  }
+}
+
 
     protected Platform getBestPlatform(BipartiteGraph graph, List<Service> services) {
         Platform p = null;

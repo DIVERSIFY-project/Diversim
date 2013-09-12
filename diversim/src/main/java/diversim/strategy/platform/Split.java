@@ -1,9 +1,11 @@
 package diversim.strategy.platform;
 
+import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
 import diversim.strategy.AbstractStrategy;
+import sim.field.network.Edge;
 import sim.util.Bag;
 
 import java.util.ArrayList;
@@ -38,23 +40,25 @@ public Split(String n, double r) {
      * @param graph
      */
     private void split_Part(BipartiteGraph graph, Platform platform) {
-        Bag out = graph.bipartiteNetwork.getEdges(this, null); // read-only!
-//        Edge[] edges = (Edge[])out.toArray(new Edge[0]);
-//        ArrayList<Entity> ents = new ArrayList<Entity>();
-//        for (Edge e : edges) {
-//            ents.add((Entity)e.getOtherNode(this));
-//        }
+        Bag edges = graph.bipartiteNetwork.getEdges(this, null); // read-only!
+        ArrayList<App> ents = new ArrayList<App>();
+        for (Object o : edges) {
+            ents.add((App)((Edge)o).getOtherNode(this));
+        }
         // get the services used by the apps, sorted from the most to the least common
-        ArrayList<Service> sortedServices = platform.sortServices(out);
+        ArrayList<Service> sortedServices = platform.sortServices(edges);
         int splitIndex = (int)Math.round(sortedServices.size() * ratio);
 
         // split the platform and keep here only the most shared half of the services
         Platform p = graph.createPlatform(
                 sortedServices.subList(splitIndex, sortedServices.size()), this);
-        System.out.println("\tStep " + graph.schedule.getSteps() + " : NEW " + p.toString());
+        graph.createLinks(p, ents);
+
         for (int i = splitIndex; i < sortedServices.size(); i++) {
             platform.getServices().remove(sortedServices.get(i)); // FIXME : make it O(log(services)) !!!
         }
+        graph.updateLinks(platform);
         platform.action = "split_part";
+        System.err.println(graph.getPrintoutHeader() + "Split : NEW " + p.toString());
     }
 }

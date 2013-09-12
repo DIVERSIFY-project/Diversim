@@ -140,14 +140,6 @@ static public <T extends Entity> List<T> findEntityWithServices(List<T> ens, Lis
 }
 
 
-static public void addEdge(BipartiteGraph graph, Entity e, Entity rem, Object info) {
-  graph.bipartiteNetwork.addEdge(e, rem, info);
-  e.incDegree();
-  rem.incDegree();
-  graph.changed();
-}
-
-
 /**
  * Returns an array with the services of this entity sorted w.r.t. the number of apps that use them.
  *

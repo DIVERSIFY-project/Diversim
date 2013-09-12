@@ -27,6 +27,7 @@ import sim.engine.Schedule;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.field.network.*;
+import sim.util.Bag;
 
 
 /**
@@ -605,6 +606,83 @@ public App createApp(List<Service> servs, Strategy<App> s) {
 }
 
 
+public void addEdge(Entity from, Entity to, Object info) {
+  bipartiteNetwork.addEdge(from, to, info);
+  from.incDegree();
+  to.incDegree();
+  changed = true;
+}
+
+
+public void removeEdge(Entity e, Edge edge) {
+  Object rem = edge.getOtherNode(e);
+  bipartiteNetwork.removeEdge(edge);
+  e.decDegree();
+  ((Entity)rem).decDegree();
+  changed = true;
+}
+
+
+/**
+ * Update existing links that have the argument at one end.
+ * This method should always be used by an entity after triggering
+ * some diversification rule that doesn't modify edges directly,
+ * but implies (as a side effect) that existing edges to/from the entity
+ * had become inconsistent and should be fixed.
+ * @param e
+ */
+public void updateLinks(Entity e) {
+  // the graph is undirected, thus EdgesIn = EdgesOut
+  Bag edges = bipartiteNetwork.getEdgesIn(e); // read-only!
+  int w; Entity rem; Edge edge;
+  for (Object o : edges) {
+    edge = (Edge)o;
+    rem = (Entity)edge.getOtherNode(e);
+    w = e.countCommonServices(rem, null);
+    if (((Number)edge.info).intValue() != w) {
+      bipartiteNetwork.removeEdge(edge);
+      if (w > 0) {
+        bipartiteNetwork.addEdge(e, rem, new Integer(w));
+      } else {
+        e.decDegree();
+        rem.decDegree();
+      }
+      changed = true;
+    }
+  }
+}
+
+
+/**
+ * Associate links to/from a NEWLY created entity.
+ * To be used only for a new entity, if needed.
+ * The second argument is a list of existing entities to consider linking with.
+ * @param e New entity to be introduced in the network.
+ * @param entities The entities to establish links with.
+ */
+public void createLinks(Entity e, ArrayList<? extends Entity> entities) {
+  int l, r, weight;
+  for (Entity remote : entities) {
+    weight = l = r = 0; // services are sorted according to their ID...
+    while (l < e.services.size() && r < remote.services.size()) {
+      if (e.services.get(l).equals(remote.services.get(r))) {
+        weight++;
+        l++;
+        r++;
+      } else if (e.services.get(l).compareTo(remote.services.get(r)) > 0) {
+        r++;
+      } else {
+        l++;
+      }
+    }
+    if (weight > 0) {
+      addEdge(e, remote, new Integer(weight));
+    }
+  }
+
+}
+
+
 /**
  * Textual printout of the network
  */
@@ -724,18 +802,19 @@ static public void printAny(Object data, String trailer, PrintStream out) {
 }
 
 
-    public void changed() {
-        changed = true;
-    }
-
     public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
        eList.remove(Collections.binarySearch(eList, entity));
        if (!centralized) entity.stop();
+       Bag edges = bipartiteNetwork.getEdgesIn(entity); // edgesIn = edgesOut
+       for (Object o : edges) {
+         ((Entity)((Edge)o).getOtherNode(entity)).decDegree();
+       }
        bipartiteNetwork.removeNode(entity);
        if (entity instanceof App)
          numApps--;
        else if (entity instanceof Platform)
          numPlatforms--;
+       changed = true;
     }
 
 }
