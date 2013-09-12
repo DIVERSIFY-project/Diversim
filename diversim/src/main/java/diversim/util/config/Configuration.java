@@ -109,7 +109,8 @@ public static void setConfig(String file) throws IOException {
 //  if (config != null) {
 //    throw new RuntimeException("Setting configuration was attempted twice.");
 //  }
-  if (config == null) config = new ConfigContainer(new ParsedProperties(file));
+  //if (config == null)
+    config = new ConfigContainer(new ParsedProperties(file));
 }
 
 

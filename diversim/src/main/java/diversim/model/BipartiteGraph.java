@@ -148,7 +148,7 @@ protected boolean changed;
 protected boolean centralized;
 private boolean manualConf;
 private boolean supervised;
-
+private static String configPath;
 
 /**
  * Getters and setters.
@@ -321,10 +321,10 @@ private void init() {
   services = new ArrayList<Service>();
   entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
   try {
-    String path = System.getenv().get("PWD");
-    if (path == null) path = "/root"; // XXX ugly but effective to bypass problems with UI...
-    Configuration.setConfig(path + "/diversim.conf");
-      manualConf = false;
+    configPath = System.getenv().get("PWD");
+    if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
+    Configuration.setConfig(configPath + "/diversim.conf");
+    manualConf = false;
   } catch (IOException e) {
     System.err.println("WARNING : Configuration file not found. Please proceed with manual configuration.");
     manualConf = true;
@@ -403,6 +403,17 @@ private void readConfig() {
   long size;
   int i, nSer;
   Strategy<? extends Steppable> st;
+  if (!supervised) {
+    initApps = Configuration.getInt("init_apps");
+    initPlatforms = Configuration.getInt("init_platforms");
+    initServices = Configuration.getInt("init_services");
+  } else if (!manualConf) {
+    try {
+      Configuration.setConfig(configPath);
+    } catch (IOException e) {
+      System.err.println("WARNING : Configuration file not found. Using previous configuration.");
+    }
+  }
   int seed = Configuration.getInt("seed", 0);
   if (seed != 0) {
     random.setSeed(seed);
@@ -410,11 +421,6 @@ private void readConfig() {
   System.err.println("Config : seed = " + seed);
   supervised = Configuration.getBoolean("supervised");
   maxCycles = Configuration.getDouble("max_cycles", Schedule.MAXIMUM_INTEGER - 1);
-  if (!supervised) {
-    initApps = Configuration.getInt("init_apps");
-    initPlatforms = Configuration.getInt("init_platforms");
-    initServices = Configuration.getInt("init_services");
-  }
   maxApps = Configuration.getInt("max_apps", 0);
   if (maxApps == 0) maxApps = Integer.MAX_VALUE;
   maxPlatforms = Configuration.getInt("max_platforms", 0);
@@ -505,22 +511,33 @@ public void start() {
       numServices++;
     }
 
-    Strategy<App> sApp;
+    AbstractStrategy<App> sApp = new LinkStrategy("Link");
+    Split split = new Split("Split", 0.5);
+    CloneMutate clone = new CloneMutate("Clone", 0.1);
+    AbstractStrategy<Platform> combo = new SplitOrClone("Combo", split, 2.0, clone, 1.1);
+    AbstractStrategy<Fate> add = new AddApp("Add", sApp);
+    AbstractStrategy<Fate> kill = new KillApp("Kill");
+    FateStrategy sFate = new FateStrategy("Fate", add, kill);
+    addUnique(entityStrategies, sApp);
+    addUnique(entityStrategies, split);
+    addUnique(entityStrategies, clone);
+    addUnique(entityStrategies, combo);
+    addUnique(entityStrategies, add);
+    addUnique(entityStrategies, kill);
+    addUnique(entityStrategies, sFate);
 
     // create platforms
     for (int i = 0; i < initPlatforms; i++) { // all services to each platform
-      createPlatform(services, new SplitOrClone("Combo", new Split("Split", 0.5), 2.0,
-          new CloneMutate("Clone", 0.1), 1.1));
+      createPlatform(services, combo);
     }
 
     // create apps
-    for (int i = 0; i < initApps; i++) {
-      createApp(selectServices(0), new LinkStrategy("Link"));
+    for (int i = 0; i < initApps; i++) { // gaussian+random selection of services per app
+      createApp(selectServices(0), sApp);
     }
 
     // create the fate model
-    sApp = new LinkStrategy("Link");
-    fate = new Fate(new FateStrategy("Fate", new AddApp("Add", sApp), new KillApp("Kill")));
+    fate = new Fate(sFate);
   } else
     readConfig();
 
