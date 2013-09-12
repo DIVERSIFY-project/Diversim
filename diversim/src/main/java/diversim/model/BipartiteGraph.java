@@ -262,7 +262,8 @@ public void setMaxCycles(double d) {
 
 public double getAvgPlatformDegree() {
   int sum = 0;
-  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
+  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
+      || numPlatforms == 0)
     return 0.0;
   for (Platform p : platforms) {
     sum += p.getDegree();
@@ -273,7 +274,8 @@ public double getAvgPlatformDegree() {
 
 public double getAvgAppDegree() {
   int sum = 0;
-  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
+  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
+      || numApps == 0)
     return 0.0;
   for (App a : apps) {
     sum += a.getDegree();
@@ -284,7 +286,8 @@ public double getAvgAppDegree() {
 
 public double getAvgPlatformSize() {
   int sum = 0;
-  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
+  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
+      || numPlatforms == 0)
     return 0.0;
   for (Platform p : platforms) {
     sum += p.getSize();
@@ -295,7 +298,8 @@ public double getAvgPlatformSize() {
 
 public double getAvgAppSize() {
   int sum = 0;
-  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION)
+  if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
+      || numApps == 0)
     return 0.0;
   for (App a : apps) {
     sum += a.getSize();

@@ -49,9 +49,11 @@ public void evolve(BipartiteGraph graph, Fate agent) {
   }
   if (graph.schedule.getSteps() >= timing.get(0)) {
     timing.remove(0);
-    App a = graph.apps.get(graph.random.nextInt(graph.getNumApps()));
-    graph.removeEntity(graph.apps, a);
-    System.out.println(graph.getPrintoutHeader() + "Fate : REMOVED " + a);
+    if (graph.getNumApps() > 0) {
+      App a = graph.apps.get(graph.random.nextInt(graph.getNumApps()));
+      graph.removeEntity(graph.apps, a);
+      System.out.println(graph.getPrintoutHeader() + "Fate : REMOVED " + a);
+    }
   }
   System.err.println(graph.getPrintoutHeader()
       + "Fate : INFO : next app failure will occur at cycle " + (int)(timing.get(0) / 3));
