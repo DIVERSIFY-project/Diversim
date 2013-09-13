@@ -31,7 +31,7 @@ public class App extends Entity {
 
     /*
      * (non-Javadoc)
-     * @see fr.inria.diversim.model.Entity#step(sim.engine.SimState)
+     * @see diversim.model.Entity#step(sim.engine.SimState)
      */
     @Override
     public void step(SimState state) {
