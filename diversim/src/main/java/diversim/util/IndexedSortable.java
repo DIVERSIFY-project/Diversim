@@ -1,4 +1,4 @@
-package fr.inria.diversim.util;
+package diversim.util;
 
 import java.util.Arrays;
 

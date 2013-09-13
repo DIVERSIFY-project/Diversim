@@ -1,10 +1,10 @@
-package fr.inria.diversim.strategy.fate;
+package diversim.strategy.fate;
 
-import fr.inria.diversim.model.BipartiteGraph;
-import fr.inria.diversim.model.App;
-import fr.inria.diversim.model.Fate;
+import diversim.model.BipartiteGraph;
+import diversim.model.App;
+import diversim.model.Fate;
 import ec.util.MersenneTwisterFast;
-import fr.inria.diversim.strategy.Strategy;
+import diversim.strategy.Strategy;
 import sim.util.distribution.Distributions;
 
 import java.util.ArrayList;

@@ -1,10 +1,10 @@
-package fr.inria.diversim.model;
+package diversim.model;
 
 import java.util.Arrays;
 
 
-import fr.inria.diversim.strategy.Strategy;
-import fr.inria.diversim.strategy.fate.FateStrategy;
+import diversim.strategy.Strategy;
+import diversim.strategy.fate.FateStrategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.util.distribution.*;

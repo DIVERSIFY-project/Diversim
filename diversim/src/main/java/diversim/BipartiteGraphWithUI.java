@@ -1,8 +1,8 @@
 package fr.inria.diversim;
 
-import fr.inria.diversim.model.App;
-import fr.inria.diversim.model.BipartiteGraph;
-import fr.inria.diversim.model.Platform;
+import diversim.model.App;
+import diversim.model.BipartiteGraph;
+import diversim.model.Platform;
 import sim.display.Console;
 import sim.display.Controller;
 import sim.display.Display2D;

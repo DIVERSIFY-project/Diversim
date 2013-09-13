@@ -1,7 +1,7 @@
-package fr.inria.diversim.strategy.application;
+package diversim.strategy.application;
 
-import fr.inria.diversim.model.*;
-import fr.inria.diversim.strategy.Strategy;
+import diversim.model.*;
+import diversim.strategy.Strategy;
 import sim.field.network.Edge;
 import sim.util.Bag;
 

@@ -1,4 +1,4 @@
-package fr.inria.diversim.model;
+package diversim.model;
 
 import java.io.PrintStream;
 import java.lang.reflect.Array;
@@ -10,9 +10,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import ec.util.MersenneTwisterFast;
-import fr.inria.diversim.strategy.application.LinkStrategy;
-import fr.inria.diversim.strategy.fate.FateStrategy;
-import fr.inria.diversim.strategy.platform.MarcoStrategy;
+import diversim.strategy.application.LinkStrategy;
+import diversim.strategy.fate.FateStrategy;
+import diversim.strategy.platform.MarcoStrategy;
 import sim.engine.RandomSequence;
 import sim.engine.Sequence;
 import sim.engine.Schedule;

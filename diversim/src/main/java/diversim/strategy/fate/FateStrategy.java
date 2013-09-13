@@ -1,9 +1,9 @@
-package fr.inria.diversim.strategy.fate;
+package diversim.strategy.fate;
 
-import fr.inria.diversim.model.BipartiteGraph;
-import fr.inria.diversim.model.Fate;
+import diversim.model.BipartiteGraph;
+import diversim.model.Fate;
 import ec.util.MersenneTwisterFast;
-import fr.inria.diversim.strategy.Strategy;
+import diversim.strategy.Strategy;
 
 /**
  * User: Simon

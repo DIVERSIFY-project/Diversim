@@ -1,4 +1,4 @@
-package fr.inria.diversim.model;
+package diversim.model;
 
 /**
  * Services are comparable, so that they can be kept in sorted array

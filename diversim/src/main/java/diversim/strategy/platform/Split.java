@@ -1,10 +1,10 @@
-package fr.inria.diversim.strategy.platform;
+package diversim.strategy.platform;
 
-import fr.inria.diversim.model.BipartiteGraph;
-import fr.inria.diversim.model.Entity;
-import fr.inria.diversim.model.Platform;
-import fr.inria.diversim.model.Service;
-import fr.inria.diversim.strategy.Strategy;
+import diversim.model.BipartiteGraph;
+import diversim.model.Entity;
+import diversim.model.Platform;
+import diversim.model.Service;
+import diversim.strategy.Strategy;
 import sim.field.network.Edge;
 import sim.util.Bag;
 

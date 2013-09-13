@@ -1,8 +1,8 @@
-package fr.inria.diversim.model;
+package diversim.model;
 
 import java.util.List;
 
-import fr.inria.diversim.strategy.Strategy;
+import diversim.strategy.Strategy;
 import sim.engine.SimState;
 
 
@@ -40,7 +40,7 @@ public class Platform extends Entity {
 
     /*
      * (non-Javadoc)
-     * @see fr.inria.diversim.model.Entity#step(sim.engine.SimState)
+     * @see diversim.model.Entity#step(sim.engine.SimState)
      */
     @Override
     public void step(SimState state) {

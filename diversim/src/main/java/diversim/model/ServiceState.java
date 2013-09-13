@@ -1,4 +1,4 @@
-package fr.inria.diversim.model;
+package diversim.model;
 
 /**
  * User: Simon

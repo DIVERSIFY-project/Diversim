@@ -1,8 +1,8 @@
-package fr.inria.diversim.strategy.platform;
+package diversim.strategy.platform;
 
-import fr.inria.diversim.model.BipartiteGraph;
-import fr.inria.diversim.model.Platform;
-import fr.inria.diversim.strategy.Strategy;
+import diversim.model.BipartiteGraph;
+import diversim.model.Platform;
+import diversim.strategy.Strategy;
 
 /**
  * User: Simon

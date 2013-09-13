@@ -1,6 +1,6 @@
-package fr.inria.diversim.strategy;
+package diversim.strategy;
 
-import fr.inria.diversim.model.BipartiteGraph;
+import diversim.model.BipartiteGraph;
 import sim.engine.Steppable;
 
 /**

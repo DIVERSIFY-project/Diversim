@@ -1,9 +1,9 @@
-package fr.inria.diversim.strategy.fate;
+package diversim.strategy.fate;
 
-import fr.inria.diversim.model.BipartiteGraph;
-import fr.inria.diversim.model.App;
-import fr.inria.diversim.model.Fate;
-import fr.inria.diversim.strategy.Strategy;
+import diversim.model.BipartiteGraph;
+import diversim.model.App;
+import diversim.model.Fate;
+import diversim.strategy.Strategy;
 
 import java.util.ArrayList;
 import java.util.List;

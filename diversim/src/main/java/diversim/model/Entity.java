@@ -1,11 +1,11 @@
-package fr.inria.diversim.model;
+package diversim.model;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 
-import fr.inria.diversim.util.IndexedSortable;
-import fr.inria.diversim.strategy.Strategy;
+import diversim.util.IndexedSortable;
+import diversim.strategy.Strategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.field.network.Edge;
