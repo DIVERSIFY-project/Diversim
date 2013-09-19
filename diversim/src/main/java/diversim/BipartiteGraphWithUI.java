@@ -30,6 +30,7 @@ import sim.util.Double2D;
  * GUI of the BipartiteGraph simulation model.
  *
  * @author Marco Biazzini
+ * @author Hui Song
  *
  */
 public class BipartiteGraphWithUI extends GUIState {
@@ -135,8 +136,8 @@ private void setupPortrayals() {
           Platform plat = (Platform)object;
           paint = new Color((int)(255 * plat.getLoadingFactor()), 0, 0);
           //paint = new Color((int)(255 * plat.services.size() / BipartiteGraph.initServices), 0, 0);
-          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).platforms.size() + 1);
-          info.draw.width = ((double)plat.getSize()) / ((BipartiteGraph)state).numServices * dist;
+          double dist = sysSpace.getWidth() / (((BipartiteGraph)state).getNumPlatforms() + 1);
+          info.draw.width = ((double)plat.getSize()) / ((BipartiteGraph)state).getNumServices() * dist;
           if (info.draw.width >= dist) info.draw.width = dist * 0.9;
           if (info.draw.width < (dist * 0.2)) info.draw.width = dist * 0.25;
           info.draw.height = 50;
