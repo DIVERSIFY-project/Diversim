@@ -120,7 +120,6 @@ public Network bipartiteNetwork;
 /**
  * Invisible agent that can affect the history of the simulation by injecting external events.
  */
-public Fate fate;
 
 
 private int sCounter;
@@ -328,9 +327,6 @@ public void start() {
   }
 
 
-  // create the fate agent
-  //fate = new Fate(random);
-  //schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
 
   // define initial network:
   // link every platform to all apps that use at least one of its services
