@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import diversim.strategy.matching.MatchingStrategy;
+import diversim.util.IndexedSortable;
+
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.field.network.Edge;
