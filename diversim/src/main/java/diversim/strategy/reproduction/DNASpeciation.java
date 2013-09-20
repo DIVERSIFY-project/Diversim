@@ -2,7 +2,7 @@ package diversim.strategy.reproduction;
 
 import java.util.List;
 
-import diversim.Service;
+import diversim.model.Service;
 
 /**
  *

@@ -3,7 +3,8 @@ package diversim.strategy.reproduction;
 import java.util.List;
 import java.util.ArrayList;
 
-import diversim.Service;
+import diversim.model.Service;
+
 import ec.util.MersenneTwisterFast;
 import sim.util.Bag;
 /**

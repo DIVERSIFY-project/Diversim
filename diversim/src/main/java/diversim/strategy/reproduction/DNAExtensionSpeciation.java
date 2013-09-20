@@ -6,7 +6,8 @@ import java.util.Set;
 import java.util.HashSet;
 
 import diversim.BipartiteGraph;
-import diversim.Service;
+import diversim.model.Service;
+
 import ec.util.MersenneTwisterFast;
 import sim.util.Bag;
 /**

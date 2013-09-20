@@ -5,7 +5,8 @@ import java.util.List;
 
 import diversim.BipartiteGraph;
 import diversim.Platform;
-import diversim.Service;
+import diversim.model.Service;
+
 import ec.util.MersenneTwisterFast;
 
 public class PlatformSpeciationReproductionByDNA 

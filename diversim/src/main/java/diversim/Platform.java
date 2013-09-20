@@ -8,6 +8,8 @@ import java.util.HashSet;
 import diversim.strategy.extinction.AppExtinctionStrategy;
 import diversim.strategy.extinction.PlatformExtinctionStrategy;
 import diversim.strategy.reproduction.PlatformReproductionStrategy;
+import diversim.model.Service;
+
 import ec.util.MersenneTwisterFast;
 import sim.engine.SimState;
 import sim.util.Bag;

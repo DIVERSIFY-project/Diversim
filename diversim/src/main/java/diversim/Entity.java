@@ -3,12 +3,16 @@ package diversim;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import diversim.strategy.matching.MatchingStrategy;
 import diversim.util.IndexedSortable;
+import diversim.model.Service;
 
 import sim.engine.SimState;
 import sim.engine.Steppable;
+import sim.engine.Stoppable;
 import sim.field.network.Edge;
 import sim.util.Bag;
 
@@ -21,14 +25,14 @@ import sim.util.Bag;
  * by double clicking the entity portrayal in the GUI.
  *
  * @author Marco Biazzini
- *
+ * @author Vivek Nallur
  */
-abstract public class Entity implements Steppable {
+abstract public class Entity implements Steppable, Comparable<Entity> {
 
 	/**
 	 * See BipartiteGraph.start().
 	 */
-	int ID;
+	protected int ID;
 	
 	/**
 	 * All services hosted by the entity.
@@ -44,6 +48,11 @@ abstract public class Entity implements Steppable {
 	 * The matching strategy employed by this entity
 	 */
 	MatchingStrategy matcher;
+/**
+ * Internal object to be used to kill this entity (i.e. to delete it from the simulator's schedule)
+ */
+	private Stoppable stoppable;
+
 		
 
 	Entity(int id) {
@@ -73,10 +82,28 @@ abstract public class Entity implements Steppable {
 	public String getComposition() {
 	  String res = "";
 	  for (Service s : services) {
-	    res += s.ID + "-";
+	    res += "s" + s.getName() + "-";
 	  }
 	  return res;
 	}
+	protected void setStoppable(Stoppable s) {
+  		stoppable = s;
+	}
+
+
+	protected void stop() {
+  		stoppable.stop();
+	}
+
+
+  /*
+   * Why should an Entity know about the BipartiteGraph?
+   * 
+  protected void printoutCurStep(BipartiteGraph g) {
+   System.out.println(g.getPrintoutHeader() + toString());
+  }
+  *
+  */
 
 /**
  * This method is called at any scheduled step by the simulation engine
@@ -88,14 +115,56 @@ abstract public class Entity implements Steppable {
 @Override
 abstract public void step(SimState state);
 
+/*
+ * I don't think we need these, given that we have a MatchingStrategy 
+ * implementation
+ *
+   static public <T extends Entity> List<T> findEntityWithAllServices(List<T> ens, List<Service> services) {
+	  List<T> list = new ArrayList<T>();
+	  for (T en : ens) {
+	    if (en.getServices().containsAll(services)) list.add(en);
+	  }
+	  Collections.sort(list, new Comparator<Entity>() {
+	
+	    @Override
+	    public int compare(Entity e, Entity e2) {
+	      return e.getDegree() - e2.getDegree();
+	    }
+	  });
+	  return list;
+	}
+	
+   static public <T extends Entity> List<T> findEntityWithServices(List<T> ens, List<Service> services) {
+	  List<T> list = new ArrayList<T>();
+	  for (T en : ens) {
+	    for (Service service : services) {
+	      if (en.getServices().contains(service)) {
+	        list.add(en);
+	        break;
+	      }
+	    }
+	  }
+	  Collections.sort(list, new Comparator<Entity>() {
+	
+	    @Override
+	    public int compare(Entity e, Entity e2) {
+	      return e.getDegree() - e2.getDegree();
+	    }
+	  });
+	  return list;
+	}
 
-/** 
- * Returns an array with the services of this entity sorted w.r.t. the number
- * of apps that use them.
- * @param edges The edges involving this entity in the current network topology.
+  */
+
+
+/**
+ * Returns an array with the services of this entity sorted w.r.t. the number of apps that use them.
+ *
+ * @param edges
+ *          The edges involving this entity in the current network topology.
  * @return Sorted array of services.
  */
-ArrayList<Service> sortServices(Bag edges) {
+public ArrayList<Service> sortServices(Bag edges) {
   ArrayList<Service> res = new ArrayList<Service>(services.size());
   Integer[] counter = new Integer[services.size()];
   Arrays.fill(counter, 0);
@@ -117,12 +186,12 @@ ArrayList<Service> sortServices(Bag edges) {
  * Count the service belonging to both this entity and the first argument.
  * The second argument (if not null) is an array of counters (one slot per service)
  * that is updated by this method. It can be used in subsequent calls to
- * sum the occurrences of the services in different entities. 
+ * sum the occurrences of the services in different entities.
  * @param e
  * @param counter
  * @return The number of services in common.
  */
-int countCommonServices(Entity e, Integer[] counter) {
+public int countCommonServices(Entity e, Integer[] counter) {
   int indx, res = 0;
   for (Service s : e.services) {
     indx = Collections.binarySearch(services, s);
@@ -143,5 +212,20 @@ public String toString() {
       + " ; size = " + getSize()
       + " ; composition = " + getComposition();
   return res;
+}
+
+public ArrayList<Service> getServices() {
+        return services;
+}
+
+public int compareTo(Entity e) {
+  return ID - e.ID;
+}
+
+
+public boolean equals(Object o) {
+  if (o instanceof Entity)
+    return compareTo((Entity)o) == 0;
+  return false;
 }
 }

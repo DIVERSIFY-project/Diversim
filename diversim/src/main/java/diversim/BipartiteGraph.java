@@ -9,6 +9,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import diversim.model.Service;
+
 import ec.util.MersenneTwisterFast;
 import sim.engine.Schedule;
 import sim.engine.SimState;
@@ -465,11 +467,11 @@ public void createLinks(Entity e, ArrayList<? extends Entity> entities) {
   for (Entity remote : entities) {
     weight = l = r = 0; // services are sorted according to their ID...
     while (l < e.services.size() && r < remote.services.size()) {
-      if (e.services.get(l).ID == remote.services.get(r).ID) {
+      if (e.services.get(l).getID() == remote.services.get(r).getID()) {
         weight++;
         l++;
         r++;
-      } else if (e.services.get(l).ID > remote.services.get(r).ID) {
+      } else if (e.services.get(l).getID() > remote.services.get(r).getID()) {
         r++;
       } else {
         l++;

@@ -8,6 +8,8 @@ import java.util.Set; // Interface
 
 import diversim.strategy.extinction.AppExtinctionStrategy;
 import diversim.strategy.reproduction.AppReproductionStrategy;
+import diversim.model.Service;
+
 import ec.util.MersenneTwisterFast;
 import sim.engine.SimState;
 
