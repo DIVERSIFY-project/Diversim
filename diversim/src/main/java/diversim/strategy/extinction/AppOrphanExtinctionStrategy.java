@@ -1,8 +1,8 @@
 package diversim.strategy.extinction;
 
-import diversim.App;
-import diversim.BipartiteGraph;
-import diversim.Entity;
+import diversim.model.App;
+import diversim.model.BipartiteGraph;
+import diversim.model.Entity;
 
 public class AppOrphanExtinctionStrategy implements AppExtinctionStrategy {
 	

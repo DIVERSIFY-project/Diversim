@@ -3,9 +3,9 @@ package diversim.strategy.reproduction;
 import java.util.Collections;
 import java.util.List;
 
-import diversim.App;
-import diversim.BipartiteGraph;
-import diversim.Platform;
+import diversim.model.App;
+import diversim.model.BipartiteGraph;
+import diversim.model.Platform;
 import ec.util.MersenneTwisterFast;
 
 public class PlatformReproductionWithPossibility implements PlatformReproductionStrategy{

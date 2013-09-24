@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.Set;
 import java.util.HashSet;
 
-import diversim.BipartiteGraph;
+import diversim.model.BipartiteGraph;
 import diversim.model.Service;
 
 import ec.util.MersenneTwisterFast;

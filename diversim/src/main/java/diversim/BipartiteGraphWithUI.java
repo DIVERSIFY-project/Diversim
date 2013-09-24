@@ -1,8 +1,8 @@
 package diversim;
 
-//import diversim.model.App;
-//import diversim.model.BipartiteGraph;
-//import diversim.model.Platform;
+import diversim.model.App;
+import diversim.model.BipartiteGraph;
+import diversim.model.Platform;
 import diversim.model.Service;
 
 import sim.display.Console;

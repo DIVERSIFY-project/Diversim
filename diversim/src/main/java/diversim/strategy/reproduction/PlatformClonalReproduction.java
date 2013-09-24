@@ -3,8 +3,8 @@ package diversim.strategy.reproduction;
 import java.util.List;
 import java.util.ArrayList;
 
-import diversim.BipartiteGraph;
-import diversim.Platform;
+import diversim.model.BipartiteGraph;
+import diversim.model.Platform;
 import ec.util.MersenneTwisterFast;
 
 /**

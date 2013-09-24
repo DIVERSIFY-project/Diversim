@@ -3,8 +3,8 @@ package diversim.strategy.reproduction;
 import java.util.Collections;
 import java.util.List;
 
-import diversim.App;
-import diversim.BipartiteGraph;
+import diversim.model.App;
+import diversim.model.BipartiteGraph;
 import ec.util.MersenneTwisterFast;
 
 public class AppReproductionWithPossibility implements AppReproductionStrategy{

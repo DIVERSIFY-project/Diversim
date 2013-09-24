@@ -1,9 +1,9 @@
 package diversim.strategy.extinction;
 
-import diversim.App;
-import diversim.BipartiteGraph;
-import diversim.Entity;
-import diversim.Platform;
+import diversim.model.App;
+import diversim.model.BipartiteGraph;
+import diversim.model.Entity;
+import diversim.model.Platform;
 
 public class AgingExtinctionStrategy implements AppExtinctionStrategy, PlatformExtinctionStrategy {
 	

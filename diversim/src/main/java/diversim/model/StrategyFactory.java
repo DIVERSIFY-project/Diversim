@@ -1,4 +1,4 @@
-package diversim;
+package diversim.model;
 
 import java.util.ArrayList;
 import java.util.List;

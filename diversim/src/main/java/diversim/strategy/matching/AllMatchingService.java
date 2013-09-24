@@ -2,7 +2,7 @@ package diversim.strategy.matching;
 
 import java.util.*;
 
-import diversim.Entity;
+import diversim.model.Entity;
 import diversim.model.Service;
 
 /**

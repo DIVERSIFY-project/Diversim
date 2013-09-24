@@ -2,8 +2,8 @@ package diversim.strategy.reproduction;
 
 import java.util.List;
 
-import diversim.App;
-import diversim.BipartiteGraph;
+import diversim.model.App;
+import diversim.model.BipartiteGraph;
 
 /**
  * This is the interface that all App reproduction strategies must implement
