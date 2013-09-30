@@ -40,6 +40,10 @@ public class Service implements Comparable<Service> {
         return name;
     }
 
+    public int getID(){
+      return id;
+    }
+
     public boolean equals(Object o) {
         if (o instanceof Service)
             return compareTo((Service) o) == 0;

@@ -1,6 +1,5 @@
 package diversim.model;
 
-import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -10,25 +9,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import ec.util.MersenneTwisterFast;
-import diversim.strategy.AbstractStrategy;
-import diversim.strategy.NullStrategy;
-import diversim.strategy.Strategy;
-import diversim.strategy.application.LinkStrategy;
-import diversim.strategy.fate.AddApp;
-import diversim.strategy.fate.FateAlmighty;
-import diversim.strategy.fate.FateStrategy;
-import diversim.strategy.fate.KillApp;
-import diversim.strategy.platform.CloneMutate;
-import diversim.strategy.platform.Split;
-import diversim.strategy.platform.SplitOrClone;
-import diversim.util.config.Configuration;
+import diversim.model.Service;
 
+import ec.util.MersenneTwisterFast;
 import sim.engine.Schedule;
 import sim.engine.SimState;
 import sim.engine.Steppable;
+import sim.util.*;
 import sim.field.network.*;
-import sim.util.Bag;
 
 
 /**
@@ -38,7 +26,27 @@ import sim.util.Bag;
  * consistent updating (see comments about the start() method).
  * More info in the comments of the methods.
  *
+ * In a nutshell:
+ * We have a two communities of species: platforms and apps
+ * Each specie of platform is description of the set of services it supports.
+ * Each individual platform-instance is an individual of a particular specie.
+ * There can be many species, but a specie with no individual
+ * platform-instances is extinct.
+ *
+ * Each specie of app is a description of the set of services it needs. Each
+ * app-instance is an individual of a particular specie. If an app-instance
+ * cannot find a platform-instance that supports at least its required set of
+ * services, it dies.
+ *
+ * Each platform-instance supports one app-instance.
+ *
+ * For visualization purposes:
+ * We need to show specie-level interactions, perhaps(?) instead of individual
+ * level interactions.
+ *
  * @author Marco Biazzini
+ * @author Vivek Nallur
+ * @author Hui Song
  *
  */
 public class BipartiteGraph extends SimState {
@@ -74,15 +82,18 @@ int maxApps;
  */
 int maxServices;
 
-/**
- * Max number of links a platform bears without triggering some diversification rule.
- */
-int platformMaxLoad;
+int platformMaxLoad = 4; // FIXME
 
 /**
  * Min number of services a platform shall host.
  */
-int platformMinSize;
+int platformMinSize = 3;
+
+/**
+ * x out of 100 possibility to allow an App to reproduce itself.
+ */
+int percentAppReproduce = 1;  // 1%
+int percentPlatformReproduce = 1; // 1%
 
 /**
  * Current number of platforms.
@@ -137,20 +148,18 @@ public ArrayList<Service> services;
 public Network bipartiteNetwork;
 
 /**
- * Invisible model that can affect the history of the simulation by injecting external events.
+ * Invisible agent that can affect the history of the simulation by injecting external events.
  */
-public Fate fate;
 
 
 private int sCounter;
 private int pCounter;
 private int aCounter;
-protected boolean changed;
-protected boolean centralized;
-private boolean manualConf;
-private boolean supervised;
-private static String configPath;
-public int stepsPerCycle;
+public boolean changed;
+
+public static BipartiteGraph INSTANCE = null;
+
+
 
 /**
  * Getters and setters.

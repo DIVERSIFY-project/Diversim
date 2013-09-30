@@ -6,8 +6,10 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import diversim.strategy.matching.MatchingStrategy;
 import diversim.util.IndexedSortable;
-import diversim.strategy.Strategy;
+import diversim.model.Service;
+
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.engine.Stoppable;
@@ -15,7 +17,7 @@ import sim.field.network.Edge;
 import sim.util.Bag;
 
 /**
- * Superclass of any model that
+ * Superclass of any agent that
  * -- has some services;
  * -- is part of the bipartite graph.
  * Thus, for instance platforms and apps extend this class.
@@ -23,128 +25,136 @@ import sim.util.Bag;
  * by double clicking the entity portrayal in the GUI.
  *
  * @author Marco Biazzini
- *
+ * @author Vivek Nallur
  */
 abstract public class Entity implements Steppable, Comparable<Entity> {
 
-/**
- * See BipartiteGraph.start().
- */
-protected int ID;
-
-/**
- * All services hosted by the entity.
- */
-protected ArrayList<Service> services;
-
-/**
- * The number of link touching the entity in the bipartite graph.
- */
-protected int degree;
-
+	/**
+	 * See BipartiteGraph.start().
+	 */
+	protected int ID;
+	
+	/**
+	 * All services hosted by the entity.
+	 */
+	public ArrayList<Service> services;
+	
+	/**
+	 * The number of link touching the entity in the bipartite graph.
+	 */
+	public int degree;
+	
+	/**
+	 * The matching strategy employed by this entity
+	 */
+	MatchingStrategy matcher;
 /**
  * Internal object to be used to kill this entity (i.e. to delete it from the simulator's schedule)
  */
-private Stoppable stoppable;
+	private Stoppable stoppable;
 
-    @SuppressWarnings("rawtypes")
-    protected Strategy strategy;
+		
+
+	Entity(int id) {
+	  ID = id;
+	  services = new ArrayList<Service>();
+	  degree = 0;
+	}
+
+	public boolean matches(Entity target){
+		return this.matcher.matches(this, target);
+	}
+	
+	public void setMatchingStrategy(MatchingStrategy ms){
+			this.matcher = ms;
+	}
+
+	public int getDegree() {
+	  return degree;
+	}
+	
+	
+	public int getSize() {
+	  return services.size();
+	}
+	
+	
+	public String getComposition() {
+	  String res = "";
+	  for (Service s : services) {
+	    res += "s" + s.getName() + "-";
+	  }
+	  return res;
+	}
+	protected void setStoppable(Stoppable s) {
+  		stoppable = s;
+	}
 
 
-@SuppressWarnings("rawtypes")
-public Strategy getStrategy() {
-  return strategy;
-}
+	protected void stop() {
+  		stoppable.stop();
+	}
 
 
-Entity(int id, Strategy<? extends Entity> strategy) {
-  ID = id;
-  services = new ArrayList<Service>();
-  degree = 0;
-    this.strategy = strategy;
-}
-
-
-public int getDegree() {
-  return degree;
-}
-
-
-public int getSize() {
-  return services.size();
-}
-
-
-public String getComposition() {
-  String res = "";
-  for (Service s : services) {
-    res += "s" + s.getName() + "-";
+  /*
+   * Why should an Entity know about the BipartiteGraph?
+   *
+  protected void printoutCurStep(BipartiteGraph g) {
+   System.out.println(g.getPrintoutHeader() + toString());
   }
-  return res;
-}
-
-
-protected void setStoppable(Stoppable s) {
-  stoppable = s;
-}
-
-
-protected void stop() {
-  stoppable.stop();
-}
-
-
-protected void printoutCurStep(BipartiteGraph g) {
-  System.out.println(g.getPrintoutHeader() + toString());
-}
-
+  *
+  */
 
 /**
  * This method is called at any scheduled step by the simulation engine
- * and must contain all the "intelligence" of the model.
- * By including here some diversification rule in a given order, the model can
+ * and must contain all the "intelligence" of the agent.
+ * By including here some diversification rule in a given order, the agent can
  * affect its state and the network topology.
  *
  */
 @Override
 abstract public void step(SimState state);
 
+/*
+ * I don't think we need these, given that we have a MatchingStrategy
+ * implementation
+ *
+   static public <T extends Entity> List<T> findEntityWithAllServices(List<T> ens, List<Service> services) {
+	  List<T> list = new ArrayList<T>();
+	  for (T en : ens) {
+	    if (en.getServices().containsAll(services)) list.add(en);
+	  }
+	  Collections.sort(list, new Comparator<Entity>() {
+	
+	    @Override
+	    public int compare(Entity e, Entity e2) {
+	      return e.getDegree() - e2.getDegree();
+	    }
+	  });
+	  return list;
+	}
+	
+   static public <T extends Entity> List<T> findEntityWithServices(List<T> ens, List<Service> services) {
+	  List<T> list = new ArrayList<T>();
+	  for (T en : ens) {
+	    for (Service service : services) {
+	      if (en.getServices().contains(service)) {
+	        list.add(en);
+	        break;
+	      }
+	    }
+	  }
+	  Collections.sort(list, new Comparator<Entity>() {
+	
+	    @Override
+	    public int compare(Entity e, Entity e2) {
+	      return e.getDegree() - e2.getDegree();
+	    }
+	  });
+	  return list;
+	}
 
-static public <T extends Entity> List<T> findEntityWithAllServices(List<T> ens, List<Service> services) {
-  List<T> list = new ArrayList<T>();
-  for (T en : ens) {
-    if (en.getServices().containsAll(services)) list.add(en);
-  }
-  Collections.sort(list, new Comparator<Entity>() {
-
-    @Override
-    public int compare(Entity e, Entity e2) {
-      return e.getDegree() - e2.getDegree();
-    }
-  });
-  return list;
-}
-
-
-static public <T extends Entity> List<T> findEntityWithServices(List<T> ens, List<Service> services) {
-  List<T> list = new ArrayList<T>();
-  for (T en : ens) {
-    for (Service service : services) {
-      if (en.getServices().contains(service)) {
-        list.add(en);
-        break;
-      }
-    }
-  }
-  Collections.sort(list, new Comparator<Entity>() {
-
-    @Override
-    public int compare(Entity e, Entity e2) {
-      return e.getDegree() - e2.getDegree();
-    }
-  });
-  return list;
-}
+  */
 
 
 /**
