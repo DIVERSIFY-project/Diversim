@@ -27,4 +27,8 @@ public class PlatformSpeciationReproductionByDNA
 		return children;
 	}
 
+    @Override
+    public void evolve(BipartiteGraph graph, Platform agent) {
+      reproduce(agent, graph);
+    }
 }

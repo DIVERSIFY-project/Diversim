@@ -3,7 +3,6 @@ package diversim.strategy.reproduction;
 import java.util.Collections;
 import java.util.List;
 
-import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import ec.util.MersenneTwisterFast;
@@ -27,4 +26,9 @@ public class PlatformReproductionWithPossibility implements PlatformReproduction
 		 else
 			 return Collections.emptyList();
 	}
+
+    @Override
+    public void evolve(BipartiteGraph graph, Platform agent) {
+      reproduce(agent, graph);
+    }
 }

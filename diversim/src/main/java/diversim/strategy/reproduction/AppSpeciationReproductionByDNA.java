@@ -31,6 +31,9 @@ public class AppSpeciationReproductionByDNA implements AppReproductionStrategy {
 		return children;
 	}
 
-	
+    @Override
+    public void evolve(BipartiteGraph graph, App agent) {
+      reproduce(agent, graph);
+    }
 
 }

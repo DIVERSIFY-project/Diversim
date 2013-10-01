@@ -25,4 +25,9 @@ public class AppClonalReproduction implements AppReproductionStrategy{
 			children.add(child);
 			return children;
 		}
+
+    @Override
+    public void evolve(BipartiteGraph graph, App agent) {
+      reproduce(agent, graph);
+    }
 }

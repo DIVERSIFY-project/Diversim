@@ -25,4 +25,9 @@ public class AppReproductionWithPossibility implements AppReproductionStrategy{
 		 else
 			 return Collections.emptyList();
 	}
+
+    @Override
+    public void evolve(BipartiteGraph graph, App agent) {
+      reproduce(agent, graph);
+    }
 }
