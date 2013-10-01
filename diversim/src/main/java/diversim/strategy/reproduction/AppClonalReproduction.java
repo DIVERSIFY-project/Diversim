@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
-import ec.util.MersenneTwisterFast;
+
 
 /**
  * This class implements the clonal reproduction strategy
@@ -19,9 +19,8 @@ public class AppClonalReproduction implements AppReproductionStrategy{
 
 		@Override
 		public List<App> reproduce(App parent, BipartiteGraph state) {
-			MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-		  	App child = new App(rnd.nextInt(), parent.getDependencies());
-		  	child.initStrategies(state);
+			App child = state.createApp(parent.getDependencies());
+			child.initStrategies(state);
 			ArrayList<App> children = new ArrayList<App>();
 			children.add(child);
 			return children;

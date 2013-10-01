@@ -8,8 +8,7 @@ import java.util.HashSet;
 import diversim.model.BipartiteGraph;
 import diversim.model.Service;
 
-import ec.util.MersenneTwisterFast;
-import sim.util.Bag;
+
 /**
  * This class implements the Extension speciation strategy
  * @author Vivek Nallur
@@ -21,9 +20,8 @@ public class DNAExtensionSpeciation implements DNASpeciation{
 				return new ArrayList<Service> (current_dna);
         	Set<Service> current_services = new HashSet<Service>(current_dna);
 			Service new_service;
-			MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
 			do {
-				new_service = all_services.get(rnd.nextInt(all_services.size()));
+				new_service = all_services.get(BipartiteGraph.INSTANCE.random.nextInt(all_services.size()));
 			}while(!current_services.add(new_service));
 			return new ArrayList<Service> (current_services);
         }

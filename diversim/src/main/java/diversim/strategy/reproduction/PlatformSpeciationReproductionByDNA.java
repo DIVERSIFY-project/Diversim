@@ -7,7 +7,6 @@ import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
 
-import ec.util.MersenneTwisterFast;
 
 public class PlatformSpeciationReproductionByDNA
 		implements PlatformReproductionStrategy {
@@ -21,12 +20,9 @@ public class PlatformSpeciationReproductionByDNA
 	@Override
 	public List<Platform> reproduce(Platform parent,
 			BipartiteGraph state) {
-		// TODO Auto-generated method stub
-		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());		
-		List<Service> services = speciator.speciate(parent.services, state.services);		
+		List<Service> services = speciator.speciate(parent.services, state.services);
 		List<Platform> children = new ArrayList<Platform>();
-		Platform pltf = new Platform(rnd.nextInt(), services, parent.getLoadingFactor());
-		pltf.initStategies(state);
+		Platform pltf = state.createPlatform(services, parent.getLoadingFactor());
 		children.add(pltf);
 		return children;
 	}

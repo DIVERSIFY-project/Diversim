@@ -5,7 +5,6 @@ import java.util.List;
 
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
-import ec.util.MersenneTwisterFast;
 
 
 /**
@@ -24,15 +23,9 @@ public class AppSpeciationReproductionByDNA implements AppReproductionStrategy {
 		this.speciator = speciator;
 	}
 
-	
+
 	public List<App> reproduce(App parent, BipartiteGraph state) {
-		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-		
-	  	App child = new App(rnd.nextInt(),
-	  				this.speciator.speciate(parent.getDependencies(), state.services)
-	  			);
-	  	
-	  	child.initStrategies(state);
+		App child = state.createApp(this.speciator.speciate(parent.getDependencies(), state.services));
 		ArrayList<App> children = new ArrayList<App>();
 		children.add(child);
 		return children;

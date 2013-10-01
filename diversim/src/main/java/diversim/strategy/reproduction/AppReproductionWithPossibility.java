@@ -5,7 +5,7 @@ import java.util.List;
 
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
-import ec.util.MersenneTwisterFast;
+
 
 public class AppReproductionWithPossibility implements AppReproductionStrategy{
 	
@@ -19,8 +19,7 @@ public class AppReproductionWithPossibility implements AppReproductionStrategy{
 
 	@Override
 	public List<App> reproduce(App parent, BipartiteGraph state) {
-		 MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-		 if(rnd.nextDouble() < possibility){
+		 if(state.random.nextDouble() < possibility){
 			 return reproducer.reproduce(parent, state);
 		 }
 		 else
