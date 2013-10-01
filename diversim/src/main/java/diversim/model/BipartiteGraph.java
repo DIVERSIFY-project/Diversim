@@ -1,5 +1,6 @@
 package diversim.model;
 
+import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -10,6 +11,18 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import diversim.model.Service;
+import diversim.strategy.AbstractStrategy;
+import diversim.strategy.NullStrategy;
+import diversim.strategy.Strategy;
+import diversim.strategy.application.LinkStrategy;
+import diversim.strategy.fate.AddApp;
+import diversim.strategy.fate.FateAlmighty;
+import diversim.strategy.fate.FateStrategy;
+import diversim.strategy.fate.KillApp;
+import diversim.strategy.platform.CloneMutate;
+import diversim.strategy.platform.Split;
+import diversim.strategy.platform.SplitOrClone;
+import diversim.util.config.Configuration;
 
 import ec.util.MersenneTwisterFast;
 import sim.engine.Schedule;
@@ -64,7 +77,7 @@ int initApps;
 /**
  * Initial total number of services
  */
-int initServices;
+public static int initServices;
 
 
 /**
@@ -150,16 +163,19 @@ public Network bipartiteNetwork;
 /**
  * Invisible agent that can affect the history of the simulation by injecting external events.
  */
-
+public Fate fate;
 
 private int sCounter;
 private int pCounter;
 private int aCounter;
-public boolean changed;
+protected boolean changed;
 
 public static BipartiteGraph INSTANCE = null;
 
-
+protected boolean centralized;
+private boolean supervised;
+private static String configPath;
+public int stepsPerCycle;
 
 /**
  * Getters and setters.
@@ -336,14 +352,11 @@ private void init() {
     if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
     configPath += "/diversim.conf";
     Configuration.setConfig(configPath);
-    manualConf = false;
     stepsPerCycle = centralized ? 2 : 3;
   } catch (IOException e) {
-    System.err.println("WARNING : Configuration file not found. Please proceed with manual configuration.");
-    manualConf = true;
-    supervised = true;
-    stepsPerCycle = 3;
+    System.err.println("ERROR : Configuration file not found.");
   }
+  INSTANCE = this;
 }
 
 
@@ -424,7 +437,7 @@ private void readConfig() {
     initApps = Configuration.getInt("init_apps");
     initPlatforms = Configuration.getInt("init_platforms");
     initServices = Configuration.getInt("init_services");
-  } else if (!manualConf) {
+  } else {
     try {
       Configuration.setConfig(configPath);
     } catch (IOException e) {
@@ -469,10 +482,10 @@ private void readConfig() {
   species = Configuration.getSpecies("platform");
   for (String s : species) {
     size = Math.round(initPlatforms * Configuration.getDouble(s, 1));
-    st = setStrategy(Configuration.getString(s + ".strategy", "null"));
+    st = setStrategy(Configuration.getString(s + ".strategy", "null")); // FIXME
     for (i = 0; i < size && numPlatforms < initPlatforms; i++) {
       //System.err.println("Config : INFO : NEW platform : " +
-      createPlatform(services, (Strategy<Platform>)st);//);
+      createPlatform(services, Configuration.getInt(s + ".load", 1));//);
     }
     System.err.println("Config : INFO : created " + i + " new platforms of type " + s);
   }
@@ -482,10 +495,10 @@ private void readConfig() {
   for (String s : species) {
     size = Math.round(initApps * Configuration.getDouble(s, 1));
     nSer = Configuration.getInt(s + ".services", 0);
-    st = setStrategy(Configuration.getString(s + ".strategy", "Link"));
+    st = setStrategy(Configuration.getString(s + ".strategy", "Link")); // FIXME
     for (i = 0; i < size && numApps < initApps; i++) {
       //System.err.println("Config : INFO : NEW app : " +
-      createApp(selectServices(nSer), (Strategy<App>)st);//);
+      createApp(selectServices(nSer));//);
     }
     System.err.println("Config : INFO : created " + i + " new apps of type " + s);
   }
@@ -527,46 +540,9 @@ public void start() {
   changed = true;
   centralized = false;
 
-  if (manualConf) {
-    stepsPerCycle = 2;
+  readConfig();
 
-    // create services
-    for (int i = 0; i < initServices; i++) {
-      services.add(new Service(++sCounter));
-      numServices++;
-    }
-
-    AbstractStrategy<App> sApp = new LinkStrategy("Link");
-    Split split = new Split("Split", 0.5);
-    CloneMutate clone = new CloneMutate("Clone", 0.1);
-    AbstractStrategy<Platform> combo = new SplitOrClone("Combo", split, 2.0, clone, 1.1);
-    AbstractStrategy<Fate> add = new AddApp("Add", sApp);
-    AbstractStrategy<Fate> kill = new KillApp("Kill");
-    FateStrategy sFate = new FateStrategy("Fate", add, kill);
-    addUnique(entityStrategies, sApp);
-    addUnique(entityStrategies, split);
-    addUnique(entityStrategies, clone);
-    addUnique(entityStrategies, combo);
-    addUnique(entityStrategies, add);
-    addUnique(entityStrategies, kill);
-    addUnique(entityStrategies, sFate);
-
-    // create platforms
-    for (int i = 0; i < initPlatforms; i++) { // all services to each platform
-      createPlatform(services, combo);
-    }
-
-    // create apps
-    for (int i = 0; i < initApps; i++) { // gaussian+random selection of services per app
-      createApp(selectServices(0), sApp);
-    }
-
-    // create the fate model
-    fate = new Fate(sFate);
-  } else
-    readConfig();
-
-  schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
+  schedule.scheduleRepeating(schedule.getTime() + 1.1, new ReConnect(), 1.0);
 
   // An invisible model will printout the state of the graph after all the entities
   // (platform and apps) have done one step, but before the fate might do something.
@@ -581,7 +557,9 @@ public void start() {
         state.schedule.seal();
     }
   };
-  schedule.scheduleRepeating(schedule.getTime() + 1.1, print, 1.0);
+  schedule.scheduleRepeating(schedule.getTime() + 1.2, print, 1.0);
+
+  schedule.scheduleRepeating(schedule.getTime() + 1.3, fate, 1.0);
 }
 
 
@@ -612,6 +590,11 @@ public ArrayList<Service> selectServices(int n) {
 }
 
 
+public Platform createPlatform(List<Service> servs) {
+  return createPlatform(servs, 1);
+}
+
+
 /**
  * This method should always be used by an entity to create a new platform in the simulation.
  * It takes care of adding the platform to the global arrays, to the network and
@@ -619,8 +602,14 @@ public ArrayList<Service> selectServices(int n) {
  * @param servs
  * @return
  */
-public Platform createPlatform(List<Service> servs, Strategy<Platform> strategy) {
-  Platform platform = new Platform(++pCounter, servs, strategy);
+public Platform createPlatform(List<Service> servs, int loadFactor) {
+  Platform platform = new Platform(++pCounter, servs, loadFactor);
+  platform.initStrategies(this);
+  return addPlatform(platform);
+}
+
+
+private Platform addPlatform(Platform platform) {
   bipartiteNetwork.addNode(platform);
   addUnique(platforms, platform);
   numPlatforms++;
@@ -637,8 +626,14 @@ public Platform createPlatform(List<Service> servs, Strategy<Platform> strategy)
  * @param servs
  * @return
  */
-public App createApp(List<Service> servs, Strategy<App> s) {
-  App app = new App(++aCounter, servs, s);
+public App createApp(List<Service> servs) {
+  App app = new App(++aCounter, servs);
+  app.initStrategies(this);
+  return addApp(app);
+}
+
+
+private App addApp(App app) {
   bipartiteNetwork.addNode(app);
   addUnique(apps, app);
   numApps++;
