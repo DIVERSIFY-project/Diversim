@@ -60,7 +60,7 @@ public class ReConnect implements Steppable {
 		for(App app : graph.apps)
 			for(Platform pltf : graph.platforms)
 				if(matcher.matches(app, pltf)){
-					graph.setLink(app, pltf);
+					graph.addEdge(app, pltf, new Integer(1));
 				}
 			
 		

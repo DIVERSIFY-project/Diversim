@@ -32,6 +32,8 @@ import sim.field.network.*;
  */
 public class Platform extends Entity {
 
+  public String action;
+
 	// how many apps can one service on this platform  support.
 	private int APP_PER_SERVICE = 1;
 	
@@ -43,6 +45,9 @@ public class Platform extends Entity {
 	List<PlatformExtinctionStrategy> killers;
 	// ArrayList<Service> supportedServices;
 
+  public String getAction() {
+    return action;
+  }
 	
 	public List<Platform> reproduce(BipartiteGraph state){
 		List<Platform> result = new ArrayList<Platform>();
@@ -79,12 +84,14 @@ public class Platform extends Entity {
 	public Platform(int id, List<Service> servs) {
 	  super(id);
 	  this.services = new ArrayList<Service> (servs);
+	  action = "none";
 	}
 
 	public Platform(int id, List<Service> servs, int loading_factor) {
 	  super(id);
 	  this.services = new ArrayList<Service> (servs);
 	  this.APP_PER_SERVICE = loading_factor;
+	  action = "none";
 	}
 
 	

@@ -115,10 +115,7 @@ abstract public class Entity implements Steppable, Comparable<Entity> {
 @Override
 abstract public void step(SimState state);
 
-/*
- * I don't think we need these, given that we have a MatchingStrategy
- * implementation
- *
+// XXX  START OF CODE FOR LinkStrategy
    static public <T extends Entity> List<T> findEntityWithAllServices(List<T> ens, List<Service> services) {
 	  List<T> list = new ArrayList<T>();
 	  for (T en : ens) {
@@ -154,7 +151,7 @@ abstract public void step(SimState state);
 	  return list;
 	}
 
-  */
+  // XXX END OF CODE FOR LinkStrategy
 
 
 /**
