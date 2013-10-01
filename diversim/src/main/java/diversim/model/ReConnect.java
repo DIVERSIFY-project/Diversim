@@ -3,7 +3,6 @@ package diversim.model;
 import java.util.ArrayList;
 import java.util.List;
 
-import diversim.strategy.matching.AllMatchingService;
 import diversim.strategy.matching.MatchingStrategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;

@@ -18,7 +18,7 @@ import diversim.strategy.reproduction.DNAReductionSpeciation;
 import diversim.strategy.reproduction.PlatformReproductionStrategy;
 import diversim.strategy.reproduction.PlatformReproductionWithPossibility;
 import diversim.strategy.reproduction.PlatformSpeciationReproductionByDNA;
-import ec.util.MersenneTwisterFast;
+
 
 /**
  *
@@ -100,7 +100,6 @@ public class StrategyFactory {
 	private static List<PlatformReproductionStrategy> PLATFORM_REPRODUCTION_STRATEGIES = null;
 	
 	public List<AppExtinctionStrategy> createAppExtinctionStrategies(App app, BipartiteGraph graph){
-		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
 		List<AppExtinctionStrategy> killers = new ArrayList<AppExtinctionStrategy>();
 		killers.add(new AgingExtinctionStrategy(app, graph, APP_MAX_LIFE));
 		killers.add(new AppOrphanExtinctionStrategy());
@@ -109,7 +108,6 @@ public class StrategyFactory {
 	}
 	
 	public List<PlatformExtinctionStrategy> createPlatformExtinctionStrategies(Platform platform, BipartiteGraph graph){
-		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
 		List<PlatformExtinctionStrategy> killers = new ArrayList<PlatformExtinctionStrategy>();
 		
 		PlatformExtinctionStrategy lifekiller = new AgingExtinctionStrategy(platform, graph, PLATFORM_MAX_LIFE);

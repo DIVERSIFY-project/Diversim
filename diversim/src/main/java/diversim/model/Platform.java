@@ -5,15 +5,12 @@ import java.util.List;
 import java.util.Set;
 import java.util.HashSet;
 
-import diversim.strategy.extinction.AppExtinctionStrategy;
+
 import diversim.strategy.extinction.PlatformExtinctionStrategy;
 import diversim.strategy.reproduction.PlatformReproductionStrategy;
 import diversim.model.Service;
 
-import ec.util.MersenneTwisterFast;
 import sim.engine.SimState;
-import sim.util.Bag;
-import sim.field.network.*;
 
 
 /**
@@ -105,17 +102,10 @@ public class Platform extends Entity {
 	
 	  BipartiteGraph graph = (BipartiteGraph)state;
 	
-	  if(dieOrNot(graph))
-		  return;
-	
-	  MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-	  List<Platform> pltfs = reproduce(graph);
-	  for(Platform pltf : pltfs){
-		  graph.addPlatform(pltf);
-	  }
-	
-	
-	  System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
+	if(dieOrNot(graph))
+		return;
+
+	System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
 	}
 	
 
@@ -125,7 +115,7 @@ public class Platform extends Entity {
 	  return res;
 	}
 	
-	public void initStategies(BipartiteGraph graph){
+	public void initStrategies(BipartiteGraph graph){
 		this.reproducers = StrategyFactory.fINSTANCE
 				.createPlatformReproductionStrategy(this, graph);
 		this.killers = StrategyFactory.fINSTANCE

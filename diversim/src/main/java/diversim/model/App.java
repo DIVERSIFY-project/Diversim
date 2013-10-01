@@ -10,7 +10,6 @@ import diversim.strategy.extinction.AppExtinctionStrategy;
 import diversim.strategy.reproduction.AppReproductionStrategy;
 import diversim.model.Service;
 
-import ec.util.MersenneTwisterFast;
 import sim.engine.SimState;
 
 /**
@@ -105,21 +104,15 @@ public class App extends Entity {
 	
 	// TODO something
 	
-	  if(dieOrNot(graph)){
-		  return;
-	  }
+	if(dieOrNot(graph)){
+		return;
+	}
 	
-	  MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
+	List<App> newApps = reproduce(graph);
 	
-	
-	  List<App> newApps = reproduce(graph);
-	  for(App app : newApps){
-		  graph.addApp(app);
-	  }
-	
-	  redundancy = ((double)degree) / graph.numPlatforms;
-	  if(redundancy < 0) redundancy = 0;
-	  System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
+	redundancy = ((double)degree) / graph.numPlatforms;
+	if(redundancy < 0) redundancy = 0;
+	System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
 	}
 	
 	
