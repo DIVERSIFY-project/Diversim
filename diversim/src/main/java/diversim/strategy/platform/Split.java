@@ -52,8 +52,8 @@ public Split(String n, double r) {
 
         // split the platform and keep here only the most shared half of the services
   @SuppressWarnings("unchecked")
-  Platform p = graph.createPlatform(sortedServices.subList(splitIndex, sortedServices.size()),
-      (Strategy<Platform>)platform.getStrategy());
+  Platform p = graph.createPlatform(sortedServices.subList(splitIndex, sortedServices.size()));
+        p.setStrategy((Strategy<Platform>)platform.getStrategy());
         graph.createLinks(p, ents);
 
         for (int i = splitIndex; i < sortedServices.size(); i++) {

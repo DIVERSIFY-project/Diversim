@@ -6,6 +6,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
+import diversim.strategy.Strategy;
 import diversim.strategy.matching.MatchingStrategy;
 import diversim.util.IndexedSortable;
 import diversim.model.Service;
@@ -53,13 +54,27 @@ abstract public class Entity implements Steppable, Comparable<Entity> {
  */
 	private Stoppable stoppable;
 
-		
+
+protected Strategy<? extends Entity> strategy;
+
+
+public Strategy<? extends Entity> getStrategy() {
+  return strategy;
+}
+
 
 	Entity(int id) {
 	  ID = id;
 	  services = new ArrayList<Service>();
 	  degree = 0;
+	  strategy = null;
 	}
+
+  public void setStrategy(Strategy<? extends Entity> s) {
+    strategy = s;
+  }
+
+  abstract public void initStrategies(BipartiteGraph graph);
 
 	public boolean matches(Entity target){
 		return this.matcher.matches(this, target);

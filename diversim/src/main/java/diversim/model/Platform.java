@@ -8,7 +8,6 @@ import java.util.HashSet;
 
 import diversim.strategy.extinction.PlatformExtinctionStrategy;
 import diversim.strategy.reproduction.PlatformReproductionStrategy;
-import diversim.model.Service;
 
 import sim.engine.SimState;
 

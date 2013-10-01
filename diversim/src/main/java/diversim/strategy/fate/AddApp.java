@@ -46,7 +46,8 @@ public class AddApp extends AbstractStrategy<Fate> {
         if (graph.schedule.getSteps() >= timing.get(0)) {
             timing.remove(0);
             if (graph.getNumApps() < graph.getMaxApps()) {
-              App app = graph.createApp(graph.selectServices(0), newAppStrategy);
+              App app = graph.createApp(graph.selectServices(0));
+              app.setStrategy(newAppStrategy);
               //app.step(graph); // this is mandatory if Fate kills apps with 0 degree at each cycle
               System.out.println(graph.getPrintoutHeader() + "Fate : ADDED " + app.toString());
             }
