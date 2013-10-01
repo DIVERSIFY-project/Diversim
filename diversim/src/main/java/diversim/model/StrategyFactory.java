@@ -60,11 +60,11 @@ public class StrategyFactory {
 		result.add(new AppReproductionWithPossibility(0.01, new AppClonalReproduction()));
 		result.add(new AppReproductionWithPossibility(0.01,
 				new AppSpeciationReproductionByDNA(
-					new DNAExtensionSpeciation()	
+					new DNAExtensionSpeciation()
 						)));
 		result.add(new AppReproductionWithPossibility(0.01,
 				new AppSpeciationReproductionByDNA(
-					new DNAReductionSpeciation()	
+					new DNAReductionSpeciation()
 						)));
 		APP_REPRODUCTION_STRATEGIES = result;
 		return result;

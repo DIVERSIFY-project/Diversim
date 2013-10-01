@@ -8,10 +8,10 @@ import diversim.model.BipartiteGraph;
 
 
 public class AppReproductionWithPossibility implements AppReproductionStrategy{
-	
+
 	private double possibility = 0;
 	private AppReproductionStrategy reproducer = null;
-	
+
 	public AppReproductionWithPossibility(double possiblility, AppReproductionStrategy reproducer){
 		this.possibility = possiblility;
 		this.reproducer = reproducer;
@@ -19,11 +19,11 @@ public class AppReproductionWithPossibility implements AppReproductionStrategy{
 
 	@Override
 	public List<App> reproduce(App parent, BipartiteGraph state) {
-		 if(state.random.nextDouble() < possibility){
-			 return reproducer.reproduce(parent, state);
-		 }
-		 else
-			 return Collections.emptyList();
+		if(state.random.nextDouble() < possibility){
+			return reproducer.reproduce(parent, state);
+		}
+		else
+			return Collections.emptyList();
 	}
 
     @Override

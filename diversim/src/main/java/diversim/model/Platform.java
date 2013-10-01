@@ -1,15 +1,13 @@
 package diversim.model;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
-
-
-import diversim.strategy.extinction.PlatformExtinctionStrategy;
-import diversim.strategy.reproduction.PlatformReproductionStrategy;
 
 import sim.engine.SimState;
+import diversim.strategy.extinction.PlatformExtinctionStrategy;
+import diversim.strategy.reproduction.PlatformReproductionStrategy;
 
 
 /**
