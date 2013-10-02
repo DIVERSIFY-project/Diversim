@@ -102,7 +102,7 @@ public class Platform extends Entity {
 	if(dieOrNot(graph))
 		return;
 
-	System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
+	printoutCurStep(graph);
 	}
 	
 

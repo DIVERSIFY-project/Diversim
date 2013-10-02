@@ -8,7 +8,6 @@ import java.util.Set; // Interface
 
 import diversim.strategy.extinction.AppExtinctionStrategy;
 import diversim.strategy.reproduction.AppReproductionStrategy;
-import diversim.model.Service;
 
 import sim.engine.SimState;
 
@@ -112,7 +111,7 @@ public class App extends Entity {
 	
 	redundancy = ((double)degree) / graph.numPlatforms;
 	if(redundancy < 0) redundancy = 0;
-	System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
+	printoutCurStep(graph);
 	}
 	
 	

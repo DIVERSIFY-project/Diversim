@@ -9,7 +9,6 @@ import java.util.List;
 import diversim.strategy.Strategy;
 import diversim.strategy.matching.MatchingStrategy;
 import diversim.util.IndexedSortable;
-import diversim.model.Service;
 
 import sim.engine.SimState;
 import sim.engine.Steppable;
@@ -111,14 +110,10 @@ public Strategy<? extends Entity> getStrategy() {
 	}
 
 
-  /*
-   * Why should an Entity know about the BipartiteGraph?
-   *
-  protected void printoutCurStep(BipartiteGraph g) {
-   System.out.println(g.getPrintoutHeader() + toString());
-  }
-  *
-  */
+protected void printoutCurStep(BipartiteGraph g) {
+	System.out.println(g.getPrintoutHeader() + toString());
+}
+
 
 /**
  * This method is called at any scheduled step by the simulation engine
@@ -227,17 +222,20 @@ public String toString() {
   return res;
 }
 
-    public ArrayList<Service> getServices() {
-        return services;
-    }
 
-    public void incDegree() {
-        degree++;
-    }
+public ArrayList<Service> getServices() {
+	return services;
+}
 
-    public void decDegree() {
-        degree--;
-    }
+
+public void incDegree() {
+	degree++;
+}
+
+
+public void decDegree() {
+	degree--;
+}
 
 
 public int compareTo(Entity e) {
