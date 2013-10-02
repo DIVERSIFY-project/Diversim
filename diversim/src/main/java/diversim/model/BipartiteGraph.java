@@ -10,7 +10,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import diversim.model.Service;
 import diversim.strategy.AbstractStrategy;
 import diversim.strategy.NullStrategy;
 import diversim.strategy.Strategy;
@@ -352,11 +351,12 @@ private void init() {
     if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
     configPath += "/diversim.conf";
     Configuration.setConfig(configPath);
-    stepsPerCycle = centralized ? 2 : 3;
+    stepsPerCycle = 0;
+    INSTANCE = this;
   } catch (IOException e) {
     System.err.println("ERROR : Configuration file not found.");
+    System.exit(1);
   }
-  INSTANCE = this;
 }
 
 
@@ -505,13 +505,14 @@ private void readConfig() {
 
   // create the fate model
   if (centralized) {
-    stepsPerCycle = 2;
     st = setStrategy("Almighty");
   } else {
-    stepsPerCycle = 3;
-    st = setStrategy(Configuration.getString("fate"));
+    st = setStrategy(Configuration.getString("fate", null));
   }
-  fate = new Fate((Strategy<Fate>)st);
+  if (st != null)
+    fate = new Fate((Strategy<Fate>)st);
+  else
+    fate = null;
 
   System.err.println("Config : INFO : the following strategies have been initialized :");
   printAny(entityStrategies, "\n", System.err);
@@ -539,27 +540,35 @@ public void start() {
   aCounter = 0;
   changed = true;
   centralized = false;
+  stepsPerCycle = 0;
 
   readConfig();
+  if (!centralized) stepsPerCycle++;
 
   schedule.scheduleRepeating(schedule.getTime() + 1.1, new ReConnect(), 1.0);
+  stepsPerCycle++;
+
+  if (fate != null) {
+    schedule.scheduleRepeating(schedule.getTime() + 1.3, fate, 1.0);
+    stepsPerCycle++;
+  }
 
   // An invisible model will printout the state of the graph after all the entities
   // (platform and apps) have done one step, but before the fate might do something.
   // Thus at each epoch the order of the events is: all the entities (randomly shuffled),
   // then the network printout, then fate.
+  stepsPerCycle++;
   Steppable print = new Steppable() {
     public void step(SimState state) {
       if (changed)
         printoutNetwork();
       changed = false;
-      if ((state.schedule.getSteps() + 2) >= getMaxCycles() * stepsPerCycle)
+      if ((state.schedule.getSteps() + stepsPerCycle) >= getMaxCycles() * stepsPerCycle)
         state.schedule.seal();
     }
   };
   schedule.scheduleRepeating(schedule.getTime() + 1.2, print, 1.0);
 
-  schedule.scheduleRepeating(schedule.getTime() + 1.3, fate, 1.0);
 }
 
 
