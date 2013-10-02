@@ -2,6 +2,7 @@ package diversim.strategy.fate;
 
 import diversim.model.BipartiteGraph;
 import diversim.model.Fate;
+import diversim.model.Platform;
 import diversim.strategy.AbstractStrategy;
 
 /**
@@ -10,13 +11,20 @@ import diversim.strategy.AbstractStrategy;
  * Time: 2:33 PM
  */
 public class KillPlatform  extends AbstractStrategy<Fate> {
-    protected KillPlatform(String n) {
-    super(n);
-    // TODO Auto-generated constructor stub
-  }
+protected KillPlatform(String n) {
+	super(n);
+}
 
-    @Override
-    public void evolve(BipartiteGraph graph, Fate agent) {
-        //TODO
-    }
+public KillPlatform() {
+	super("KillStrategy");
+}
+
+@Override
+public void evolve(BipartiteGraph graph, Fate agent) {
+	Platform a = graph.platforms.get(graph.random.nextInt(graph.getNumApps()));
+	graph.removeEntity(graph.platforms, a);
+}
+
+@Override
+public void init(String stratId) {}
 }

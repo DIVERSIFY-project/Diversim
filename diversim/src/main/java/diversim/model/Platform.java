@@ -33,6 +33,16 @@ int maxSize; // TODO
         return action;
     }
 
+public Platform() {}
+
+public void init(String entityId, BipartiteGraph graph)  {
+	super.init(entityId, graph);
+	for (Service s : graph.selectServices(graph.getMaxServices())) {
+		BipartiteGraph.addUnique(services, s);
+	}
+	pressure = 0;
+	action = "none";
+}
 
     public Platform(int id, List<Service> servs, Strategy<Platform> strategy) {
         super(id,strategy);

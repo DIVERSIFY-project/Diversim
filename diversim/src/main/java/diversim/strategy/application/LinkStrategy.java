@@ -15,9 +15,10 @@ import java.util.List;
  */
 public class LinkStrategy extends AbstractStrategy<App> {
 
-    public LinkStrategy(String n) {
-    super(n);
-  }
+public LinkStrategy() {
+	super("LinkStrategy");
+}
+
 
     public void evolve(BipartiteGraph graph, App e) {
         removeLinkFor(graph,e);
@@ -29,6 +30,11 @@ public class LinkStrategy extends AbstractStrategy<App> {
             for(Platform platform : getPlatform(graph, e.getServices()))
               graph.addEdge(e, platform, platform.countCommonServices(e, null));
     }
+
+@Override
+public void init(String stratId) {
+	this.name = "LinkStrategy";
+}
 
 
 protected void removeLinkFor(BipartiteGraph graph, App e) {

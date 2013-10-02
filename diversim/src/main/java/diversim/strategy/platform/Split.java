@@ -20,6 +20,10 @@ public class Split extends AbstractStrategy<Platform> {
 
 double ratio;
 
+public Split() {
+	super("Split");
+}
+
 public Split(String n, double r) {
   super(n);
   ratio = r;
@@ -52,8 +56,9 @@ public Split(String n, double r) {
 
         // split the platform and keep here only the most shared half of the services
   @SuppressWarnings("unchecked")
-  Platform p = graph.createPlatform(sortedServices.subList(splitIndex, sortedServices.size()),
-      (Strategy<Platform>)platform.getStrategy());
+  		String kind = graph.apps.get(0).getKind();
+		Platform p = graph.createPlatform(kind);
+		p.setServices(sortedServices.subList(splitIndex, sortedServices.size()));
         graph.createLinks(p, ents);
 
         for (int i = splitIndex; i < sortedServices.size(); i++) {

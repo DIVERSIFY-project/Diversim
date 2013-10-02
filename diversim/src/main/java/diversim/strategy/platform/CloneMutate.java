@@ -21,6 +21,9 @@ public class CloneMutate extends AbstractStrategy<Platform> {
 
 double factor;
 
+public CloneMutate() {
+	super("Clone");
+}
 
 public CloneMutate(String n, double m) {
   super(n);
@@ -60,7 +63,9 @@ public CloneMutate(String n, double m) {
         for (i = csize - 1; i >= 0; i--)
           servs.remove(((Integer)set[i]).intValue());
         @SuppressWarnings("unchecked")
-        Platform p = graph.createPlatform(servs, platform.getStrategy());
+		String kind = graph.platforms.get(0).getKind();
+		Platform p = graph.createPlatform(kind);
+		graph.createLinks(p, ents);
         graph.createLinks(p, ents);
 
         // remove different size * factor services from this platform

@@ -46,7 +46,7 @@ protected String kind;
 /**
  * All services hosted by the entity.
  */
-protected ArrayList<Service> services;
+protected List<Service> services;
 
 /**
  * The number of link touching the entity in the bipartite graph.
@@ -67,6 +67,7 @@ public Strategy getStrategy() {
   return strategy;
 }
 
+public Entity() {}
 
 Entity(int id, Strategy<? extends Entity> strategy) {
   ID = id;
@@ -75,7 +76,7 @@ Entity(int id, Strategy<? extends Entity> strategy) {
     this.strategy = strategy;
 }
 
-    public void init(String entityId, BipartiteGraph graph) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+    public void init(String entityId, BipartiteGraph graph) {
         ID = counter;
         counter++;
         kind = entityId;
@@ -224,7 +225,7 @@ public String toString() {
   return res;
 }
 
-    public ArrayList<Service> getServices() {
+    public List<Service> getServices() {
         return services;
     }
 
@@ -236,6 +237,9 @@ public String toString() {
         degree--;
     }
 
+public String getKind() {
+	return kind;
+}
 
 public int compareTo(Entity e) {
   return ID - e.ID;
@@ -246,5 +250,9 @@ public boolean equals(Object o) {
   if (o instanceof Entity)
     return compareTo((Entity)o) == 0;
   return false;
+}
+
+public void setServices(List<Service> services) {
+	this.services = services;
 }
 }

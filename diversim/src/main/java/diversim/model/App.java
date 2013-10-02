@@ -4,6 +4,7 @@ package diversim.model;
 import java.util.List;
 
 import diversim.strategy.Strategy;
+import diversim.util.config.Configuration;
 import sim.engine.SimState;
 
 /**
@@ -28,6 +29,16 @@ public class App extends Entity {
         }
     }
 
+public App() {};
+
+@Override
+public void init(String entityId, BipartiteGraph graph) {
+	super.init(entityId, graph);
+	int nSer = Configuration.getInt(entityId + ".services");
+	for (Service s : graph.selectServices(nSer)) {
+		BipartiteGraph.addUnique(services, s);
+	}
+}
 
     /*
      * (non-Javadoc)

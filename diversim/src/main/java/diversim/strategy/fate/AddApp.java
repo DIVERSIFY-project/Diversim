@@ -22,12 +22,12 @@ public class AddApp extends AbstractStrategy<Fate> {
     private ArrayList<Integer> timing;
     private Strategy<App> newAppStrategy;
 
-    public AddApp(String s, Strategy<App> newStrategy) {
-      super(s);
-      newAppStrategy = newStrategy;
-      timing = new ArrayList<Integer>(); // zipf-distributed sequence of timesteps.
-      counter = 0; // how many times a new value has been added to timing
-    }
+public AddApp() {
+	super("AddStrategy");
+
+	timing = new ArrayList<Integer>(); // zipf-distributed sequence of timesteps.
+	counter = 0; // how many times a new value has been added to timing
+}
 
     @Override
     public void evolve(BipartiteGraph graph, Fate agent) {
@@ -46,7 +46,8 @@ public class AddApp extends AbstractStrategy<Fate> {
         if (graph.schedule.getSteps() >= timing.get(0)) {
             timing.remove(0);
             if (graph.getNumApps() < graph.getMaxApps()) {
-              App app = graph.createApp(graph.selectServices(0), newAppStrategy);
+				String kind = graph.apps.get(0).getKind();
+				App app = graph.createApp(kind);
               //app.step(graph); // this is mandatory if Fate kills apps with 0 degree at each cycle
               System.out.println(graph.getPrintoutHeader() + "Fate : ADDED " + app.toString());
             }
