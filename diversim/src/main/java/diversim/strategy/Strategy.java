@@ -16,4 +16,6 @@ public interface Strategy<T extends Steppable> {
      */
     public void evolve(BipartiteGraph graph, T agent);
 
+void init(String stratId);
+
 }

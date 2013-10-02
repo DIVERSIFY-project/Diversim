@@ -14,6 +14,8 @@ import sim.util.Bag;
 import diversim.strategy.Strategy;
 import diversim.strategy.matching.MatchingStrategy;
 import diversim.util.IndexedSortable;
+import diversim.util.config.Configuration;
+
 
 /**
  * Superclass of any agent that
@@ -47,6 +49,17 @@ abstract public class Entity implements Steppable, Comparable<Entity> {
 	 * The matching strategy employed by this entity
 	 */
 	MatchingStrategy matcher;
+
+/**
+ * counter for all entity
+ */
+protected static int counter;
+
+/**
+ * kind of entity (all entities kinds are defined in the conf file)
+ */
+protected String kind;
+
 /**
  * Internal object to be used to kill this entity (i.e. to delete it from the simulator's schedule)
  */
@@ -55,6 +68,14 @@ abstract public class Entity implements Steppable, Comparable<Entity> {
 
 protected Strategy<? extends Entity> strategy;
 
+    public void init(String entityId, BipartiteGraph graph) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+        ID = counter;
+        counter++;
+        kind = entityId;
+        services = new ArrayList<Service>();
+        strategy = BipartiteGraph.getStrategy(Configuration.getString(kind + ".strategy"));
+        degree = 0;
+    }
 
 public Strategy<? extends Entity> getStrategy() {
   return strategy;

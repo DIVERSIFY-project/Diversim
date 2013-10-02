@@ -39,4 +39,6 @@ public String toString() {
   return name + " ( " + this.getClass().getSimpleName() + "#" + this.hashCode() + " )";
 }
 
+
+public void init(String stratId) {}
 }
