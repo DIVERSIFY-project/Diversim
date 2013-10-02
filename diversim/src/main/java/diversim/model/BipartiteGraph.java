@@ -10,6 +10,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import sim.engine.Schedule;
+import sim.engine.SimState;
+import sim.engine.Steppable;
+import sim.field.network.Edge;
+import sim.field.network.Network;
+import sim.util.Bag;
 import diversim.strategy.AbstractStrategy;
 import diversim.strategy.NullStrategy;
 import diversim.strategy.Strategy;
@@ -22,13 +28,7 @@ import diversim.strategy.platform.CloneMutate;
 import diversim.strategy.platform.Split;
 import diversim.strategy.platform.SplitOrClone;
 import diversim.util.config.Configuration;
-
 import ec.util.MersenneTwisterFast;
-import sim.engine.Schedule;
-import sim.engine.SimState;
-import sim.engine.Steppable;
-import sim.util.*;
-import sim.field.network.*;
 
 
 /**

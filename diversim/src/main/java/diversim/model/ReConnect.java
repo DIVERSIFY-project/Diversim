@@ -1,8 +1,8 @@
 package diversim.model;
 
-import diversim.strategy.matching.MatchingStrategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;
+import diversim.strategy.matching.MatchingStrategy;
 
 /**
  *

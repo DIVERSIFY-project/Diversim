@@ -6,15 +6,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import diversim.strategy.Strategy;
-import diversim.strategy.matching.MatchingStrategy;
-import diversim.util.IndexedSortable;
-
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.engine.Stoppable;
 import sim.field.network.Edge;
 import sim.util.Bag;
+import diversim.strategy.Strategy;
+import diversim.strategy.matching.MatchingStrategy;
+import diversim.util.IndexedSortable;
 
 /**
  * Superclass of any agent that

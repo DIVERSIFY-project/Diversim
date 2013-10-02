@@ -1,15 +1,14 @@
 package diversim.model;
 
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.Set; // Interface
-
-import diversim.strategy.extinction.AppExtinctionStrategy;
-import diversim.strategy.reproduction.AppReproductionStrategy;
+import java.util.List;
+import java.util.Set;
 
 import sim.engine.SimState;
+import diversim.strategy.extinction.AppExtinctionStrategy;
+import diversim.strategy.reproduction.AppReproductionStrategy;
 
 /**
  * Apps rely on specific services to function
