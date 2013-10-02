@@ -39,7 +39,7 @@ public class App extends Entity {
         BipartiteGraph graph = (BipartiteGraph) state;
         strategy.evolve(graph,this);
 
-        redundancy = ((double) degree) / graph.numPlatforms;
+        redundancy = ((double) degree) / graph.getNumPlatforms();
         if (redundancy > 1.0) redundancy = 1.0;
         printoutCurStep(graph);
     }

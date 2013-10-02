@@ -84,21 +84,6 @@ int platformMaxLoad;
  */
 int platformMinSize;
 
-/**
- * Current number of platforms.
- */
-public int numPlatforms;
-
-/**
- * Current number of apps.
- */
-public int numApps;
-
-/**
- * Current number of services.
- */
-public int numServices;
-
 
 /**
  * Maximum number of scheduled events per agent.
@@ -238,18 +223,27 @@ public void setPlatformMinSize(int minsize) {
 }
 
 
+/**
+ * Current number of platforms.
+ */
 public int getNumPlatforms() {
-  return numPlatforms;
+	return platforms.size();
 }
 
 
+/**
+ * Current number of apps.
+ */
 public int getNumApps() {
-  return numApps;
+	return apps.size();
 }
 
 
+/**
+ * Current number of services.
+ */
 public int getNumServices() {
-  return numServices;
+	return services.size();
 }
 
 
@@ -266,48 +260,48 @@ public void setMaxCycles(double d) {
 public double getAvgPlatformDegree() {
   int sum = 0;
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
-      || numPlatforms == 0)
+      || getNumPlatforms() == 0)
     return 0.0;
   for (Platform p : platforms) {
     sum += p.getDegree();
   }
-  return sum / numPlatforms;
+  return sum / getNumPlatforms();
 }
 
 
 public double getAvgAppDegree() {
   int sum = 0;
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
-      || numApps == 0)
+      || getNumApps() == 0)
     return 0.0;
   for (App a : apps) {
     sum += a.getDegree();
   }
-  return sum / numApps;
+  return sum / getNumApps();
 }
 
 
 public double getAvgPlatformSize() {
   int sum = 0;
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
-      || numPlatforms == 0)
+      || getNumPlatforms() == 0)
     return 0.0;
   for (Platform p : platforms) {
     sum += p.getSize();
   }
-  return sum / numPlatforms;
+  return sum / getNumPlatforms();
 }
 
 
 public double getAvgAppSize() {
   int sum = 0;
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
-      || numApps == 0)
+      || getNumApps() == 0)
     return 0.0;
   for (App a : apps) {
     sum += a.getSize();
   }
-  return sum / numApps;
+  return sum / getNumApps();
 }
 
 
@@ -323,9 +317,9 @@ private void init() {
   services = new ArrayList<Service>();
   entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
   try {
-    configPath = System.getenv().get("PWD");
-    if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
-    configPath += "/diversim.conf";
+//    configPath = System.getenv().get("PWD");
+//    if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
+    configPath = "diversim.conf";
     Configuration.setConfig(configPath);
     manualConf = false;
     stepsPerCycle = centralized ? 2 : 3;
@@ -447,10 +441,9 @@ private void readConfig() {
     size = Math.round(initServices * Configuration.getDouble(s, 1));
     ser = ServiceState.valueOf(Configuration.getString(s + ".state", "OK"));
     ver = Configuration.getInt(s + ".version", 1);
-    for (i = 0; i < size && numServices < initServices; i++) {
+    for (i = 0; i < size && getNumServices() < initServices; i++) {
       ++sCounter;
       services.add(new Service(sCounter, sCounter, ver, ser));
-      numServices++;
     }
     System.err.println("Config : INFO : created " + i + " new services of type " + s);
     //printAny(services.subList((numServices - i), numServices), "\n", System.err);
@@ -461,7 +454,7 @@ private void readConfig() {
   for (String s : species) {
     size = Math.round(initPlatforms * Configuration.getDouble(s, 1));
     st = setStrategy(Configuration.getString(s + ".strategy", "null"));
-    for (i = 0; i < size && numPlatforms < initPlatforms; i++) {
+    for (i = 0; i < size && getNumPlatforms() < initPlatforms; i++) {
       //System.err.println("Config : INFO : NEW platform : " +
       createPlatform(services, (Strategy<Platform>)st);//);
     }
@@ -474,7 +467,7 @@ private void readConfig() {
     size = Math.round(initApps * Configuration.getDouble(s, 1));
     nSer = Configuration.getInt(s + ".services", 0);
     st = setStrategy(Configuration.getString(s + ".strategy", "Link"));
-    for (i = 0; i < size && numApps < initApps; i++) {
+    for (i = 0; i < size && getNumApps() < initApps; i++) {
       //System.err.println("Config : INFO : NEW app : " +
       createApp(selectServices(nSer), (Strategy<App>)st);//);
     }
@@ -509,9 +502,6 @@ public void start() {
   services.clear();
   bipartiteNetwork.clear();
   entityStrategies.clear();
-  numPlatforms = 0;
-  numApps = 0;
-  numServices = 0;
   sCounter = 0;
   pCounter = 0;
   aCounter = 0;
@@ -524,7 +514,6 @@ public void start() {
     // create services
     for (int i = 0; i < initServices; i++) {
       services.add(new Service(++sCounter));
-      numServices++;
     }
 
     AbstractStrategy<App> sApp = new LinkStrategy("Link");
@@ -585,7 +574,7 @@ public static void main(String[] args) {
 /**
  * Returns a random selection of services. The number of services returned is specified by the given argument.
  * If the argument is <= 0, a gaussian-distributed number of randomly selected services is returned.
- * The number of services returned is always at least 1 and at most {@link #numServices}.
+ * The number of services returned is always at least 1 and at most {@link #getNumServices()}.
  *
  * @param n
  *          Number of services to return.
@@ -593,10 +582,10 @@ public static void main(String[] args) {
  */
 public ArrayList<Service> selectServices(int n) {
   ArrayList<Service> servs = new ArrayList<Service>();
-  if (n < 1) n = (int)((random.nextGaussian() + 3) / 6 * (numServices - 1) + 1);
-  n = n < 1 ? 1 : n > numServices ? numServices : n;
+  if (n < 1) n = (int)((random.nextGaussian() + 3) / 6 * (getNumServices() - 1) + 1);
+  n = n < 1 ? 1 : n > getNumServices() ? getNumServices() : n;
   for (int j = 0; j < n; j++) {
-    servs.add(services.get(random.nextInt(numServices)));
+    servs.add(services.get(random.nextInt(getNumServices())));
   }
 
   return servs;
@@ -614,7 +603,6 @@ public Platform createPlatform(List<Service> servs, Strategy<Platform> strategy)
   Platform platform = new Platform(++pCounter, servs, strategy);
   bipartiteNetwork.addNode(platform);
   addUnique(platforms, platform);
-  numPlatforms++;
   changed = true;
   if (!centralized) platform.setStoppable(schedule.scheduleRepeating(platform));
   return platform;
@@ -632,7 +620,6 @@ public App createApp(List<Service> servs, Strategy<App> s) {
   App app = new App(++aCounter, servs, s);
   bipartiteNetwork.addNode(app);
   addUnique(apps, app);
-  numApps++;
   changed = true;
   if (!centralized) app.setStoppable(schedule.scheduleRepeating(app));
   return app;
@@ -843,10 +830,6 @@ static public void printAny(Object data, String trailer, PrintStream out) {
          ((Entity)((Edge)o).getOtherNode(entity)).decDegree();
        }
        bipartiteNetwork.removeNode(entity);
-       if (entity instanceof App)
-         numApps--;
-       else if (entity instanceof Platform)
-         numPlatforms--;
        changed = true;
     }
 
