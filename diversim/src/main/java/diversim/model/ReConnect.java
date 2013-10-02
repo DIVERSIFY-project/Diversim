@@ -1,8 +1,5 @@
 package diversim.model;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import diversim.strategy.matching.MatchingStrategy;
 import sim.engine.SimState;
 import sim.engine.Steppable;
@@ -22,39 +19,27 @@ public class ReConnect implements Steppable {
 	@Override
 	public void step(SimState state) {
 		BipartiteGraph graph = (BipartiteGraph) state;
-		
-		List<App> dead = new ArrayList<App>();
-		for(App a : graph.apps){
-			if(a.dead){
-				dead.add(a);
-				graph.bipartiteNetwork.removeNode(a);
-				
-			}
+
+	App a;
+	for (int i = graph.getNumApps() - 1; i >= 0; i--) {
+		a = graph.apps.get(i);
+		if (a.dead) {
+			graph.removeEntity(graph.apps, a);
 		}
-		
-		graph.apps.removeAll(dead);
-		
-		List<Platform> deadp = new ArrayList<Platform>();
-		for(Platform p : graph.platforms){
-			if(p.dead){
-				deadp.add(p);
-				graph.bipartiteNetwork.removeNode(p);
-			}
+	}
+
+	Platform p;
+	for (int i = graph.getNumPlatforms() - 1; i >= 0; i--) {
+		p = graph.platforms.get(i);
+		if (p.dead) {
+			graph.removeEntity(graph.platforms, p);
 		}
-		
-		graph.platforms.removeAll(deadp);
+	}
+
 		System.out.println(String.format("Step %d : apps: %d, platforms: %d",
 				graph.schedule.getSteps(), graph.apps.size(), graph.platforms.size()));
-		
-		
-		
-		
-		for(App app:graph.apps)
-			app.degree = 0;
-		for(Platform pltf : graph.platforms)
-			pltf.degree = 0;
-		
-		graph.bipartiteNetwork.removeAllEdges();
+
+	graph.removeAllEdges();
 		
 		for(App app : graph.apps)
 			for(Platform pltf : graph.platforms)

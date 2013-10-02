@@ -660,6 +660,15 @@ public void removeEdge(Entity e, Edge edge) {
 }
 
 
+public void removeAllEdges() {
+	bipartiteNetwork.removeAllEdges();
+	for (Object n : bipartiteNetwork.getAllNodes()) {
+		((Entity)n).degree = 0;
+	}
+	changed = true;
+}
+
+
 /**
  * Update existing links that have the argument at one end.
  * This method should always be used by an entity after triggering
