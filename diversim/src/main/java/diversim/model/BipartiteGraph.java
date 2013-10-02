@@ -626,6 +626,70 @@ public App createApp(List<Service> servs, Strategy<App> s) {
 }
 
 
+/**
+ * This method should always be used by an entity to create a new entity (app, platform or fate). It
+ * takes care of adding the entity to the global arrays, to the network and to schedule it with the
+ * other entities.
+ * 
+ * @param entityName
+ * @return
+ */
+public void createEntities(String entityName, long maxSize, List<? extends Entity> all)
+    throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+	long bound = Math.round(maxSize * Configuration.getDouble(entityName + ".ratio"));
+	for (int i = 0; i < bound; i++) {
+		Entity entity = createEntity(entityName);
+
+		addUnique(all, entity);
+	}
+	changed = true;
+}
+
+
+public Entity createEntity(String entityName) throws ClassNotFoundException,
+    IllegalAccessException, InstantiationException {
+	String className = Configuration.getString(entityName + ".class");
+	Class cl = Class.forName(className);
+	Entity entity = (Entity)cl.newInstance();
+	entity.init(entityName, this);
+	bipartiteNetwork.addNode(entity);
+	entity.setStoppable(schedule.scheduleRepeating(entity));
+	return entity;
+}
+
+
+public App createApp(String entityName) throws IllegalAccessException, InstantiationException,
+    ClassNotFoundException {
+	App app = (App)createEntity(entityName);
+	addUnique(apps, app);
+	return app;
+}
+
+
+public Platform createPlatform(String entityName) throws IllegalAccessException,
+    InstantiationException, ClassNotFoundException {
+	Platform app = (Platform)createEntity(entityName);
+	addUnique(platforms, app);
+	return app;
+}
+
+
+public static Strategy<?> getStrategy(String strategyName) throws ClassNotFoundException,
+    IllegalAccessException, InstantiationException {
+	String id = "";
+	for (String strategy : Configuration.getSpecies("strategy")) {
+		if (strategyName.equals(Configuration.getString(strategy + ".name"))) {
+			id = strategy;
+			break;
+		}
+	}
+	String className = Configuration.getString(id + ".class");
+	Class cl = Class.forName(className);
+	Strategy<?> strategy = (Strategy<?>)cl.newInstance();
+	strategy.init(id);
+	return strategy;
+}
+
 public void addEdge(Entity from, Entity to, Object info) {
   bipartiteNetwork.addEdge(from, to, info);
   from.incDegree();

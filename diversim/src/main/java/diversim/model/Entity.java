@@ -8,6 +8,7 @@ import java.util.List;
 
 import diversim.util.IndexedSortable;
 import diversim.strategy.Strategy;
+import diversim.util.config.Configuration;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.engine.Stoppable;
@@ -31,6 +32,16 @@ abstract public class Entity implements Steppable, Comparable<Entity> {
  * See BipartiteGraph.start().
  */
 protected int ID;
+
+/**
+ * counter for all entity
+ */
+protected static int counter;
+
+/**
+ * kind of entity (all entities kinds are defined in the conf file)
+ */
+protected String kind;
 
 /**
  * All services hosted by the entity.
@@ -64,6 +75,14 @@ Entity(int id, Strategy<? extends Entity> strategy) {
     this.strategy = strategy;
 }
 
+    public void init(String entityId, BipartiteGraph graph) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+        ID = counter;
+        counter++;
+        kind = entityId;
+        services = new ArrayList<Service>();
+        strategy = BipartiteGraph.getStrategy(Configuration.getString(kind + ".strategy"));
+        degree = 0;
+    }
 
 public int getDegree() {
   return degree;
