@@ -7,6 +7,10 @@ import java.util.List;
 import java.util.Set;
 
 import sim.engine.SimState;
+import diversim.strategy.Strategy;
+import diversim.strategy.extinction.AppExtinctionStrategy;
+import diversim.strategy.reproduction.AppReproductionStrategy;
+import diversim.util.config.Configuration;
 
 /**
  * Apps rely on specific services to function
@@ -27,11 +31,7 @@ public class App extends Entity {
 private double redundancy = 0;
 	
 	public boolean dead = false;
-	
-	public double getRedundancy() {
-	return redundancy > 0 ? redundancy : 0;
-	}
-	
+
 	List<AppReproductionStrategy> reproducers;
 	List<AppExtinctionStrategy> killers;
 	
@@ -46,7 +46,7 @@ private double redundancy = 0;
 	        this.services.clear();
 	        this.services.addAll(all_services);
 	}
-	
+
 
 	public void removeDependencies(List<Service> obs_deps){
 	        // The removeAll method should ideally execute in O(n) time
@@ -67,18 +67,48 @@ private double redundancy = 0;
 	  }
 	  return result;
    }
-	
-	
-	public App(int id, List<Service> service_dependencies) {
-	        super(id);
-	        this.services = new ArrayList<Service> (service_dependencies);
 
-	        // TODO: Now only use AppSpeciationReproduction, may need to include others
-	        //Not initialized from 0, so that new Apps will always survice to their first
-	        // steps.
-	        degree = -1;
+
+    public double getRedundancy() {
+        return redundancy > 0 ? redundancy : 0;
+    }
+
+
+    public App(int id, List<Service> servs, Strategy<App> strategy) {
+        super(id,strategy);
+        for (Service s : servs) {
+            BipartiteGraph.addUnique(services, s);
+        }
+    }
+
+public App() {};
+
+@Override
+public void init(String entityId, BipartiteGraph graph) {
+	super.init(entityId, graph);
+	int nSer = Configuration.getInt(entityId + ".services");
+	for (Service s : graph.selectServices(nSer)) {
+		BipartiteGraph.addUnique(services, s);
 	}
-	
+}
+
+
+// /*
+// * (non-Javadoc)
+// * @see diversim.model.Entity#step(sim.engine.SimState)
+// */
+// @SuppressWarnings("unchecked")
+// @Override
+// public void step(SimState state) {
+// BipartiteGraph graph = (BipartiteGraph) state;
+// strategy.evolve(graph,this);
+//
+// redundancy = ((double) degree) / graph.getNumPlatforms();
+// if (redundancy > 1.0) redundancy = 1.0;
+// printoutCurStep(graph);
+// }
+
+
 	public void initStrategies(BipartiteGraph graph){
 		this.reproducers = StrategyFactory.fINSTANCE.createAppReproductionStrategy(this, graph);
 		this.killers = StrategyFactory.fINSTANCE.createAppExtinctionStrategies(this, graph);
@@ -104,7 +134,7 @@ private double redundancy = 0;
 	
 	List<App> newApps = reproduce(graph);
 	
-	redundancy = ((double)degree) / graph.numPlatforms;
+	redundancy = ((double)degree) / graph.getNumPlatforms();
 	if (redundancy > 1.0) redundancy = 1.0;
 	printoutCurStep(graph);
 	}

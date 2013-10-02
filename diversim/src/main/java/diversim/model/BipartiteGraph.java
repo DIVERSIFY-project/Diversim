@@ -338,7 +338,7 @@ private void init() {
   try {
 //    configPath = System.getenv().get("PWD");
 //    if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
-    configPath = "diversim.conf";
+    configPath = "neutralModel.conf";
     Configuration.setConfig(configPath);
     stepsPerCycle = 0;
     INSTANCE = this;
@@ -534,57 +534,6 @@ public ArrayList<Service> selectServices(int n) {
 }
 
 
-public Platform createPlatform(List<Service> servs) {
-  return createPlatform(servs, 1);
-}
-
-
-/**
- * This method should always be used by an entity to create a new platform in the simulation.
- * It takes care of adding the platform to the global arrays, to the network and
- * to schedule it with the other entities.
- * @param servs
- * @return
- */
-public Platform createPlatform(List<Service> servs, int loadFactor) {
-  Platform platform = new Platform(++pCounter, servs, loadFactor);
-  platform.initStrategies(this);
-  return addPlatform(platform);
-}
-
-
-private Platform addPlatform(Platform platform) {
-  bipartiteNetwork.addNode(platform);
-  addUnique(platforms, platform);
-  changed = true;
-  if (!centralized) platform.setStoppable(schedule.scheduleRepeating(platform));
-  return platform;
-}
-
-
-/**
- * This method should always be used by an entity to create a new app in the simulation.
- * It takes care of adding the app to the global arrays, to the network and
- * to schedule it with the other entities.
- * @param servs
- * @return
- */
-public App createApp(List<Service> servs) {
-  App app = new App(++aCounter, servs);
-  app.initStrategies(this);
-  return addApp(app);
-}
-
-
-private App addApp(App app) {
-  bipartiteNetwork.addNode(app);
-  addUnique(apps, app);
-  changed = true;
-  if (!centralized) app.setStoppable(schedule.scheduleRepeating(app));
-  return app;
-}
-
-
 /**
  * This method should always be used by an entity to create a new entity (app, platform or fate). It
  * takes care of adding the entity to the global arrays, to the network and to schedule it with the
@@ -617,24 +566,31 @@ public Entity createEntity(String entityName) throws ClassNotFoundException,
 }
 
 
-public App createApp(String entityName) throws IllegalAccessException, InstantiationException,
-    ClassNotFoundException {
-	App app = (App)createEntity(entityName);
+public App createApp(String entityName)  {
+	App app = null;
+	try {
+		app = (App)createEntity(entityName);
+	} catch (Exception e) {
+		new Exception(e);
+	}
 	addUnique(apps, app);
 	return app;
 }
 
 
-public Platform createPlatform(String entityName) throws IllegalAccessException,
-    InstantiationException, ClassNotFoundException {
-	Platform app = (Platform)createEntity(entityName);
+public Platform createPlatform(String entityName) {
+	Platform app = null;
+	try {
+		app = (Platform)createEntity(entityName);
+	} catch (Exception e) {
+		new Exception(e);
+	}
 	addUnique(platforms, app);
 	return app;
 }
 
 
-public static Strategy<?> getStrategy(String strategyName) throws ClassNotFoundException,
-    IllegalAccessException, InstantiationException {
+public static Strategy<?> getStrategy(String strategyName)  {
 	String id = "";
 	for (String strategy : Configuration.getSpecies("strategy")) {
 		if (strategyName.equals(Configuration.getString(strategy + ".name"))) {
@@ -643,9 +599,16 @@ public static Strategy<?> getStrategy(String strategyName) throws ClassNotFoundE
 		}
 	}
 	String className = Configuration.getString(id + ".class");
-	Class cl = Class.forName(className);
-	Strategy<?> strategy = (Strategy<?>)cl.newInstance();
-	strategy.init(id);
+	Strategy<?> strategy = null;
+	try {
+		Class cl = Class.forName(className);
+		strategy = (Strategy<?>)cl.newInstance();
+		strategy.init(id);
+	} catch (Exception e) {
+		new Exception(e);
+	}
+
+
 	return strategy;
 }
 

@@ -1,15 +1,15 @@
 package diversim.strategy.platform;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import sim.field.network.Edge;
+import sim.util.Bag;
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
 import diversim.strategy.AbstractStrategy;
-import sim.field.network.Edge;
-import sim.util.Bag;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 
 
 /**
@@ -21,6 +21,9 @@ public class CloneMutate extends AbstractStrategy<Platform> {
 
 double factor;
 
+public CloneMutate() {
+	super("Clone");
+}
 
 public CloneMutate(String n, double m) {
   super(n);
@@ -59,9 +62,9 @@ public CloneMutate(String n, double m) {
         Arrays.sort(set, 0, csize);
         for (i = csize - 1; i >= 0; i--)
           servs.remove(((Integer)set[i]).intValue());
-        @SuppressWarnings("unchecked")
-        Platform p = graph.createPlatform(servs);
-        p.setStrategy(platform.getStrategy());
+		String kind = graph.platforms.get(0).getKind();
+		Platform p = graph.createPlatform(kind);
+		graph.createLinks(p, ents);
         graph.createLinks(p, ents);
 
         // remove different size * factor services from this platform

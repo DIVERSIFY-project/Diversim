@@ -43,7 +43,7 @@ abstract public class Entity implements Steppable, Comparable<Entity> {
 	/**
 	 * The number of link touching the entity in the bipartite graph.
 	 */
-	public int degree;
+protected int degree;
 	
 	/**
 	 * The matching strategy employed by this entity
@@ -68,12 +68,24 @@ protected String kind;
 
 protected Strategy<? extends Entity> strategy;
 
-    public void init(String entityId, BipartiteGraph graph) throws IllegalAccessException, InstantiationException, ClassNotFoundException {
+
+public Entity() {}
+
+Entity(int id, Strategy<? extends Entity> strategy) {
+  ID = id;
+  services = new ArrayList<Service>();
+  degree = 0;
+    this.strategy = strategy;
+}
+
+
+    public void init(String entityId, BipartiteGraph graph) {
         ID = counter;
         counter++;
         kind = entityId;
         services = new ArrayList<Service>();
-        strategy = BipartiteGraph.getStrategy(Configuration.getString(kind + ".strategy"));
+	strategy = (Strategy<? extends Entity>)BipartiteGraph.getStrategy(
+			Configuration.getString(kind + ".strategy"));
         degree = 0;
     }
 
@@ -257,6 +269,9 @@ public void decDegree() {
 	degree--;
 }
 
+public String getKind() {
+	return kind;
+}
 
 public int compareTo(Entity e) {
   return ID - e.ID;
@@ -267,5 +282,10 @@ public boolean equals(Object o) {
   if (o instanceof Entity)
     return compareTo((Entity)o) == 0;
   return false;
+}
+
+
+public void setServices(ArrayList<Service> services) {
+	this.services = services;
 }
 }

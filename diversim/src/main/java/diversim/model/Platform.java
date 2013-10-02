@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import sim.engine.SimState;
+import diversim.strategy.Strategy;
 import diversim.strategy.extinction.PlatformExtinctionStrategy;
 import diversim.strategy.reproduction.PlatformReproductionStrategy;
 
@@ -26,23 +27,17 @@ import diversim.strategy.reproduction.PlatformReproductionStrategy;
  */
 public class Platform extends Entity {
 
-  public String action;
 
 	// how many apps can one service on this platform  support.
 	private int APP_PER_SERVICE = 1;
 	
 	public boolean dead = false;
-	
-	public List<App> app = new ArrayList<App>();
-	
+
 	List<PlatformReproductionStrategy> reproducers;
 	List<PlatformExtinctionStrategy> killers;
 	// ArrayList<Service> supportedServices;
 
-  public String getAction() {
-    return action;
-  }
-	
+
 	public List<Platform> reproduce(BipartiteGraph state){
 		List<Platform> result = new ArrayList<Platform>();
 		for(PlatformReproductionStrategy reproducer : reproducers){
@@ -104,14 +99,8 @@ public class Platform extends Entity {
 
 	printoutCurStep(graph);
 	}
-	
 
-	@Override
-	public String toString() {
-	  String res = super.toString();
-	  return res;
-	}
-	
+
 	public void initStrategies(BipartiteGraph graph){
 		this.reproducers = StrategyFactory.fINSTANCE
 				.createPlatformReproductionStrategy(this, graph);
@@ -130,6 +119,67 @@ public class Platform extends Entity {
 		}
 		return false;
 	}
-	
-	
+
+
+    double pressure;
+    public String action;
+
+
+    public double getPressure() {
+        return pressure;
+    }
+
+    public String getAction() {
+        return action;
+    }
+
+public Platform() {}
+
+public void init(String entityId, BipartiteGraph graph)  {
+	super.init(entityId, graph);
+	for (Service s : graph.selectServices(graph.getMaxServices())) {
+		BipartiteGraph.addUnique(services, s);
+	}
+	pressure = 0;
+	action = "none";
+}
+
+    public Platform(int id, List<Service> servs, Strategy<Platform> strategy) {
+        super(id,strategy);
+        for (Service s : servs) {
+            BipartiteGraph.addUnique(services, s);
+        }
+        pressure = 0;
+        action = "none";
+    }
+
+
+// /*
+// * (non-Javadoc)
+// * @see diversim.model.Entity#step(sim.engine.SimState)
+// */
+// @SuppressWarnings("unchecked")
+// @Override
+// public void step(SimState state) {
+// BipartiteGraph graph = (BipartiteGraph) state;
+// action = "none";
+// if (getDegree() >= graph.getPlatformMaxLoad()
+// && getSize() > graph.getPlatformMinSize()) {
+// strategy.evolve(graph, this);
+// }
+// pressure = ((double) degree) / graph.getPlatformMaxLoad();
+// if (pressure > 1.0) pressure = 1.0;
+//
+// printoutCurStep(graph);
+// }
+
+
+    @Override
+    public String toString() {
+        String res = super.toString();
+        res += " ; pressure = " + pressure
+                + " ; action = " + action;
+        return res;
+    }
+
 }
