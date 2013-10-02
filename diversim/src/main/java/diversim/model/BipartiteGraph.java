@@ -287,6 +287,11 @@ public void setMaxCycles(double d) {
 }
 
 
+public int getCurCycle() {
+	return (int)Math.ceil(((double)schedule.getSteps()) / stepsPerCycle);
+}
+
+
 public double getAvgPlatformDegree() {
   int sum = 0;
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
@@ -752,7 +757,7 @@ private void printoutNetwork() { // TODO
  * @return The standard printout header.
  */
 public String getPrintoutHeader() {
-  return "Cycle " + (int)schedule.getTime() + " [" + schedule.getSteps() + "] : ";
+	return "Cycle " + getCurCycle() + " [" + schedule.getSteps() + "] : ";
 }
 
 
