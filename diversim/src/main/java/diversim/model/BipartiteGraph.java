@@ -139,9 +139,7 @@ public Network bipartiteNetwork;
  */
 public Fate fate;
 
-private int sCounter;
-private int pCounter;
-private int aCounter;
+
 protected boolean changed;
 
 public static BipartiteGraph INSTANCE = null;
@@ -462,9 +460,6 @@ public void start() {
   services.clear();
   bipartiteNetwork.clear();
   entityStrategies.clear();
-  sCounter = 0;
-  pCounter = 0;
-  aCounter = 0;
   changed = true;
   centralized = false;
   stepsPerCycle = 0;
