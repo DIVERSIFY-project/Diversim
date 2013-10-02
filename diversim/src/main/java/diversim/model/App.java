@@ -26,15 +26,12 @@ import diversim.strategy.reproduction.AppReproductionStrategy;
 public class App extends Entity {
 	
 	
-	double redundancy = 0;
+private double redundancy = 0;
 	
 	public boolean dead = false;
 	
-	public List<Platform> platforms = new ArrayList<Platform>();
-	
-	
 	public double getRedundancy() {
-	  return redundancy;
+	return redundancy > 0 ? redundancy : 0;
 	}
 	
 	List<AppReproductionStrategy> reproducers;
@@ -52,6 +49,7 @@ public class App extends Entity {
 	        this.services.addAll(all_services);
 	}
 	
+
 	public void removeDependencies(List<Service> obs_deps){
 	        // The removeAll method should ideally execute in O(n) time
 	        // however at least as of java 1.7, it does not. Inserting
@@ -109,7 +107,7 @@ public class App extends Entity {
 	List<App> newApps = reproduce(graph);
 	
 	redundancy = ((double)degree) / graph.numPlatforms;
-	if(redundancy < 0) redundancy = 0;
+	if (redundancy > 1.0) redundancy = 1.0;
 	printoutCurStep(graph);
 	}
 	
