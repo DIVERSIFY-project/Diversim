@@ -7,8 +7,6 @@ import java.util.List;
 import java.util.Set;
 
 import sim.engine.SimState;
-import diversim.strategy.extinction.AppExtinctionStrategy;
-import diversim.strategy.reproduction.AppReproductionStrategy;
 
 /**
  * Apps rely on specific services to function
