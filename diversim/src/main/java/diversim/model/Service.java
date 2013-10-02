@@ -9,7 +9,12 @@ package diversim.model;
  */
 public class Service implements Comparable<Service> {
 
-    int id;
+/**
+ * counter for the services
+ */
+public static int counter;
+
+int id;
     int name;
     int version;
     ServiceState state;
