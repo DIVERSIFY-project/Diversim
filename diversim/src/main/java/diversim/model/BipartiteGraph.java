@@ -356,55 +356,7 @@ public BipartiteGraph(long seed, Schedule schedule) {
 }
 
 
-@SuppressWarnings("unchecked")
-<T extends Steppable> Strategy<T> setStrategy(String s) {
-  s = s.toLowerCase();
-  @SuppressWarnings("rawtypes")
-  AbstractStrategy res = getElement(entityStrategies, s);
-  if (res == null) {
-    if (s.startsWith("fate")) {
-      AbstractStrategy<T> add = (AbstractStrategy<T>)setStrategy(
-          Configuration.getString(s + ".add_app", "add"));
-      AbstractStrategy<T> kill = (AbstractStrategy<T>)setStrategy(
-          Configuration.getString(s + ".kill_app", "kill"));
-      res = new FateStrategy(Configuration.getString(s), (Strategy<Fate>)add, (Strategy<Fate>)kill);
-    } else if (s.startsWith("combo")) {
-      AbstractStrategy<T> sp = (AbstractStrategy<T>)setStrategy(
-          Configuration.getString(s + ".split"));
-      AbstractStrategy<T> cl = (AbstractStrategy<T>)setStrategy(
-          Configuration.getString(s + ".clone"));
-      res = new SplitOrClone(Configuration.getString(s),
-          (Split)sp, Configuration.getDouble(s + ".split_factor", 1.0),
-          (CloneMutate)cl, Configuration.getDouble(s + ".clone_factor", 2.0));
-    } else if (s.startsWith("add")) {
-      AbstractStrategy<App> st = getElement(entityStrategies,
-          Configuration.getString(s + ".new_app_strategy", "Link"));
-      res = new AddApp(Configuration.getString(s, "Add"), st);
-    } else if (s.startsWith("kill")) {
-      res = new KillApp(Configuration.getString(s, "Kill"));
-    }
-    else if (s.startsWith("clone")) {
-      res = new CloneMutate(Configuration.getString(s), Configuration.getDouble(s + ".mutation", 0.1));
-    } else if (s.startsWith("split")) {
-      res = new Split(Configuration.getString(s), Configuration.getDouble(s + ".keep", 2.0));
-    } else if (s.equals("link")) {
-      res = new LinkStrategy("Link");
-    } else if (s.equals("almighty")) {
-      AbstractStrategy<T> all = (AbstractStrategy<T>)setStrategy("fate");
-      res = new FateAlmighty("Almighty", (Strategy<Fate>)all);
-    } else
-      res = new NullStrategy<Entity>();
-    addUnique(entityStrategies, res);
-  }
-  return res;
-}
-
-
 private void readConfig() {
-  String[] species;
-  long size;
-  int i, nSer;
-  Strategy<? extends Steppable> st;
   if (!supervised) {
     initApps = Configuration.getInt("init_apps");
     initPlatforms = Configuration.getInt("init_platforms");
@@ -432,61 +384,45 @@ private void readConfig() {
   platformMaxLoad = Configuration.getInt("p_max_load");
   platformMinSize = Configuration.getInt("p_min_size");
   centralized = Configuration.getBoolean("centralized");
+}
 
-  // create services
-  species = Configuration.getSpecies("service");
-  ServiceState ser;
-  int ver;
-  for (String s : species) {
-    size = Math.round(initServices * Configuration.getDouble(s, 1));
-    ser = ServiceState.valueOf(Configuration.getString(s + ".state", "OK"));
-    ver = Configuration.getInt(s + ".version", 1);
-    for (i = 0; i < size && getNumServices() < initServices; i++) {
-      ++sCounter;
-      services.add(new Service(sCounter, sCounter, ver, ser));
-    }
-    System.err.println("Config : INFO : created " + i + " new services of type " + s);
-    //printAny(services.subList((numServices - i), numServices), "\n", System.err);
-  }
 
-  // create platforms
-  species = Configuration.getSpecies("platform");
-  for (String s : species) {
-    size = Math.round(initPlatforms * Configuration.getDouble(s, 1));
-    st = setStrategy(Configuration.getString(s + ".strategy", "null"));
-    for (i = 0; i < size && getNumPlatforms() < initPlatforms; i++) {
-      //System.err.println("Config : INFO : NEW platform : " +
-      createPlatform(services, (Strategy<Platform>)st);//);
-    }
-    System.err.println("Config : INFO : created " + i + " new platforms of type " + s);
-  }
+protected void initFate() throws IllegalAccessException, InstantiationException,
+    ClassNotFoundException {
+	Strategy<?> st = getStrategy(Configuration.getString("fate.strategy"));
+	fate = new Fate((Strategy<Fate>)st);
+}
 
-  // create apps
-  species = Configuration.getSpecies("app");
-  for (String s : species) {
-    size = Math.round(initApps * Configuration.getDouble(s, 1));
-    nSer = Configuration.getInt(s + ".services", 0);
-    st = setStrategy(Configuration.getString(s + ".strategy", "Link"));
-    for (i = 0; i < size && getNumApps() < initApps; i++) {
-      //System.err.println("Config : INFO : NEW app : " +
-      createApp(selectServices(nSer), (Strategy<App>)st);//);
-    }
-    System.err.println("Config : INFO : created " + i + " new apps of type " + s);
-  }
 
-  // create the fate model
-  if (centralized) {
-    stepsPerCycle = 2;
-    st = setStrategy("Almighty");
-  } else {
-    stepsPerCycle = 3;
-    st = setStrategy(Configuration.getString("fate"));
-  }
-  fate = new Fate((Strategy<Fate>)st);
+// create initial platforms
+protected void initPlatform() throws IllegalAccessException, InstantiationException,
+    ClassNotFoundException {
+	for (String kind : Configuration.getSpecies("platform")) {
+		createEntities(kind, initPlatforms, platforms);
+		System.err.println("Config : INFO : created " + " new platforms of type " + kind);
+	}
+}
 
-  System.err.println("Config : INFO : the following strategies have been initialized :");
-  printAny(entityStrategies, "\n", System.err);
 
+// create initial apps
+protected void initApp() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+	for (String s : Configuration.getSpecies("app")) {
+		createEntities(s, initApps, apps);
+		System.err.println("Config : INFO : created " + " new apps of type " + s);
+	}
+}
+
+
+protected void initServices() {
+
+	for (String s : Configuration.getSpecies("service")) {
+		long size = Math.round(initServices * Configuration.getDouble(s, 1));
+		for (int i = 0; i < size && getNumServices() < initServices; i++) {
+			services.add(new Service(Service.counter, Service.counter, 1, ServiceState.OK));
+			Service.counter++;
+		}
+		System.err.println("Config : INFO : created " + " new services of type " + s);
+	}
 }
 
 
@@ -511,40 +447,17 @@ public void start() {
   if (manualConf) {
     stepsPerCycle = 2;
 
-    // create services
-    for (int i = 0; i < initServices; i++) {
-      services.add(new Service(++sCounter));
-    }
-
-    AbstractStrategy<App> sApp = new LinkStrategy("Link");
-    Split split = new Split("Split", 0.5);
-    CloneMutate clone = new CloneMutate("Clone", 0.1);
-    AbstractStrategy<Platform> combo = new SplitOrClone("Combo", split, 2.0, clone, 1.1);
-    AbstractStrategy<Fate> add = new AddApp("Add", sApp);
-    AbstractStrategy<Fate> kill = new KillApp("Kill");
-    FateStrategy sFate = new FateStrategy("Fate", add, kill);
-    addUnique(entityStrategies, sApp);
-    addUnique(entityStrategies, split);
-    addUnique(entityStrategies, clone);
-    addUnique(entityStrategies, combo);
-    addUnique(entityStrategies, add);
-    addUnique(entityStrategies, kill);
-    addUnique(entityStrategies, sFate);
-
-    // create platforms
-    for (int i = 0; i < initPlatforms; i++) { // all services to each platform
-      createPlatform(services, combo);
-    }
-
-    // create apps
-    for (int i = 0; i < initApps; i++) { // gaussian+random selection of services per app
-      createApp(selectServices(0), sApp);
-    }
-
-    // create the fate model
-    fate = new Fate(sFate);
   } else
     readConfig();
+	initServices();
+	try {
+		initFate();
+		initPlatform();
+		initApp();
+	} catch (Exception e) {
+		e.printStackTrace();
+	}
+
 
   schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
 
