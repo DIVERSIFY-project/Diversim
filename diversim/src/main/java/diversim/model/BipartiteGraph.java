@@ -128,8 +128,6 @@ public Fate fate;
 
 
 protected boolean changed;
-protected boolean centralized;
-private boolean manualConf;
 private boolean supervised;
 private static String configPath;
 public int stepsPerCycle;
@@ -318,13 +316,10 @@ private void init() {
 //    if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
     configPath = "neutralModel.conf";
     Configuration.setConfig(configPath);
-    manualConf = false;
-    stepsPerCycle = centralized ? 2 : 3;
-  } catch (IOException e) {
-    System.err.println("WARNING : Configuration file not found. Please proceed with manual configuration.");
-    manualConf = true;
-    supervised = true;
     stepsPerCycle = 3;
+  } catch (IOException e) {
+    System.err.println("WARNING : Configuration file not found.");
+    new  Exception(e);
   }
 }
 
@@ -358,12 +353,6 @@ private void readConfig() {
     initApps = Configuration.getInt("init_apps");
     initPlatforms = Configuration.getInt("init_platforms");
     initServices = Configuration.getInt("init_services");
-  } else if (!manualConf) {
-    try {
-      Configuration.setConfig(configPath);
-    } catch (IOException e) {
-      System.err.println("WARNING : Configuration file not found. Using previous configuration.");
-    }
   }
   int seed = Configuration.getInt("seed", 0);
   if (seed != 0) {
@@ -380,7 +369,6 @@ private void readConfig() {
   if (maxServices == 0) maxServices = Integer.MAX_VALUE;
   platformMaxLoad = Configuration.getInt("p_max_load");
   platformMinSize = Configuration.getInt("p_min_size");
-  centralized = Configuration.getBoolean("centralized");
 }
 
 
@@ -436,12 +424,8 @@ public void start() {
   bipartiteNetwork.clear();
   entityStrategies.clear();
   changed = true;
-  centralized = false;
 
-  if (manualConf) {
-    stepsPerCycle = 2;
 
-  } else
     readConfig();
 	initServices();
 	try {
@@ -775,7 +759,7 @@ static public void printAny(Object data, String trailer, PrintStream out) {
 
     public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
        eList.remove(Collections.binarySearch(eList, entity));
-       if (!centralized) entity.stop();
+       entity.stop();
        Bag edges = bipartiteNetwork.getEdgesIn(entity); // edgesIn = edgesOut
        for (Object o : edges) {
          ((Entity)((Edge)o).getOtherNode(entity)).decDegree();
