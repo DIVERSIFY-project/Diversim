@@ -1,4 +1,4 @@
-package fr.inria.diversim;
+package diversim;
 
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
