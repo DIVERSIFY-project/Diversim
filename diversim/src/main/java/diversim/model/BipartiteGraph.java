@@ -319,8 +319,8 @@ private void init() {
     INSTANCE = this;
 		supervised = true;
   } catch (IOException e) {
-    System.err.println("WARNING : Configuration file not found.");
-    new  Exception(e);
+		System.err.println("ERROR : Configuration file not found.");
+		System.exit(1);
   }
 }
 
