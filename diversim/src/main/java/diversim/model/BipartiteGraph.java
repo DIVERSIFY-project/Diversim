@@ -382,39 +382,49 @@ private void readConfig() {
 
 protected void initFate() throws IllegalAccessException, InstantiationException,
     ClassNotFoundException {
-	Strategy<?> st = getStrategy(Configuration.getString("fate.strategy"));
-	fate = new Fate((Strategy<Fate>)st);
+	Strategy<?> st = getStrategy(Configuration.getString("fate.strategy", null));
+	if (st != null) {
+		fate = new Fate((Strategy<Fate>)st);
+	} else
+		fate = null;
 }
 
 
 // create initial platforms
 protected void initPlatform() throws IllegalAccessException, InstantiationException,
-    ClassNotFoundException {
+		ClassNotFoundException {
+	int c = getNumPlatforms();
 	for (String kind : Configuration.getSpecies("platform")) {
 		createEntities(kind, initPlatforms, platforms);
-		System.err.println("Config : INFO : created " + " new platforms of type " + kind);
+		System.err.println("Config : INFO : created " + (getNumPlatforms() - c)
+				+ " new platforms of type " + kind);
+		c = getNumPlatforms();
 	}
 }
 
 
 // create initial apps
 protected void initApp() throws IllegalAccessException, ClassNotFoundException, InstantiationException {
+	int c = getNumApps();
 	for (String s : Configuration.getSpecies("app")) {
 		createEntities(s, initApps, apps);
-		System.err.println("Config : INFO : created " + " new apps of type " + s);
+		System.err.println("Config : INFO : created " + (getNumApps() - c) + " new apps of type " + s);
+		c = getNumApps();
 	}
 }
 
 
 protected void initServices() {
-
+	int c = Service.counter;
 	for (String s : Configuration.getSpecies("service")) {
 		long size = Math.round(initServices * Configuration.getDouble(s, 1));
 		for (int i = 0; i < size && getNumServices() < initServices; i++) {
 			services.add(new Service(Service.counter, Service.counter, 1, ServiceState.OK));
 			Service.counter++;
-		}
-		System.err.println("Config : INFO : created " + " new services of type " + s);
+	}
+		System.err.println("Config : INFO : created " + (Service.counter - c)
+				+ " new services of type " + s);
+		c = Service.counter;
 	}
 }
 
