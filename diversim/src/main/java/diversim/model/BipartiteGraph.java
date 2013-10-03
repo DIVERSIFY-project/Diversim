@@ -311,9 +311,8 @@ private void init() {
   services = new ArrayList<Service>();
   entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
   try {
-//    configPath = System.getenv().get("PWD");
-//    if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
-    configPath = "neutralModel.conf";
+		configPath = System.getenv().get("PWD");
+		configPath += "/neutralModel.conf";
     Configuration.setConfig(configPath);
     stepsPerCycle = 0;
     INSTANCE = this;
