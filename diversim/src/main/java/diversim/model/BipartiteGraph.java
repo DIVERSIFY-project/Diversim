@@ -160,9 +160,9 @@ public int getInitPlatforms() {
 }
 
 
-public void setInitPlatforms(int p) {
-  initPlatforms = p;
-}
+// public void setInitPlatforms(int p) {
+// initPlatforms = p;
+// }
 
 
 public int getInitApps() {
@@ -170,9 +170,9 @@ public int getInitApps() {
 }
 
 
-public void setInitApps(int p) {
-  initApps = p;
-}
+// public void setInitApps(int p) {
+// initApps = p;
+// }
 
 
 public int getInitServices() {
@@ -180,9 +180,9 @@ public int getInitServices() {
 }
 
 
-public void setInitServices(int p) {
-  initServices = p;
-}
+// public void setInitServices(int p) {
+// initServices = p;
+// }
 
 
 public int getMaxPlatforms() {
@@ -340,6 +340,7 @@ private void init() {
     Configuration.setConfig(configPath);
     stepsPerCycle = 0;
     INSTANCE = this;
+		supervised = true;
   } catch (IOException e) {
     System.err.println("ERROR : Configuration file not found.");
     System.exit(1);
@@ -372,24 +373,24 @@ public BipartiteGraph(long seed, Schedule schedule) {
 
 
 private void readConfig() {
-  if (!supervised) {
-    initApps = Configuration.getInt("init_apps");
-    initPlatforms = Configuration.getInt("init_platforms");
-    initServices = Configuration.getInt("init_services");
-  } else {
-    try {
-      Configuration.setConfig(configPath);
-    } catch (IOException e) {
-      System.err.println("WARNING : Configuration file not found. Using previous configuration.");
-    }
-  }
-  int seed = Configuration.getInt("seed", 0);
+	if (supervised) {
+		try {
+			Configuration.setConfig(configPath);
+		}
+		catch (IOException e) {
+			System.err.println("WARNING : Configuration file not found. Using previous configuration.");
+		}
+	}
+	int seed = Configuration.getInt("seed", 0);
   if (seed != 0) {
     random.setSeed(seed);
   }
   System.err.println("Config : seed = " + seed);
-  supervised = Configuration.getBoolean("supervised");
-  maxCycles = Configuration.getDouble("max_cycles", Schedule.MAXIMUM_INTEGER - 1);
+	supervised = Configuration.getBoolean("supervised");
+	initApps = Configuration.getInt("init_apps");
+	initPlatforms = Configuration.getInt("init_platforms");
+	initServices = Configuration.getInt("init_services");
+	maxCycles = Configuration.getDouble("max_cycles", Schedule.MAXIMUM_INTEGER - 1);
   maxApps = Configuration.getInt("max_apps", 0);
   if (maxApps == 0) maxApps = Integer.MAX_VALUE;
   maxPlatforms = Configuration.getInt("max_platforms", 0);
@@ -558,7 +559,9 @@ public Entity createEntity(String entityName) throws ClassNotFoundException,
 	Entity entity = (Entity)cl.newInstance();
 	entity.init(entityName, this);
 	bipartiteNetwork.addNode(entity);
-	entity.setStoppable(schedule.scheduleRepeating(entity));
+	if (!centralized)
+		entity.setStoppable(schedule.scheduleRepeating(Math.floor(schedule.getTime() + 1.0), entity,
+				1.0));
 	return entity;
 }
 
