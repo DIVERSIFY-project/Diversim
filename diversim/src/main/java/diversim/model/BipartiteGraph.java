@@ -270,7 +270,7 @@ public void setMaxCycles(double d) {
 
 
 public int getCurCycle() {
-	return (int)Math.ceil(((double)schedule.getSteps()) / stepsPerCycle);
+	return (int)Math.ceil(((double)schedule.getSteps() + 1) / stepsPerCycle);
 }
 
 
@@ -496,7 +496,7 @@ public void start() {
       if (changed)
         printoutNetwork();
       changed = false;
-      if ((state.schedule.getSteps() + stepsPerCycle) >= getMaxCycles() * stepsPerCycle)
+			if (getCurCycle() + 1 == (int)getMaxCycles())
         state.schedule.seal();
     }
   };
