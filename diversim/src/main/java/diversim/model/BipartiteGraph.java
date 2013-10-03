@@ -436,14 +436,16 @@ protected void initApp() throws IllegalAccessException, ClassNotFoundException, 
 
 
 protected void initServices() {
-
+	int c = Service.counter;
 	for (String s : Configuration.getSpecies("service")) {
 		long size = Math.round(initServices * Configuration.getDouble(s, 1));
 		for (int i = 0; i < size && getNumServices() < initServices; i++) {
 			services.add(new Service(Service.counter, Service.counter, 1, ServiceState.OK));
 			Service.counter++;
 		}
-		System.err.println("Config : INFO : created " + " new services of type " + s);
+		System.err.println("Config : INFO : created " + (Service.counter - c)
+		    + " new services of type " + s);
+		c = Service.counter;
 	}
 }
 
