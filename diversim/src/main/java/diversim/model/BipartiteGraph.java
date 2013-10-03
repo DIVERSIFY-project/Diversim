@@ -246,6 +246,11 @@ public void setMaxCycles(double d) {
 }
 
 
+public int getCurCycle() {
+	return (int)Math.ceil(((double)schedule.getSteps() + 1) / stepsPerCycle);
+}
+
+
 public double getAvgPlatformDegree() {
   int sum = 0;
   if (schedule.getTime() <= Schedule.BEFORE_SIMULATION
@@ -456,11 +461,11 @@ public void start() {
       if (changed)
         printoutNetwork();
       changed = false;
-      if ((state.schedule.getSteps() + 2) >= getMaxCycles() * stepsPerCycle)
+		if (getCurCycle() + 1 == (int)getMaxCycles())
         state.schedule.seal();
     }
   };
-  schedule.scheduleRepeating(schedule.getTime() + 1.1, print, 1.0);
+	schedule.scheduleRepeating(schedule.getTime() + 1.2, print, 1.0);
 }
 
 
