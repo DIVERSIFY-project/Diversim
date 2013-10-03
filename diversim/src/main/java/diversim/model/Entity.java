@@ -66,7 +66,7 @@ protected String kind;
 	private Stoppable stoppable;
 
 
-protected Strategy<? extends Entity> strategy;
+protected Strategy strategy;
 
 
 public Entity() {}
