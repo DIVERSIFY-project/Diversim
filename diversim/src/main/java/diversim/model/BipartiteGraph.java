@@ -677,7 +677,7 @@ private void printoutNetwork() { // TODO
  * @return The standard printout header.
  */
 public String getPrintoutHeader() {
-  return "Cycle " + (int)schedule.getTime() + " [" + schedule.getSteps() + "] : ";
+	return "Cycle " + getCurCycle() + " [" + schedule.getSteps() + "] : ";
 }
 
 
