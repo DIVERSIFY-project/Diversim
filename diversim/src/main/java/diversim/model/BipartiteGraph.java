@@ -10,25 +10,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import ec.util.MersenneTwisterFast;
-import diversim.strategy.AbstractStrategy;
-import diversim.strategy.NullStrategy;
-import diversim.strategy.Strategy;
-import diversim.strategy.application.LinkStrategy;
-import diversim.strategy.fate.AddApp;
-import diversim.strategy.fate.FateAlmighty;
-import diversim.strategy.fate.FateStrategy;
-import diversim.strategy.fate.KillApp;
-import diversim.strategy.platform.CloneMutate;
-import diversim.strategy.platform.Split;
-import diversim.strategy.platform.SplitOrClone;
-import diversim.util.config.Configuration;
-
 import sim.engine.Schedule;
 import sim.engine.SimState;
 import sim.engine.Steppable;
-import sim.field.network.*;
+import sim.field.network.Edge;
+import sim.field.network.Network;
 import sim.util.Bag;
+import diversim.strategy.Strategy;
+import diversim.util.config.Configuration;
+import ec.util.MersenneTwisterFast;
 
 
 /**
@@ -128,6 +118,10 @@ public Fate fate;
 
 
 protected boolean changed;
+
+public static BipartiteGraph INSTANCE = null;
+
+protected boolean centralized;
 private boolean supervised;
 private static String configPath;
 public int stepsPerCycle;
@@ -143,9 +137,9 @@ public int getInitPlatforms() {
 }
 
 
-public void setInitPlatforms(int p) {
-  initPlatforms = p;
-}
+// public void setInitPlatforms(int p) {
+// initPlatforms = p;
+// }
 
 
 public int getInitApps() {
@@ -153,9 +147,9 @@ public int getInitApps() {
 }
 
 
-public void setInitApps(int p) {
-  initApps = p;
-}
+// public void setInitApps(int p) {
+// initApps = p;
+// }
 
 
 public int getInitServices() {
@@ -163,9 +157,9 @@ public int getInitServices() {
 }
 
 
-public void setInitServices(int p) {
-  initServices = p;
-}
+// public void setInitServices(int p) {
+// initServices = p;
+// }
 
 
 public int getMaxPlatforms() {
@@ -316,7 +310,9 @@ private void init() {
 //    if (configPath == null) configPath = "/root"; // XXX ugly but effective to bypass problems with UI...
     configPath = "neutralModel.conf";
     Configuration.setConfig(configPath);
-    stepsPerCycle = 3;
+    stepsPerCycle = 0;
+    INSTANCE = this;
+		supervised = true;
   } catch (IOException e) {
     System.err.println("WARNING : Configuration file not found.");
     new  Exception(e);
@@ -349,18 +345,24 @@ public BipartiteGraph(long seed, Schedule schedule) {
 
 
 private void readConfig() {
-  if (!supervised) {
-    initApps = Configuration.getInt("init_apps");
-    initPlatforms = Configuration.getInt("init_platforms");
-    initServices = Configuration.getInt("init_services");
-  }
-  int seed = Configuration.getInt("seed", 0);
+	if (supervised) {
+		try {
+			Configuration.setConfig(configPath);
+		}
+		catch (IOException e) {
+			System.err.println("WARNING : Configuration file not found. Using previous configuration.");
+		}
+	}
+	int seed = Configuration.getInt("seed", 0);
   if (seed != 0) {
     random.setSeed(seed);
   }
   System.err.println("Config : seed = " + seed);
-  supervised = Configuration.getBoolean("supervised");
-  maxCycles = Configuration.getDouble("max_cycles", Schedule.MAXIMUM_INTEGER - 1);
+	supervised = Configuration.getBoolean("supervised");
+	initApps = Configuration.getInt("init_apps");
+	initPlatforms = Configuration.getInt("init_platforms");
+	initServices = Configuration.getInt("init_services");
+	maxCycles = Configuration.getDouble("max_cycles", Schedule.MAXIMUM_INTEGER - 1);
   maxApps = Configuration.getInt("max_apps", 0);
   if (maxApps == 0) maxApps = Integer.MAX_VALUE;
   maxPlatforms = Configuration.getInt("max_platforms", 0);
@@ -369,6 +371,7 @@ private void readConfig() {
   if (maxServices == 0) maxServices = Integer.MAX_VALUE;
   platformMaxLoad = Configuration.getInt("p_max_load");
   platformMinSize = Configuration.getInt("p_min_size");
+	centralized = Configuration.getBoolean("centralized");
 }
 
 
@@ -424,7 +427,8 @@ public void start() {
   bipartiteNetwork.clear();
   entityStrategies.clear();
   changed = true;
-
+	centralized = false;
+	stepsPerCycle = 0;
 
     readConfig();
 	initServices();
@@ -435,15 +439,19 @@ public void start() {
 	} catch (Exception e) {
 		e.printStackTrace();
 	}
+	if (!centralized) stepsPerCycle++;
 
-
-  schedule.scheduleRepeating(schedule.getTime() + 1.2, fate, 1.0);
+	if (fate != null) {
+		schedule.scheduleRepeating(schedule.getTime() + 1.3, fate, 1.0);
+		stepsPerCycle++;
+	}
 
   // An invisible model will printout the state of the graph after all the entities
   // (platform and apps) have done one step, but before the fate might do something.
   // Thus at each epoch the order of the events is: all the entities (randomly shuffled),
   // then the network printout, then fate.
-  Steppable print = new Steppable() {
+	stepsPerCycle++;
+	Steppable print = new Steppable() {
     public void step(SimState state) {
       if (changed)
         printoutNetwork();
@@ -510,7 +518,9 @@ public Entity createEntity(String entityName) throws ClassNotFoundException,
 	Entity entity = (Entity)cl.newInstance();
 	entity.init(entityName, this);
 	bipartiteNetwork.addNode(entity);
-	entity.setStoppable(schedule.scheduleRepeating(entity));
+	if (!centralized)
+		entity.setStoppable(schedule.scheduleRepeating(Math.floor(schedule.getTime() + 1.0), entity,
+				1.0));
 	return entity;
 }
 
@@ -759,7 +769,7 @@ static public void printAny(Object data, String trailer, PrintStream out) {
 
     public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
        eList.remove(Collections.binarySearch(eList, entity));
-       entity.stop();
+	if (!centralized) entity.stop();
        Bag edges = bipartiteNetwork.getEdgesIn(entity); // edgesIn = edgesOut
        for (Object o : edges) {
          ((Entity)((Edge)o).getOtherNode(entity)).decDegree();
