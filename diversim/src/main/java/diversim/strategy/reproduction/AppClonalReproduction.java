@@ -1,7 +1,7 @@
 package diversim.strategy.reproduction;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
@@ -19,7 +19,8 @@ public class AppClonalReproduction implements AppReproductionStrategy{
 
 		@Override
 		public List<App> reproduce(App parent, BipartiteGraph state) {
-			App child = state.createApp(parent.getDependencies());
+	App child = state.createApp(""); // TODO
+	child.setServices(parent.getDependencies());
 			child.initStrategies(state);
 			ArrayList<App> children = new ArrayList<App>();
 			children.add(child);
@@ -30,4 +31,11 @@ public class AppClonalReproduction implements AppReproductionStrategy{
     public void evolve(BipartiteGraph graph, App agent) {
       reproduce(agent, graph);
     }
+
+
+@Override
+public void init(String stratId) {
+	// TODO Auto-generated method stub
+
+}
 }

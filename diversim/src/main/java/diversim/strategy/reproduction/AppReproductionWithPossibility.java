@@ -30,4 +30,11 @@ public class AppReproductionWithPossibility implements AppReproductionStrategy{
     public void evolve(BipartiteGraph graph, App agent) {
       reproduce(agent, graph);
     }
+
+
+@Override
+public void init(String stratId) {
+	// TODO Auto-generated method stub
+
+}
 }

@@ -25,7 +25,8 @@ public class AppSpeciationReproductionByDNA implements AppReproductionStrategy {
 
 
 	public List<App> reproduce(App parent, BipartiteGraph state) {
-		App child = state.createApp(this.speciator.speciate(parent.getDependencies(), state.services));
+	App child = state.createApp(""); // TODO
+	child.setServices(this.speciator.speciate(parent.getDependencies(), state.services));
 		ArrayList<App> children = new ArrayList<App>();
 		children.add(child);
 		return children;
@@ -35,5 +36,12 @@ public class AppSpeciationReproductionByDNA implements AppReproductionStrategy {
     public void evolve(BipartiteGraph graph, App agent) {
       reproduce(agent, graph);
     }
+
+
+@Override
+public void init(String stratId) {
+	// TODO Auto-generated method stub
+
+}
 
 }

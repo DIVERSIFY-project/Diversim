@@ -1,11 +1,11 @@
 package diversim.strategy.reproduction;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
-import ec.util.MersenneTwisterFast;
+
 
 /**
  * This class implements the ReproductionStrategy with clonal reproduction
@@ -14,8 +14,8 @@ import ec.util.MersenneTwisterFast;
  */
 public class PlatformClonalReproduction implements PlatformReproductionStrategy{
         public List<Platform> reproduce(Platform parent, BipartiteGraph state){
-			MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-		  	Platform child = new Platform(rnd.nextInt(), parent.getSupportedServices());
+	Platform child = state.createPlatform(""); // TODO
+	child.setServices(parent.getSupportedServices());
 			child.setLoadingFactor(parent.getLoadingFactor());
 			ArrayList<Platform> children = new ArrayList<Platform>();
 			children.add(child);
@@ -26,4 +26,11 @@ public class PlatformClonalReproduction implements PlatformReproductionStrategy{
   public void evolve(BipartiteGraph graph, Platform agent) {
     reproduce(agent, graph);
   }
+
+
+@Override
+public void init(String stratId) {
+	// TODO Auto-generated method stub
+
+}
 }

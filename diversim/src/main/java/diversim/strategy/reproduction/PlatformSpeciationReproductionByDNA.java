@@ -22,7 +22,9 @@ public class PlatformSpeciationReproductionByDNA
 			BipartiteGraph state) {
 		List<Service> services = speciator.speciate(parent.services, state.services);
 		List<Platform> children = new ArrayList<Platform>();
-		Platform pltf = state.createPlatform(services, parent.getLoadingFactor());
+	Platform pltf = state.createPlatform(""); // TODO
+	pltf.setServices(services);
+	pltf.setLoadingFactor(parent.getLoadingFactor());
 		children.add(pltf);
 		return children;
 	}
@@ -31,4 +33,11 @@ public class PlatformSpeciationReproductionByDNA
     public void evolve(BipartiteGraph graph, Platform agent) {
       reproduce(agent, graph);
     }
+
+
+@Override
+public void init(String stratId) {
+	// TODO Auto-generated method stub
+
+}
 }

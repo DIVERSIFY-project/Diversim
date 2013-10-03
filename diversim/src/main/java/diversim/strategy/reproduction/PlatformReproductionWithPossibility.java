@@ -31,4 +31,11 @@ public class PlatformReproductionWithPossibility implements PlatformReproduction
     public void evolve(BipartiteGraph graph, Platform agent) {
       reproduce(agent, graph);
     }
+
+
+@Override
+public void init(String stratId) {
+	// TODO Auto-generated method stub
+
+}
 }
