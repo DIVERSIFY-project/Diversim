@@ -1,7 +1,10 @@
 package diversim.strategy.fate;
 
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import diversim.model.BipartiteGraph;
 import diversim.model.Fate;
@@ -38,6 +41,7 @@ protected void clonePlatform(BipartiteGraph graph, List<Service> services) {
 	Platform platform = graph.createPlatform(kind);
 	platform.setServices(services);
 	// graph.createLinks(platform, graph);
+	System.out.println(graph.getPrintoutHeader() + "Fate : ADDED " + platform);
 }
 
 
@@ -45,11 +49,15 @@ protected void childrenPlatform(BipartiteGraph graph, List<Service> p) {
 	String kind = graph.platforms.get(0).getKind();
 	Platform platform = graph.createPlatform(kind);
 
-	Random r = new Random();
-	p.remove(r.nextInt(p.size()));
-	p.remove(r.nextInt(p.size()));
+	p.remove(graph.random.nextInt(p.size()));
+	p.remove(graph.random.nextInt(p.size()));
 
-	p.addAll(graph.selectServices(2));
+	for (Service s : graph.selectServices(2)) {
+		BipartiteGraph.addUnique(p, s);
+	}
+	platform.setServices(p);
+
+	System.out.println(graph.getPrintoutHeader() + "Fate : ADDED " + platform);
 }
 
 
@@ -66,8 +74,7 @@ protected List<Service> selectRandomSpecies(Map<List<Service>, Integer> distribu
 			list.add(p);
 		}
 	}
-	Random r = new Random();
-	return list.get(r.nextInt(list.size()));
+	return list.get(BipartiteGraph.INSTANCE.random.nextInt(list.size()));
 }
 
 
