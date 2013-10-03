@@ -285,7 +285,8 @@ public boolean equals(Object o) {
 }
 
 
-public void setServices(ArrayList<Service> services) {
-	this.services = services;
+public void setServices(List<Service> services) {
+	for (Service s : services)
+		BipartiteGraph.addUnique(this.services, s);
 }
 }
