@@ -46,10 +46,9 @@ public class StrategyFactory {
 	//private static AppReproductionStrategy appReproductionStrategy = null;
 	/**
 	 * Currently, reproduction strategy is general, so only one instance is enough
-	 * @param graph
 	 * @return
 	 */
-	public List<ReproStrategy<App>> createAppReproductionStrategy(App app, BipartiteGraph graph){
+public List<ReproStrategy<App>> createAppReproductionStrategy() {
 		
 		if(APP_REPRODUCTION_STRATEGIES != null)
 			return APP_REPRODUCTION_STRATEGIES;
@@ -75,8 +74,7 @@ private static List<ReproStrategy<App>> APP_REPRODUCTION_STRATEGIES = null;
 	 * @param allServices
 	 * @return
 	 */
-public List<ReproStrategy<Platform>> createPlatformReproductionStrategy(Platform platform,
-		BipartiteGraph state) {
+public List<ReproStrategy<Platform>> createPlatformReproductionStrategy() { // TODO
 		if(PLATFORM_REPRODUCTION_STRATEGIES != null)
 			return PLATFORM_REPRODUCTION_STRATEGIES;
 		
@@ -101,7 +99,7 @@ public List<ReproStrategy<Platform>> createPlatformReproductionStrategy(Platform
 private static List<ReproStrategy<Platform>> PLATFORM_REPRODUCTION_STRATEGIES = null;
 	
 
-public List<ExtinctionStrategy<App>> createAppExtinctionStrategies(App app, BipartiteGraph graph) {
+public List<ExtinctionStrategy<App>> createAppExtinctionStrategies() {
 	List<ExtinctionStrategy<App>> killers = new ArrayList<ExtinctionStrategy<App>>();
 	killers.add((ExtinctionStrategy)new AgingExtinctionStrategy(app, graph, APP_MAX_LIFE));
 	killers.add(new AppOrphanExtinctionStrategy("")); // TODO
@@ -110,8 +108,7 @@ public List<ExtinctionStrategy<App>> createAppExtinctionStrategies(App app, Bipa
 	}
 	
 
-public List<ExtinctionStrategy<Platform>> createPlatformExtinctionStrategies(Platform platform,
-		BipartiteGraph graph) {
+public List<ExtinctionStrategy<Platform>> createPlatformExtinctionStrategies() {
 	List<ExtinctionStrategy<Platform>> killers = new ArrayList<ExtinctionStrategy<Platform>>();
 		
 	ExtinctionStrategy<Entity> lifekiller = new AgingExtinctionStrategy(platform, graph,
