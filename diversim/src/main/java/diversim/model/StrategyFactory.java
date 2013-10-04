@@ -101,7 +101,7 @@ private static List<ReproStrategy<Platform>> PLATFORM_REPRODUCTION_STRATEGIES = 
 
 public List<ExtinctionStrategy<App>> createAppExtinctionStrategies() {
 	List<ExtinctionStrategy<App>> killers = new ArrayList<ExtinctionStrategy<App>>();
-	killers.add((ExtinctionStrategy)new AgingExtinctionStrategy(app, graph, APP_MAX_LIFE));
+	killers.add((ExtinctionStrategy)new AgingExtinctionStrategy(APP_MAX_LIFE));
 	killers.add(new AppOrphanExtinctionStrategy("")); // TODO
 		return killers;
 		
@@ -111,8 +111,7 @@ public List<ExtinctionStrategy<App>> createAppExtinctionStrategies() {
 public List<ExtinctionStrategy<Platform>> createPlatformExtinctionStrategies() {
 	List<ExtinctionStrategy<Platform>> killers = new ArrayList<ExtinctionStrategy<Platform>>();
 		
-	ExtinctionStrategy<Entity> lifekiller = new AgingExtinctionStrategy(platform, graph,
-			PLATFORM_MAX_LIFE);
+	ExtinctionStrategy<Entity> lifekiller = new AgingExtinctionStrategy(PLATFORM_MAX_LIFE);
 		
 	killers.add((ExtinctionStrategy)lifekiller);
 		

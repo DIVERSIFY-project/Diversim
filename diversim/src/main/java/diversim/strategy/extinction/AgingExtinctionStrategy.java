@@ -6,22 +6,19 @@ import diversim.model.Entity;
 
 public class AgingExtinctionStrategy extends ExtinctionStrategy<Entity> {
 	
-	private Entity entity = null;
-	private int expectedAge = 0;
-	private long born = 0;
+private int expectedAge;
+
 	
-	public AgingExtinctionStrategy(Entity entity, BipartiteGraph graph, int expectedAge){
+public AgingExtinctionStrategy(int expectedAge) {
 	super(""); // TODO
-		this.born = graph.schedule.getSteps();		
-		this.expectedAge = expectedAge;
-		this.entity = entity;
-		
+	this.expectedAge = expectedAge;
+
 	}
 
 
-	public boolean die(BipartiteGraph graph) {
-		long steps = graph.schedule.getSteps();
-		if( steps - born >= expectedAge){
+public boolean die(Entity e, BipartiteGraph graph) {
+	long steps = graph.getCurCycle();
+	if (steps - e.getBirthCycle() >= expectedAge) {
 			return true;
 		}
 		else
@@ -30,15 +27,9 @@ public class AgingExtinctionStrategy extends ExtinctionStrategy<Entity> {
 	}
 
 
-	@Override
-public boolean die(Entity e, BipartiteGraph graph) {
-		return die(graph);
-	}
-
-
 @Override
 public void evolve(BipartiteGraph graph, Entity agent) {
-	die(agent, graph);
+	agent.dead = die(agent, graph);
 
 }
 

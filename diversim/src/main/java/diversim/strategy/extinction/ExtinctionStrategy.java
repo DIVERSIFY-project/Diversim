@@ -1,5 +1,6 @@
 package diversim.strategy.extinction;
 
+
 import diversim.model.BipartiteGraph;
 import diversim.model.Entity;
 import diversim.strategy.AbstractStrategy;

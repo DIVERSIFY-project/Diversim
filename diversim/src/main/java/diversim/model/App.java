@@ -1,15 +1,12 @@
 package diversim.model;
 
 
-import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 import sim.engine.SimState;
 import diversim.strategy.Strategy;
-import diversim.strategy.extinction.ExtinctionStrategy;
-import diversim.strategy.reproduction.ReproStrategy;
 import diversim.util.config.Configuration;
 
 /**
@@ -30,11 +27,7 @@ public class App extends Entity {
 	
 private double redundancy = 0;
 
-List<ReproStrategy<App>> reproducers;
 
-List<ExtinctionStrategy<App>> killers;
-	
-	
 	public List<Service> getDependencies(){
 	        return this.services;
 	}
@@ -55,17 +48,6 @@ List<ExtinctionStrategy<App>> killers;
 	
 	        this.services.removeAll(new HashSet(obs_deps));
 	}
-	
-	
-	
-	
-	public List<App> reproduce(BipartiteGraph state){
-	  List<App> result = new ArrayList<App>();
-	for (ReproStrategy<App> reproducer : reproducers) {
-		  result.addAll(reproducer.reproduce(this, state));
-	  }
-	  return result;
-   }
 
 
     public double getRedundancy() {
@@ -92,73 +74,27 @@ public void init(String entityId, BipartiteGraph graph) {
 }
 
 
-// /*
-// * (non-Javadoc)
-// * @see diversim.model.Entity#step(sim.engine.SimState)
-// */
-// @SuppressWarnings("unchecked")
-// @Override
-// public void step(SimState state) {
-// BipartiteGraph graph = (BipartiteGraph) state;
-// strategy.evolve(graph,this);
-//
-// redundancy = ((double) degree) / graph.getNumPlatforms();
-// if (redundancy > 1.0) redundancy = 1.0;
-// printoutCurStep(graph);
-// }
+/*
+ * (non-Javadoc)
+ * @see diversim.model.Entity#step(sim.engine.SimState)
+ */
+@SuppressWarnings("unchecked")
+@Override
+public void step(SimState state) {
+	BipartiteGraph graph = (BipartiteGraph)state;
+	strategy.evolve(graph, this);
 
-
-	public void initStrategies(BipartiteGraph graph){
-		this.reproducers = StrategyFactory.fINSTANCE.createAppReproductionStrategy(this, graph);
-		this.killers = StrategyFactory.fINSTANCE.createAppExtinctionStrategies(this, graph);
-	}
-	
-	
-	/*
-	 * (non-Javadoc)
-	 * @see diversim.Entity#step(sim.engine.SimState)
-	 *
-	 * This is where we want the command pattern to be invoked from the bipartite
-	 * graph.
-	 */
-	@Override
-	public void step(SimState state) {
-	  BipartiteGraph graph = (BipartiteGraph) state;
-	
-	// TODO something
-	
-	if(dieOrNot(graph)){
-		return;
-	}
-	
 	redundancy = ((double)degree) / graph.getNumPlatforms();
 	if (redundancy > 1.0) redundancy = 1.0;
 	printoutCurStep(graph);
-	}
-	
-	
+}
+
+
 	@Override
 	public String toString() {
 	  String res = super.toString();
 	  res += " ; redundancy = " + redundancy;
 	  return res;
 	}
-	
-	/**
-	 * Many killers, any of them could kill an App
-	 *
-	 * TODO: should introduce a "Die Strategy"
-	 */
-	public boolean dieOrNot(BipartiteGraph graph){
-		if(dead)
-			return true;
-	for (ExtinctionStrategy<App> killer : killers) {
-			if( killer.die(this, graph)){
-				this.dead = true;
-				return true;
-			}
-		}
-		return false;
-	}
-	
+
 }
