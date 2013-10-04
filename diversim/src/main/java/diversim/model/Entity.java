@@ -6,14 +6,14 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import diversim.util.IndexedSortable;
-import diversim.strategy.Strategy;
-import diversim.util.config.Configuration;
 import sim.engine.SimState;
 import sim.engine.Steppable;
 import sim.engine.Stoppable;
 import sim.field.network.Edge;
 import sim.util.Bag;
+import diversim.strategy.Strategy;
+import diversim.util.IndexedSortable;
+import diversim.util.config.Configuration;
 
 /**
  * Superclass of any model that
@@ -62,6 +62,11 @@ private Stoppable stoppable;
     protected Strategy strategy;
 
 
+public boolean dead;
+
+private int since; // cycle at which the entity is created.
+
+
 @SuppressWarnings("rawtypes")
 public Strategy getStrategy() {
   return strategy;
@@ -76,6 +81,12 @@ Entity(int id, Strategy<? extends Entity> strategy) {
     this.strategy = strategy;
 }
 
+
+public int getBirthCycle() {
+	return since;
+}
+
+
     public void init(String entityId, BipartiteGraph graph) {
         ID = counter;
         counter++;
@@ -83,6 +94,8 @@ Entity(int id, Strategy<? extends Entity> strategy) {
         services = new ArrayList<Service>();
         strategy = BipartiteGraph.getStrategy(Configuration.getString(kind + ".strategy"));
         degree = 0;
+	dead = false;
+	since = graph.getCurCycle();
     }
 
 public int getDegree() {
