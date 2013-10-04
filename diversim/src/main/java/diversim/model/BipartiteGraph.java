@@ -554,7 +554,7 @@ public void createEntities(String entityName, long maxSize, List<? extends Entit
 public Entity createEntity(String entityName) throws ClassNotFoundException,
     IllegalAccessException, InstantiationException {
 	String className = Configuration.getString(entityName + ".class");
-	Class cl = Class.forName(className);
+	Class<?> cl = Class.forName(className);
 	Entity entity = (Entity)cl.newInstance();
 	entity.init(entityName, this);
 	bipartiteNetwork.addNode(entity);
@@ -589,7 +589,7 @@ public Platform createPlatform(String entityName) {
 }
 
 
-public static Strategy<?> getStrategy(String strategyName)  {
+public static Strategy<? extends Steppable> getStrategy(String strategyName) {
 	String id = "";
 	for (String strategy : Configuration.getSpecies("strategy")) {
 		if (strategyName.equals(Configuration.getString(strategy + ".name"))) {
@@ -600,7 +600,7 @@ public static Strategy<?> getStrategy(String strategyName)  {
 	String className = Configuration.getString(id + ".class");
 	Strategy<?> strategy = null;
 	try {
-		Class cl = Class.forName(className);
+		Class<?> cl = Class.forName(className);
 		strategy = (Strategy<?>)cl.newInstance();
 		strategy.init(id);
 	} catch (Exception e) {
