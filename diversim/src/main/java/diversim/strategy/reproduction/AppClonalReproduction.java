@@ -27,7 +27,7 @@ public AppClonalReproduction(String n) {
 		public List<App> reproduce(App parent, BipartiteGraph state) {
 	App child = state.createApp(""); // TODO
 	child.setServices(parent.getDependencies());
-			child.initStrategies(state);
+	child.setStrategy(parent.getStrategy());
 			ArrayList<App> children = new ArrayList<App>();
 			children.add(child);
 			return children;

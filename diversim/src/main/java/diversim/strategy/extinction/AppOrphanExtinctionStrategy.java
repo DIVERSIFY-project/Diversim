@@ -25,7 +25,7 @@ public AppOrphanExtinctionStrategy(String n) {
 
 @Override
 public void evolve(BipartiteGraph graph, App agent) {
-	die(agent, graph);
+	agent.dead = die(agent, graph);
 
 }
 

@@ -28,6 +28,7 @@ public class AppSpeciationReproductionByDNA extends ReproStrategy<App> {
 	public List<App> reproduce(App parent, BipartiteGraph state) {
 	App child = state.createApp(""); // TODO
 	child.setServices(this.speciator.speciate(parent.getDependencies(), state.services));
+	child.setStrategy(parent.getStrategy());
 		ArrayList<App> children = new ArrayList<App>();
 		children.add(child);
 		return children;
