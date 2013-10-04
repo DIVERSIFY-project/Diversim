@@ -15,11 +15,12 @@ import diversim.model.BipartiteGraph;
  *
  */
 
-public class AppSpeciationReproductionByDNA implements AppReproductionStrategy {
+public class AppSpeciationReproductionByDNA extends ReproStrategy<App> {
 	
 	DNASpeciation speciator = null;
 	
 	public AppSpeciationReproductionByDNA(DNASpeciation speciator){
+	super(""); // TODO
 		this.speciator = speciator;
 	}
 

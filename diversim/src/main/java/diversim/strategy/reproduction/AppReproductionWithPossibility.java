@@ -7,12 +7,15 @@ import diversim.model.App;
 import diversim.model.BipartiteGraph;
 
 
-public class AppReproductionWithPossibility implements AppReproductionStrategy{
+public class AppReproductionWithPossibility extends ReproStrategy<App> {
 
 	private double possibility = 0;
-	private AppReproductionStrategy reproducer = null;
 
-	public AppReproductionWithPossibility(double possiblility, AppReproductionStrategy reproducer){
+private ReproStrategy<App> reproducer = null;
+
+
+public AppReproductionWithPossibility(double possiblility, ReproStrategy<App> reproducer) {
+	super(""); // TODO
 		this.possibility = possiblility;
 		this.reproducer = reproducer;
 	}

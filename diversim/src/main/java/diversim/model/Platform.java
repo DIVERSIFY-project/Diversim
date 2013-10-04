@@ -7,8 +7,8 @@ import java.util.Set;
 
 import sim.engine.SimState;
 import diversim.strategy.Strategy;
-import diversim.strategy.extinction.PlatformExtinctionStrategy;
-import diversim.strategy.reproduction.PlatformReproductionStrategy;
+import diversim.strategy.extinction.ExtinctionStrategy;
+import diversim.strategy.reproduction.ReproStrategy;
 
 
 /**
@@ -33,14 +33,15 @@ public class Platform extends Entity {
 	
 	public boolean dead = false;
 
-	List<PlatformReproductionStrategy> reproducers;
-	List<PlatformExtinctionStrategy> killers;
+List<ReproStrategy<Platform>> reproducers;
+
+List<ExtinctionStrategy<Platform>> killers;
 	// ArrayList<Service> supportedServices;
 
 
 	public List<Platform> reproduce(BipartiteGraph state){
 		List<Platform> result = new ArrayList<Platform>();
-		for(PlatformReproductionStrategy reproducer : reproducers){
+	for (ReproStrategy<Platform> reproducer : reproducers) {
 			result.addAll(reproducer.reproduce(this, state));
 		}
 		return result;
@@ -111,7 +112,7 @@ public class Platform extends Entity {
 	public boolean dieOrNot(BipartiteGraph graph){
 		if(dead)
 			return true;
-		for(PlatformExtinctionStrategy killer : killers){
+	for (ExtinctionStrategy<Platform> killer : killers) {
 			if( killer.die(this, graph)){
 				this.dead = true;
 				return true;

@@ -12,8 +12,15 @@ import diversim.model.Platform;
  * i.e., the Platform child that is created is exactly the same as the parent Platform. Also, this strategy results in only one child.
  * @author Vivek Nallur
  */
-public class PlatformClonalReproduction implements PlatformReproductionStrategy{
-        public List<Platform> reproduce(Platform parent, BipartiteGraph state){
+public class PlatformClonalReproduction extends ReproStrategy<Platform> {
+
+protected PlatformClonalReproduction(String n) {
+	super(n);
+	// TODO Auto-generated constructor stub
+}
+
+
+public List<Platform> reproduce(Platform parent, BipartiteGraph state) {
 	Platform child = state.createPlatform(""); // TODO
 	child.setServices(parent.getSupportedServices());
 			child.setLoadingFactor(parent.getLoadingFactor());

@@ -1,18 +1,17 @@
 package diversim.strategy.extinction;
 
-import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Entity;
-import diversim.model.Platform;
 
-public class AgingExtinctionStrategy implements AppExtinctionStrategy, PlatformExtinctionStrategy {
+
+public class AgingExtinctionStrategy extends ExtinctionStrategy<Entity> {
 	
 	private Entity entity = null;
 	private int expectedAge = 0;
 	private long born = 0;
 	
 	public AgingExtinctionStrategy(Entity entity, BipartiteGraph graph, int expectedAge){
-		
+	super(""); // TODO
 		this.born = graph.schedule.getSteps();		
 		this.expectedAge = expectedAge;
 		this.entity = entity;
@@ -32,15 +31,15 @@ public class AgingExtinctionStrategy implements AppExtinctionStrategy, PlatformE
 
 
 	@Override
-	public boolean die(Platform platform, BipartiteGraph graph) {
+public boolean die(Entity e, BipartiteGraph graph) {
 		return die(graph);
 	}
 
 
-	@Override
-	public boolean die(App app, BipartiteGraph graph) {
-		// TODO Auto-generated method stub
-		return die(graph);
-	}
+@Override
+public void evolve(BipartiteGraph graph, Entity agent) {
+	die(agent, graph);
+
+}
 
 }

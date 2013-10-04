@@ -15,7 +15,13 @@ import diversim.model.BipartiteGraph;
  *
  * @author Vivek Nallur
  */
-public class AppClonalReproduction implements AppReproductionStrategy{
+public class AppClonalReproduction extends ReproStrategy<App> {
+
+public AppClonalReproduction(String n) {
+	super(n);
+	// TODO Auto-generated constructor stub
+}
+
 
 		@Override
 		public List<App> reproduce(App parent, BipartiteGraph state) {

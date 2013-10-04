@@ -6,12 +6,16 @@ import java.util.List;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 
-public class PlatformReproductionWithPossibility implements PlatformReproductionStrategy{
+
+public class PlatformReproductionWithPossibility extends ReproStrategy<Platform> {
 	
 	private double possibility = 0;
-	private PlatformReproductionStrategy reproducer = null;
+
+private ReproStrategy<Platform> reproducer = null;
 	
-	public PlatformReproductionWithPossibility(double possiblility, PlatformReproductionStrategy reproducer){
+
+public PlatformReproductionWithPossibility(double possiblility, ReproStrategy<Platform> reproducer) {
+	super(""); // TODO
 		this.possibility = possiblility;
 		this.reproducer = reproducer;
 	}

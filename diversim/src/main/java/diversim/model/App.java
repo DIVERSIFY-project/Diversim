@@ -8,8 +8,8 @@ import java.util.Set;
 
 import sim.engine.SimState;
 import diversim.strategy.Strategy;
-import diversim.strategy.extinction.AppExtinctionStrategy;
-import diversim.strategy.reproduction.AppReproductionStrategy;
+import diversim.strategy.extinction.ExtinctionStrategy;
+import diversim.strategy.reproduction.ReproStrategy;
 import diversim.util.config.Configuration;
 
 /**
@@ -32,8 +32,9 @@ private double redundancy = 0;
 	
 	public boolean dead = false;
 
-	List<AppReproductionStrategy> reproducers;
-	List<AppExtinctionStrategy> killers;
+List<ReproStrategy<App>> reproducers;
+
+List<ExtinctionStrategy<App>> killers;
 	
 	
 	public List<Service> getDependencies(){
@@ -62,7 +63,7 @@ private double redundancy = 0;
 	
 	public List<App> reproduce(BipartiteGraph state){
 	  List<App> result = new ArrayList<App>();
-	  for(AppReproductionStrategy reproducer : reproducers){
+	for (ReproStrategy<App> reproducer : reproducers) {
 		  result.addAll(reproducer.reproduce(this, state));
 	  }
 	  return result;
@@ -132,8 +133,6 @@ public void init(String entityId, BipartiteGraph graph) {
 		return;
 	}
 	
-	List<App> newApps = reproduce(graph);
-	
 	redundancy = ((double)degree) / graph.getNumPlatforms();
 	if (redundancy > 1.0) redundancy = 1.0;
 	printoutCurStep(graph);
@@ -155,7 +154,7 @@ public void init(String entityId, BipartiteGraph graph) {
 	public boolean dieOrNot(BipartiteGraph graph){
 		if(dead)
 			return true;
-		for(AppExtinctionStrategy killer : killers){
+	for (ExtinctionStrategy<App> killer : killers) {
 			if( killer.die(this, graph)){
 				this.dead = true;
 				return true;

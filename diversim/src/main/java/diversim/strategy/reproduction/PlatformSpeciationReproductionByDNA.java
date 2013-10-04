@@ -8,12 +8,12 @@ import diversim.model.Platform;
 import diversim.model.Service;
 
 
-public class PlatformSpeciationReproductionByDNA
-		implements PlatformReproductionStrategy {
+public class PlatformSpeciationReproductionByDNA extends ReproStrategy<Platform> {
 
 	private DNASpeciation speciator;
 
 	public PlatformSpeciationReproductionByDNA(DNASpeciation speciator){
+	super(""); // TODO
 		this.speciator = speciator;
 	}
 	
