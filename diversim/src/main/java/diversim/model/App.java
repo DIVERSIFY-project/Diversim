@@ -29,8 +29,6 @@ public class App extends Entity {
 	
 	
 private double redundancy = 0;
-	
-	public boolean dead = false;
 
 List<ReproStrategy<App>> reproducers;
 

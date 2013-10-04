@@ -30,8 +30,6 @@ public class Platform extends Entity {
 
 	// how many apps can one service on this platform  support.
 	private int APP_PER_SERVICE = 1;
-	
-	public boolean dead = false;
 
 List<ReproStrategy<Platform>> reproducers;
 

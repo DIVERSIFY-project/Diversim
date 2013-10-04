@@ -68,6 +68,10 @@ protected String kind;
 
 protected Strategy strategy;
 
+public boolean dead;
+
+private int since; // cycle at which the entity is created.
+
 
 public Entity() {}
 
@@ -79,6 +83,11 @@ Entity(int id, Strategy<? extends Entity> strategy) {
 }
 
 
+public int getBirthCycle() {
+	return since;
+}
+
+
     public void init(String entityId, BipartiteGraph graph) {
         ID = counter;
         counter++;
@@ -87,6 +96,8 @@ Entity(int id, Strategy<? extends Entity> strategy) {
 	strategy = (Strategy<? extends Entity>)BipartiteGraph.getStrategy(
 			Configuration.getString(kind + ".strategy"));
         degree = 0;
+	dead = false;
+	since = graph.getCurCycle();
     }
 
 public Strategy<? extends Entity> getStrategy() {
@@ -105,7 +116,6 @@ public Strategy<? extends Entity> getStrategy() {
     strategy = s;
   }
 
-  abstract public void initStrategies(BipartiteGraph graph);
 
 	public boolean matches(Entity target){
 		return this.matcher.matches(this, target);
