@@ -10,6 +10,9 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+
+import com.sun.istack.internal.logging.Logger;
 
 import sim.engine.Schedule;
 import sim.engine.SimState;
@@ -532,7 +535,8 @@ public App createApp(String entityName) {
 		app = (App)createEntity(entityName);
 	}
 	catch (Exception e) {
-		new Exception(e);
+		Logger.getLogger(this.getClass()).log(Level.SEVERE, "createApp: error " + e.getMessage());
+		return null;
 	}
 	addUnique(apps, app);
 	return app;
@@ -545,7 +549,8 @@ public Platform createPlatform(String entityName) {
 		app = (Platform)createEntity(entityName);
 	}
 	catch (Exception e) {
-		new Exception(e);
+		Logger.getLogger(this.getClass()).log(Level.SEVERE, "createPlatform: error " + e.getMessage());
+		return null;
 	}
 	addUnique(platforms, app);
 	return app;
@@ -568,7 +573,9 @@ public static Strategy<? extends Steppable> getStrategy(String strategyName) {
 		strategy.init(id);
 	}
 	catch (Exception e) {
-		new Exception(e);
+		Logger.getLogger(BipartiteGraph.class)
+		    .log(Level.SEVERE, "getStrategy: error " + e.getMessage());
+		return null;
 	}
 
 	return strategy;
