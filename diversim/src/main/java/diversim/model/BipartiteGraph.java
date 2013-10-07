@@ -294,7 +294,8 @@ private void init() {
 	services = new ArrayList<Service>();
 	entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
 	try {
-		configPath = System.getenv().get("PWD");
+		//configPath = System.getenv().get("PWD");
+		configPath = System.getProperty("user.dir");
 		configPath += "/neutralModel.conf";
 		Configuration.setConfig(configPath);
 		stepsPerCycle = 0;
