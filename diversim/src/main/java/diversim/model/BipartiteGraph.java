@@ -479,15 +479,15 @@ public static void main(String[] args) {
  * returned. The number of services returned is always at least 1 and at most
  * {@link #getNumServices()}.
  * 
- * @param n
+ * @param size
  *          Number of services to return.
  * @return A random selection of services.
  */
-public ArrayList<Service> selectServices(int n) {
+public ArrayList<Service> selectServices(int size) {
 	ArrayList<Service> servs = new ArrayList<Service>();
-	if (n < 1) n = (int)((random.nextGaussian() + 3) / 6 * (getNumServices() - 1) + 1);
-	n = n < 1 ? 1 : n > getNumServices() ? getNumServices() : n;
-	for (int j = 0; j < n; j++) {
+	if (size < 1) size = (int)((random.nextGaussian() + 3) / 6 * (getNumServices() - 1) + 1);
+	size = size < 1 ? 1 : size > getNumServices() ? getNumServices() : size;
+	for (int j = 0; j < size; j++) {
 		servs.add(services.get(random.nextInt(getNumServices())));
 	}
 
