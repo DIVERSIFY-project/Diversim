@@ -69,7 +69,6 @@ private void clone_Mutate(BipartiteGraph graph, Platform platform) {
 	String kind = graph.platforms.get(0).getKind();
 	Platform p = graph.createPlatform(kind);
 	graph.createLinks(p, ents);
-	graph.createLinks(p, ents);
 
 	// remove different size * factor services from this platform
 	Arrays.sort(set, csize, csize * 2);
