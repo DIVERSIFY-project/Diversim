@@ -21,10 +21,16 @@ public KillPlatform() {
 
 @Override
 public void evolve(BipartiteGraph graph, Fate agent) {
-	Platform a = graph.platforms.get(graph.random.nextInt(graph.getNumPlatforms()));
-	graph.removeEntity(graph.platforms, a);
+	if (graph.getNumPlatforms() > 0) {
+		Platform a = graph.platforms.get(graph.random.nextInt(graph.getNumPlatforms()));
+		graph.removeEntity(graph.platforms, a);
 
-	System.out.println(graph.getPrintoutHeader() + "Fate : REMOVED " + a);
+		System.out.println(graph.getPrintoutHeader() + "Fate : REMOVED " + a);
+	}
+	else {
+		System.out.println(graph.getPrintoutHeader() + "Fate : NO PLATFORMS REMAINING ");
+		//graph.schedule.clear();
+	}
 }
 
 @Override
