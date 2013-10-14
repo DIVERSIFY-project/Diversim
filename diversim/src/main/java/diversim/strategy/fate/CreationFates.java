@@ -2,8 +2,7 @@ package diversim.strategy.fate;
 
 
 import java.util.logging.Level;
-
-import com.sun.istack.internal.logging.Logger;
+import java.util.logging.Logger;
 
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
@@ -11,12 +10,17 @@ import diversim.model.Platform;
 
 public class CreationFates {
 
-public static void cloningRandom(BipartiteGraph graph, int amount) {
-	for (int i = 0; i < Math.min(amount, graph.platforms.size()); i++) {
-		graph.platforms.add(new Platform((int)System.currentTimeMillis(), graph.platforms.get(i)
-		    .getServices(), graph.platforms.get(i).getStrategy()));
-		Logger.getLogger(CreationFates.class).log(Level.INFO,
-		    "Platform <" + graph.platforms.get(i) + "> has been cloned");
+public CreationFates() {}
+
+
+public static void cloningRandom(BipartiteGraph graph, double amount) {
+	for (int i = 0; i < graph.getNumPlatforms() * amount; i++) {
+		Platform source = graph.platforms.get(graph.random.nextInt(graph.getNumPlatforms()));
+		Platform clone = graph.createPlatform("platform.1");
+		clone.setServices(source.getServices());
+		clone.setStrategy(source.getStrategy());
+		Logger.getLogger(CreationFates.class.getName()).log(Level.INFO,
+		    "Platform <" + source + "> has been cloned");
 	}
 }
 }
