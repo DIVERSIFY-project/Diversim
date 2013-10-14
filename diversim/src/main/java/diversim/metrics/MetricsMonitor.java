@@ -256,7 +256,7 @@ public class MetricsMonitor {
                 }
             }
         }
-        System.out.println(paras);
+        System.out.println("Metrics : Recording " + paras);
         MetricsMonitor metrics = new MetricsMonitor(graph, paras);
 		metrics.filePath = "C:\\Users\\huis\\bitbucket\\divmetrics\\data\\";
 		allMetrics.add(metrics);

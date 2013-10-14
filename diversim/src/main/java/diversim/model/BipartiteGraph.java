@@ -19,6 +19,7 @@ import sim.field.network.Network;
 import sim.util.Bag;
 import diversim.strategy.Strategy;
 import diversim.util.config.Configuration;
+import diversim.metrics.*;
 import ec.util.MersenneTwisterFast;
 
 
@@ -107,6 +108,8 @@ public Network bipartiteNetwork;
  * Invisible agent that can affect the history of the simulation by injecting external events.
  */
 public Fate fate;
+
+public static MetricsMonitor metrics;
 
 protected boolean changed;
 
@@ -436,6 +439,7 @@ public void start() {
 		initFate();
 		initPlatform();
 		initApp();
+		metrics = MetricsMonitor.createMetricsInstance(INSTANCE);
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -457,7 +461,12 @@ public void start() {
 		public void step(SimState state) {
 			if (changed) printoutNetwork();
 			changed = false;
+			System.out.println("METRICS: " + metrics.recordSnapshot());
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
+			
+			if (state.schedule.scheduleComplete()) {
+				System.out.println("METRICS HISTORY: " + metrics.getHistory());
+			}
 		}
 	};
 	schedule.scheduleRepeating(schedule.getTime() + 1.2, print, 1.0);
