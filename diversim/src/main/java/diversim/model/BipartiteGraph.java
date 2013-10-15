@@ -427,6 +427,12 @@ protected void initServices() {
  * This method is called ONCE at the beginning of every simulation. EVERY field, parameter,
  * structure etc. MUST be initialized here (and not in the constructor).
  */
+public void start(String path) {
+	configPath = path;
+	System.err.println("Config : INFO : Starting with config file: " + path);
+	start();
+}
+
 public void start() {
 	super.start();
 	// reset all parameters and fields
