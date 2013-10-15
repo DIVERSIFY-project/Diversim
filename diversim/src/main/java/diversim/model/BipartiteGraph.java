@@ -10,9 +10,10 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+
+import java.util.logging.Logger;
 import java.util.logging.Level;
 
-import com.sun.istack.internal.logging.Logger;
 
 import sim.engine.Schedule;
 import sim.engine.SimState;
@@ -125,6 +126,8 @@ private boolean supervised;
 private static String configPath;
 
 public int stepsPerCycle;
+
+private static Logger logger = Logger.getLogger("BipartiteGraph");
 
 
 /**
@@ -545,7 +548,7 @@ public App createApp(String entityName) {
 		app = (App)createEntity(entityName);
 	}
 	catch (Exception e) {
-		Logger.getLogger(this.getClass()).log(Level.SEVERE, "createApp: error " + e.getMessage());
+		logger.log(Level.SEVERE, "createApp: error " + e.getMessage());
 		return null;
 	}
 	addUnique(apps, app);
@@ -559,7 +562,7 @@ public Platform createPlatform(String entityName) {
 		app = (Platform)createEntity(entityName);
 	}
 	catch (Exception e) {
-		Logger.getLogger(this.getClass()).log(Level.SEVERE, "createPlatform: error " + e.getMessage());
+		logger.log(Level.SEVERE, "createPlatform: error " + e.getMessage());
 		return null;
 	}
 	addUnique(platforms, app);
@@ -583,8 +586,7 @@ public static Strategy<? extends Steppable> getStrategy(String strategyName) {
 		strategy.init(id);
 	}
 	catch (Exception e) {
-		Logger.getLogger(BipartiteGraph.class)
-		    .log(Level.SEVERE, "getStrategy: error " + e.getMessage());
+		logger.log(Level.SEVERE, "getStrategy: error " + e.getMessage());
 		return null;
 	}
 
