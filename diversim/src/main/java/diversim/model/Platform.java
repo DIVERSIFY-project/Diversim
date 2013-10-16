@@ -37,7 +37,7 @@ public Platform() {}
 
 public void init(String entityId, BipartiteGraph graph) {
 	super.init(entityId, graph);
-	int numberServices = Configuration.getInt(entityId + ".services", graph.getMaxServices());
+	int numberServices = Configuration.getInt(entityId + ".services", graph.getNumServices());
 	for (Service s : graph.selectServices(numberServices)) {
 		BipartiteGraph.addUnique(services, s);
 	}
