@@ -288,6 +288,36 @@ public double getAvgAppSize() {
 }
 
 
+public double getShannon() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.SHANNON_PLATFORM);
+}
+
+
+public double getGiniSimpson() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.GS_PLATFORM);
+}
+
+
+public double getAveDiff() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.DIFF_PLATFORM);
+}
+
+
+public double getMaxShannon() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return Math.log(this.getNumPlatforms());
+}
+
+
+public double getMinGiniSimpson() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return 1 - 1 / (Double)metrics.getSnapshot().get(MetricsMonitor.NUM_SPECIES_PLATFORM);
+}
+
+
 /**
  * Dynamic persistent data structures should be created here.
  */
