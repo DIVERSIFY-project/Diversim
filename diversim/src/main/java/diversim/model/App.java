@@ -38,7 +38,7 @@ public App() {};
 public void init(String entityId, BipartiteGraph graph) {
 	super.init(entityId, graph);
 	int nSer = Configuration.getInt(entityId + ".services");
-	for (Service s : graph.selectServices(nSer)) {
+	for (Service s : graph.nextBundle()) {
 		BipartiteGraph.addUnique(services, s);
 	}
 }
