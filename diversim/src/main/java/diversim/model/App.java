@@ -67,4 +67,8 @@ public String toString() {
 	return res;
 }
 
+public boolean isAppAlive() {
+	return getDegree() == getServices().size();	
+}
+
 }
