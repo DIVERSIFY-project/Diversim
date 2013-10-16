@@ -731,6 +731,11 @@ public String getPrintoutHeader() {
 }
 
 
+public MersenneTwisterFast random() {
+	return random;
+}
+
+
 /**
  * It gets a object from a given list, that matches the given target. The object is cast to the
  * runtime class of the variable to which is assigned to, with NO type check. The list must be
