@@ -23,8 +23,8 @@ public RoundRobin() {
 public void evolve(BipartiteGraph graph, App e) {
 	if (graph.getNumPlatforms() > 0) {
 		Bag platforms = new Bag(graph.platforms);
-		platforms.shuffle(graph.random);
 		for (Service s: e.getServices()) {
+			platforms.shuffle(graph.random);
 			for (Object p : platforms) {
 				if (((Platform)p).getDegree() <= graph.getPlatformMaxLoad() && ((Platform)p).getServices().contains(s)) {
 					graph.addEdge(e, ((Platform)p), e.getSize());
