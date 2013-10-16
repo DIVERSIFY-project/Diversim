@@ -22,7 +22,7 @@ public static void bugCorrected(BipartiteGraph graph) {
 	for (Platform p : graph.platforms) {
 		if (p.getServices().contains(obsolete)) {
 			p.getServices().remove(obsolete);
-			p.getServices().add(replacement);
+			graph.addUnique(p.getServices(), replacement);
 			Logger.getLogger(MutationFates.class.getName()).log(
 			    Level.INFO,
 			    "Platform <" + p + "> has mutated: Service <" + obsolete + "> replaced with Service <"
