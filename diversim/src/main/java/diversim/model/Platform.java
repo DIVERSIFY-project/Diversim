@@ -5,6 +5,7 @@ import java.util.List;
 
 import sim.engine.SimState;
 import diversim.strategy.Strategy;
+import diversim.util.config.Configuration;
 
 
 /**
@@ -36,7 +37,8 @@ public Platform() {}
 
 public void init(String entityId, BipartiteGraph graph) {
 	super.init(entityId, graph);
-	for (Service s : graph.selectServices(graph.getMaxServices())) {
+	int numberServices = Configuration.getInt(entityId + ".services", graph.getNumServices());
+	for (Service s : graph.selectServices(numberServices)) {
 		BipartiteGraph.addUnique(services, s);
 	}
 	pressure = 0;

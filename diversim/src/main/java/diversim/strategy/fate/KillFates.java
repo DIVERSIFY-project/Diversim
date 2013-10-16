@@ -66,7 +66,7 @@ public static void unattended(BipartiteGraph graph, double amount) {
 		if (p.getServices().contains(backdoor)) {
 			platforms.remove(p);
 			Logger.getLogger(KillFates.class.getName()).log(Level.INFO,
-			    "Platform <" + p + "> has been killed by Backdoor Service <" + backdoor + ">");
+			    "Platform <" + p + "> has been killed by Unattended Service <" + backdoor + ">");
 			if (--counter <= 0) {
 				break;
 			}

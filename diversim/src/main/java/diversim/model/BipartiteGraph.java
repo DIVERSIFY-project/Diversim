@@ -130,6 +130,11 @@ public int stepsPerCycle;
 private static Logger logger = Logger.getLogger("BipartiteGraph");
 
 
+ArrayList<ArrayList<Service>> serviceBundles;
+
+private int nextBundle;
+
+
 /**
  * Getters and setters. Any Java Bean getter/setter is auto-magically included in the GUI. If a
  * variable has an associated setter here, it can be modify at runtime via the Model tab of the GUI.
@@ -291,6 +296,36 @@ public double getAvgAppSize() {
 }
 
 
+public double getShannon() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.SHANNON_PLATFORM);
+}
+
+
+public double getGiniSimpson() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.GS_PLATFORM);
+}
+
+
+public double getAveDiff() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.DIFF_PLATFORM);
+}
+
+
+public double getMaxShannon() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return Math.log(this.getNumPlatforms());
+}
+
+
+public double getMinGiniSimpson() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return 1 - 1 / (Double)metrics.getSnapshot().get(MetricsMonitor.NUM_SPECIES_PLATFORM);
+}
+
+
 /**
  * Dynamic persistent data structures should be created here.
  */
@@ -302,6 +337,7 @@ private void init() {
 	apps = new ArrayList<App>();
 	services = new ArrayList<Service>();
 	entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
+	serviceBundles = new ArrayList<ArrayList<Service>>();
 	try {
 		//configPath = System.getenv().get("PWD");
 		configPath = System.getProperty("user.dir");
@@ -423,6 +459,11 @@ protected void initServices() {
 }
 
 
+public ArrayList<Service> nextBundle() {
+	return serviceBundles.get(nextBundle++);
+}
+
+
 /**
  * This method is called ONCE at the beginning of every simulation. EVERY field, parameter,
  * structure etc. MUST be initialized here (and not in the constructor).
@@ -439,14 +480,35 @@ public void start() {
 	platforms.clear();
 	apps.clear();
 	services.clear();
+	serviceBundles.clear();
 	bipartiteNetwork.clear();
 	entityStrategies.clear();
 	changed = true;
 	centralized = false;
 	stepsPerCycle = 0;
+	nextBundle = 0;
+	Service.counter = 0;
 
 	readConfig();
-	initServices();
+	if (services.isEmpty()) {
+		initServices();
+		for (int i = 0; i < initApps; i++) {
+			serviceBundles.add(selectServices(0));
+		}
+		// try {
+		// FileWriter fout = new FileWriter("services" + System.currentTimeMillis());
+		// for (ArrayList<Service> serviceA : serviceBundles)
+		// for (Service s : serviceA)
+		// fout.write(s.toString() + "\n");
+		// fout.flush();
+		// fout.close();
+		// }
+		// catch (IOException e) {
+		// // TODO Auto-generated catch block
+		// e.printStackTrace();
+		// }
+	}
+
 	try {
 		initFate();
 		initPlatform();
@@ -706,6 +768,11 @@ private void printoutNetwork() { // TODO
  */
 public String getPrintoutHeader() {
 	return "Cycle " + getCurCycle() + " [" + schedule.getSteps() + "] : ";
+}
+
+
+public MersenneTwisterFast random() {
+	return random;
 }
 
 
