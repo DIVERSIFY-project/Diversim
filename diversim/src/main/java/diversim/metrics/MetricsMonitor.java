@@ -147,7 +147,7 @@ public class MetricsMonitor {
     
 
 	
-	protected Map<String, Object> getSnapshot(){
+public Map<String, Object> getSnapshot() {
 		Map<String, Object> snapshot = new HashMap<String, Object> ();
 		for(String s : register){
 			if(SHANNON_PLATFORM.equals(s)){
