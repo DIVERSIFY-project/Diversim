@@ -880,8 +880,10 @@ public static int addUnique(List set, Comparable item) {
 	if (i < 0) {
 		i = -i - 1;
 		set.add(i, item);
+		return i;
+	} else {
+		return -1;
 	}
-	return i;
 }
 
 
