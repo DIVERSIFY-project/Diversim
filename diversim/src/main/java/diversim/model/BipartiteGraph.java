@@ -10,10 +10,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-
 import java.util.logging.Logger;
 import java.util.logging.Level;
-
 
 import sim.engine.Schedule;
 import sim.engine.SimState;
@@ -22,6 +20,8 @@ import sim.field.network.Edge;
 import sim.field.network.Network;
 import sim.util.Bag;
 import diversim.strategy.Strategy;
+import diversim.strategy.fate.KillFates;
+import diversim.strategy.fate.LinkStrategyFates;
 import diversim.util.config.Configuration;
 import diversim.metrics.*;
 import ec.util.MersenneTwisterFast;
@@ -296,6 +296,22 @@ public double getAvgAppSize() {
 }
 
 
+public double getRobustness() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	//return Robustness.calculateRobustness(this);
+	try {
+		return Robustness.calculateRobustness(this,
+		    LinkStrategyFates.class.getDeclaredMethod("linkingA", BipartiteGraph.class),
+		    KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class));
+	}
+	catch (NoSuchMethodException | SecurityException e) {
+		// TODO Auto-generated catch block
+		e.printStackTrace();
+		return -1;
+	}
+}
+
+
 public double getShannon() {
 	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
 	return (Double)metrics.getSnapshot().get(MetricsMonitor.SHANNON_PLATFORM);
@@ -540,6 +556,10 @@ public void start() {
 			
 			if (state.schedule.scheduleComplete()) {
 				System.out.println("METRICS HISTORY: " + metrics.getHistory());
+				// System.out.println("ROBUSTNESS: " +
+				// Robustness.calculateRobustness((BipartiteGraph)state));
+				System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
+				    + Robustness.displayAllRobustness((BipartiteGraph)state));
 			}
 		}
 	};
