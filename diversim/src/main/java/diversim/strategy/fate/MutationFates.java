@@ -19,13 +19,13 @@ public MutationFates() {}
 public static void bugCorrected(BipartiteGraph graph) {
 	Service obsolete = graph.services.get(graph.random.nextInt(graph.getNumServices()));
 	Service replacement = graph.services.get(graph.random.nextInt(graph.getNumServices()));
-	for (Platform p : graph.platforms) {
-		if (p.getServices().contains(obsolete)) {
-			p.getServices().remove(obsolete);
-			graph.addUnique(p.getServices(), replacement);
+	for (Platform platform : graph.platforms) {
+		if (platform.getServices().contains(obsolete)) {
+			platform.getServices().remove(obsolete);
+			BipartiteGraph.addUnique(platform.getServices(), replacement);
 			Logger.getLogger(MutationFates.class.getName()).log(
 			    Level.INFO,
-			    "Platform <" + p + "> has mutated: Service <" + obsolete + "> replaced with Service <"
+			    "Platform <" + platform + "> has mutated: Service <" + obsolete + "> replaced with Service <"
 			        + replacement + ">");
 		}
 	}
@@ -33,7 +33,7 @@ public static void bugCorrected(BipartiteGraph graph) {
 
 
 public static void upgrade(BipartiteGraph graph, int upgradedServicesNumber) {
-	Platform upgradedPlatform = graph.platforms.get(graph.random.nextInt(graph.getNumServices()));
+	Platform upgradedPlatform = graph.platforms.get(graph.random.nextInt(graph.getNumPlatforms()));
 	List<Service> removedServices = new ArrayList<Service>();
 	for (int i = 0; i < Math.min(upgradedServicesNumber, upgradedPlatform.getServices().size()); i++) {
 		removedServices.add(upgradedPlatform.getServices().get(
