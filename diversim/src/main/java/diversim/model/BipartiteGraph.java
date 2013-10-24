@@ -342,6 +342,12 @@ public double getMinGiniSimpson() {
 }
 
 
+public int getCountSpecies() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0;
+	return (Integer)metrics.getSnapshot().get(MetricsMonitor.NUM_SPECIES_PLATFORM);
+}
+
+
 /**
  * Dynamic persistent data structures should be created here.
  */
@@ -623,6 +629,11 @@ public ArrayList<Service> selectServices(int size) {
 	}
 
 	return servs;
+}
+
+
+public Service selectSingleService() {
+	return services.get(random.nextInt(getNumServices()));
 }
 
 
