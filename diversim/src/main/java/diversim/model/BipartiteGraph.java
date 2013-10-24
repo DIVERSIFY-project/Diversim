@@ -686,16 +686,16 @@ public App createApp(String entityName) {
 
 
 public Platform createPlatform(String entityName) {
-	Platform app = null;
+	Platform platform = null;
 	try {
-		app = (Platform)createEntity(entityName);
+		platform = (Platform)createEntity(entityName);
 	}
 	catch (Exception e) {
 		logger.log(Level.SEVERE, "createPlatform: error " + e.getMessage());
 		return null;
 	}
-	addUnique(platforms, app);
-	return app;
+	addUnique(platforms, platform);
+	return platform;
 }
 
 
