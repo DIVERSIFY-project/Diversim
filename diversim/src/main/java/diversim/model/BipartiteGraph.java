@@ -394,6 +394,36 @@ public BipartiteGraph(long seed, Schedule schedule) {
 }
 
 
+public BipartiteGraph clone() {
+	BipartiteGraph clone = new BipartiteGraph(seed());
+	clone.bipartiteNetwork = new Network(bipartiteNetwork);
+	clone.initPlatforms = new Integer(initPlatforms);
+	clone.initApps = new Integer(initApps);
+	clone.initServices = new Integer(initServices);
+	clone.maxPlatforms = new Integer(maxPlatforms);
+	clone.maxApps = new Integer(maxApps);
+	clone.maxServices = new Integer(maxServices);
+	clone.platformMaxLoad = new Integer(platformMaxLoad);
+	clone.platformMinSize = new Integer(platformMinSize);
+	clone.maxCycles = new Double(maxCycles);
+	clone.entityStrategies = new ArrayList<Strategy<? extends Steppable>>(entityStrategies);
+	clone.platforms = new ArrayList<Platform>(platforms);
+	clone.apps = new ArrayList<App>(apps);
+	clone.services = new ArrayList<Service>(services);
+	if (fate == null)
+		clone.fate = new Fate(null);
+	else
+		clone.fate = new Fate(fate.strategy);
+	clone.changed = new Boolean(changed);
+	clone.centralized = new Boolean(centralized);
+	clone.supervised = new Boolean(supervised);
+	clone.stepsPerCycle = new Integer(stepsPerCycle);
+	clone.serviceBundles = new ArrayList<ArrayList<Service>>(serviceBundles);
+	clone.nextBundle = new Integer(nextBundle);
+	return clone;
+}
+
+
 private void readConfig() {
 	if (supervised) {
 		try {
