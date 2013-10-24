@@ -233,6 +233,19 @@ public int countCommonServices(Entity e, Integer[] counter) {
 }
 
 
+public List<Service> getCommonServices(Entity entity) {
+	List<Service> result = new ArrayList<Service>();
+	int index = 0;
+	for (Service s : entity.getServices()) {
+		index = Collections.binarySearch(getServices(), s);
+		if (index >= 0) {
+			result.add(getServices().get(index));
+		}
+	}
+	return result;
+}
+
+
 @Override
 public String toString() {
 	String res = "";
