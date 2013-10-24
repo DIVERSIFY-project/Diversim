@@ -1,121 +1,123 @@
 package diversim.metrics;
 
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-import sim.util.Bag;
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
-import diversim.model.Entity;
-import diversim.model.Platform;
-import diversim.model.Service;
-import ec.util.MersenneTwisterFast;
+import diversim.strategy.fate.KillFates;
+import diversim.strategy.fate.LinkStrategyFates;
 
 
 public class Robustness {
 
-private BipartiteGraph graph = null;
 
+/*
+ * public static Map<String, Double> calculateAllRobustness(BipartiteGraph graph) { Map<String,
+ * Double> results = new HashMap<String, Double>(); }
+ */
 
-public Robustness(BipartiteGraph graph) {
-	this.graph = graph;
-}
-
-
-public BipartiteGraph getGraph() {
-	return graph;
-}
-
-
-public void setGraph(BipartiteGraph graph) {
-	this.graph = graph;
-}
-
-
-public static double calculateRobustness(BipartiteGraph graph) {
-	List<App> apps = new ArrayList<App>(graph.apps);
-	List<Platform> platforms = new ArrayList<Platform>(graph.platforms);
+public static double calculateRobustness(BipartiteGraph graph, Method linking, Method killing) {
+	BipartiteGraph clone = graph.clone();
 	double robustness = 0;
-	double maxRobustness = graph.getNumApps() * graph.getNumPlatforms();
-	for (int i = graph.getNumPlatforms() - 1; i >= 0; i--) {
-		for (int j = 0; j < graph.getNumApps(); j++) {
-			linkMacroFairShare(graph, graph.apps.get(j));
+	double maxRobustness = clone.getNumApps() * clone.getNumPlatforms();
+	for (int i = clone.getNumPlatforms() - 1; i >= 0; i--) {
+		LinkStrategyFates.linkingA(clone);
+		try {
+			linking.invoke(null, clone);
+		}
+		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
+			    "In calculateRobustness, could not load linking method <" + linking.getName() + ">");
+			return -1;
 		}
 		int aliveAppsCounter = 0;
-		for (App app : graph.apps) {
-			if (app.getDegree() == app.getServices().size()) {
+		for (App app : clone.apps) {
+			if (!app.dead) {
 				aliveAppsCounter++;
 			}
 		}
 		robustness += aliveAppsCounter;
-		System.out.println("---" + robustness);
-		graph.removeEntity(graph.platforms, graph.platforms.get(i));
+		// System.out.println("---" + aliveAppsCounter);
+		// clone.removeEntity(clone.platforms, clone.platforms.get(i));
+		try {
+			killing.invoke(null, clone, 1);
+		}
+		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
+			    "In calculateRobustness, could not load killing method <" + killing.getName() + ">");
+			e.printStackTrace();
+			return -1;
+		}
 	}
-	System.out.println("+++" + maxRobustness);
-	System.out.println("***" + robustness / maxRobustness);
+	// System.out.println("+++" + maxRobustness);
+	// System.out.println(robustness + "***" + robustness / maxRobustness);
 	return robustness / maxRobustness;
 }
 
 
-// TODO
-public static List<App> linking(List<App> apps, List<Platform> platforms,
-    MersenneTwisterFast random, int maxPlatformLoad) {
-	List<App> aliveApps = new ArrayList<App>();
-	shuffle(platforms, random);
-	for (App app : apps) {
-		List<Service> requiredServices = app.getServices();
-		for (Platform platform : platforms) {
-			int formerSize = requiredServices.size();
-			if (platform.getDegree() < maxPlatformLoad) {
-				for (Service offeredService : platform.getServices()) {
-					requiredServices.remove(offeredService);
-				}
+public static Map<String, Double> calculateAllRobustness(BipartiteGraph graph) {
+	Map<String, Double> results = new HashMap<String, Double>();
+	Method linkingMethod;
+	Method killingMethod;
+	for (String linkingName : LinkStrategyFates.getLinkingMethods().keySet()) {
+		for (String killingName : KillFates.getKillingMethods().keySet()) {
+			try {
+				linkingMethod = LinkStrategyFates.class.getDeclaredMethod(linkingName, LinkStrategyFates
+				    .getLinkingMethods().get(linkingName));
 			}
-			if (requiredServices.size() < formerSize) {
-
+			catch (NoSuchMethodException | SecurityException e) {
+				Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
+				    "In calculateAllRobustness, could not load linking method <" + linkingName + ">");
+				linkingMethod = null;
+			}
+			try {
+				killingMethod = KillFates.class.getDeclaredMethod(killingName, KillFates
+				    .getKillingMethods().get(killingName));
+			}
+			catch (NoSuchMethodException | SecurityException e) {
+				Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
+				    "In calculateAllRobustness, could not load killing method <" + killingName + ">");
+				e.printStackTrace();
+				killingMethod = null;
+			}
+			if (linkingMethod != null && killingMethod != null) {
+				results.put(linkingName + "-" + killingName,
+				    calculateRobustness(graph, linkingMethod, killingMethod));
 			}
 		}
 	}
-	return aliveApps;
+	return results;
 }
 
 
-public static void shuffle(List<? extends Entity> list, MersenneTwisterFast random) {
-	List<Entity> shuffledList = new ArrayList<Entity>();
-	while (shuffledList.size() < list.size()) {
-		Entity toAdd = list.get(random.nextInt(list.size()));
-		if (!shuffledList.contains(toAdd)) {
-			shuffledList.add(toAdd);
+public static String displayAllRobustness(BipartiteGraph graph) {
+	Logger.getLogger(KillFates.class.getName()).setLevel(Level.WARNING);
+	String result = "";
+	final Map<String, Double> robustness = calculateAllRobustness(graph);
+	ArrayList<String> names = new ArrayList<String>(robustness.keySet());
+	// Collections.sort(names);
+	Collections.sort(names, new Comparator() {
+
+		@Override
+		public int compare(Object o1, Object o2) {
+			return robustness.get((String)o2) - robustness.get((String)o1) > 0 ? 1 : -1;
 		}
+
+	});
+	for (String name: names) {
+		result += "  " + name + ": " + robustness.get(name) + System.getProperty("line.separator");
 	}
-	list = shuffledList;
-}
-
-
-public static void linkMacroFairShare(BipartiteGraph graph, App e) {
-	if (graph.getNumPlatforms() > 0) {
-		Bag platforms = new Bag(graph.platforms);
-		for (Service s : e.getServices()) {
-			platforms.sort(new Comparator<Entity>() {
-				@Override
-				public int compare(Entity e, Entity e2) {
-					return e.getSize() - e2.getSize();
-				}
-			});
-			platforms.reverse();
-			for (Object p : platforms) {
-				if (((Platform)p).getDegree() <= graph.getPlatformMaxLoad()
-				    && ((Platform)p).getServices().contains(s)) {
-					graph.addEdge(e, ((Platform)p), e.getSize());
-					break;
-				}
-			}
-		}
-	}
-
+	return result;
 }
 
 }
