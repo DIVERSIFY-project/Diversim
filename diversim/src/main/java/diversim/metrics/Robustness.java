@@ -43,7 +43,7 @@ public static double calculateRobustness(BipartiteGraph graph, Method linking, M
 		try {
 			linking.invoke(null, clone);
 		}
-		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		catch (Exception e) {
 			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
 			    "In calculateRobustness, could not load linking method <" + linking.getName() + ">");
 			return -1;
@@ -60,7 +60,7 @@ public static double calculateRobustness(BipartiteGraph graph, Method linking, M
 		try {
 			killing.invoke(null, clone, 1);
 		}
-		catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		catch (Exception e) {
 			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
 			    "In calculateRobustness, could not load killing method <" + killing.getName() + ">");
 			e.printStackTrace();
@@ -93,7 +93,7 @@ public static Map<String, double[]> calculateAllRobustness(BipartiteGraph graph,
 					linkingMethod = LinkStrategyFates.class.getDeclaredMethod(linkingName, LinkStrategyFates
 					    .getLinkingMethods().get(linkingName));
 				}
-				catch (NoSuchMethodException | SecurityException e) {
+				catch (Exception e) {
 					Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
 					    "In calculateAllRobustness, could not load linking method <" + linkingName + ">");
 					linkingMethod = null;
@@ -102,7 +102,7 @@ public static Map<String, double[]> calculateAllRobustness(BipartiteGraph graph,
 					killingMethod = KillFates.class.getDeclaredMethod(killingName, KillFates
 					    .getKillingMethods().get(killingName));
 				}
-				catch (NoSuchMethodException | SecurityException e) {
+				catch (Exception e) {
 					Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
 					    "In calculateAllRobustness, could not load killing method <" + killingName + ">");
 					e.printStackTrace();
