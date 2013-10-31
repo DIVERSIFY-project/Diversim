@@ -34,10 +34,16 @@ public App(int id, List<Service> servs, Strategy<App> strategy) {
 public App() {};
 
 
+public App(App app) {
+	super((Entity)app);
+	this.redundancy = app.redundancy;
+}
+
+
 @Override
 public void init(String entityId, BipartiteGraph graph) {
 	super.init(entityId, graph);
-	int nSer = Configuration.getInt(entityId + ".services");
+	// int nSer = Configuration.getInt(entityId + ".services");
 	for (Service s : graph.nextBundle()) {
 		BipartiteGraph.addUnique(services, s);
 	}

@@ -400,32 +400,40 @@ public BipartiteGraph(long seed, Schedule schedule) {
 }
 
 
-public BipartiteGraph clone() {
-	BipartiteGraph clone = new BipartiteGraph(seed());
+/**
+ * Creates a clone for the sole purpose of the extinction sequence in Robustness calculation
+ * 
+ * @return clone
+ */
+public BipartiteGraph extinctionClone() {
+	BipartiteGraph clone = new BipartiteGraph(random());
 	clone.bipartiteNetwork = new Network(bipartiteNetwork);
-	clone.initPlatforms = new Integer(initPlatforms);
-	clone.initApps = new Integer(initApps);
-	clone.initServices = new Integer(initServices);
-	clone.maxPlatforms = new Integer(maxPlatforms);
-	clone.maxApps = new Integer(maxApps);
-	clone.maxServices = new Integer(maxServices);
-	clone.platformMaxLoad = new Integer(platformMaxLoad);
-	clone.platformMinSize = new Integer(platformMinSize);
-	clone.maxCycles = new Double(maxCycles);
-	clone.entityStrategies = new ArrayList<Strategy<? extends Steppable>>(entityStrategies);
+	clone.initPlatforms = initPlatforms;
+	clone.initApps = initApps;
+	clone.initServices = initServices;
+	clone.maxPlatforms = maxPlatforms;
+	clone.maxApps = maxApps;
+	clone.maxServices = maxServices;
+	clone.platformMaxLoad = platformMaxLoad;
+	clone.platformMinSize = platformMinSize;
+	clone.maxCycles = maxCycles;
+	clone.entityStrategies = entityStrategies;
 	clone.platforms = new ArrayList<Platform>(platforms);
+	/*
+	 * for (Platform platform : platforms) { clone.platforms.add(new Platform(platform)); }
+	 */
 	clone.apps = new ArrayList<App>(apps);
-	clone.services = new ArrayList<Service>(services);
-	if (fate == null)
-		clone.fate = new Fate(null);
-	else
-		clone.fate = new Fate(fate.strategy);
-	clone.changed = new Boolean(changed);
-	clone.centralized = new Boolean(centralized);
-	clone.supervised = new Boolean(supervised);
-	clone.stepsPerCycle = new Integer(stepsPerCycle);
-	clone.serviceBundles = new ArrayList<ArrayList<Service>>(serviceBundles);
-	clone.nextBundle = new Integer(nextBundle);
+	/*
+	 * for (App app : apps) { clone.apps.add(new App(app)); }
+	 */
+	clone.services = services;
+	clone.fate = fate;
+	clone.changed = changed;
+	clone.centralized = centralized;
+	clone.supervised = supervised;
+	clone.stepsPerCycle = stepsPerCycle;
+	clone.serviceBundles = serviceBundles;
+	clone.nextBundle = nextBundle;
 	return clone;
 }
 

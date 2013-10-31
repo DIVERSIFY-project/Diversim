@@ -35,6 +35,12 @@ public String getAction() {
 public Platform() {}
 
 
+public Platform(Platform platform) {
+	super((Entity)platform);
+	this.pressure = platform.pressure;
+	this.action = platform.action;
+}
+
 public void init(String entityId, BipartiteGraph graph) {
 	super.init(entityId, graph);
 	int numberServices = Math.min(
@@ -43,7 +49,7 @@ public void init(String entityId, BipartiteGraph graph) {
 	// BipartiteGraph.addUnique(services, s);
 	// }
 	while (numberServices > 0) {
-		numberServices += BipartiteGraph.addUnique(services, graph.selectSingleService()) >= 0 ? -1 : 0;
+		numberServices -= BipartiteGraph.addUnique(services, graph.selectSingleService()) >= 0 ? 1 : 0;
 	}
 	pressure = 0;
 	action = "none";
