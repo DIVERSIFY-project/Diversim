@@ -19,9 +19,12 @@ import sim.engine.Steppable;
 import sim.field.network.Edge;
 import sim.field.network.Network;
 import sim.util.Bag;
+import diversim.ExternalLauncher;
 import diversim.strategy.Strategy;
+import diversim.strategy.fate.CreationFates;
 import diversim.strategy.fate.KillFates;
 import diversim.strategy.fate.LinkStrategyFates;
+import diversim.strategy.fate.MutationFates;
 import diversim.util.config.Configuration;
 import diversim.metrics.*;
 import ec.util.MersenneTwisterFast;
@@ -134,6 +137,7 @@ ArrayList<ArrayList<Service>> serviceBundles;
 
 private int nextBundle;
 
+boolean readConfigurationFile = true;
 
 /**
  * Getters and setters. Any Java Bean getter/setter is auto-magically included in the GUI. If a
@@ -367,19 +371,22 @@ private void init() {
 	services = new ArrayList<Service>();
 	entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
 	serviceBundles = new ArrayList<ArrayList<Service>>();
-	try {
-		//configPath = System.getenv().get("PWD");
-		configPath = System.getProperty("user.dir");
-		configPath += "/neutralModel.conf";
-		Configuration.setConfig(configPath);
-		stepsPerCycle = 0;
-		INSTANCE = this;
-		supervised = true;
+	if (readConfigurationFile) {
+		try {
+			// configPath = System.getenv().get("PWD");
+			configPath = System.getProperty("user.dir");
+			// configPath += "/neutralModel.conf";
+			configPath += "/andreModel.conf";
+			Configuration.setConfig(configPath);
+		}
+		catch (IOException e) {
+			System.err.println("ERROR : Configuration file not found.");
+			System.exit(1);
+		}
 	}
-	catch (IOException e) {
-		System.err.println("ERROR : Configuration file not found.");
-		System.exit(1);
-	}
+	stepsPerCycle = 0;
+	INSTANCE = this;
+	supervised = true;
 }
 
 
@@ -555,8 +562,9 @@ public void start() {
 	stepsPerCycle = 0;
 	nextBundle = 0;
 	Service.counter = 0;
-
-	readConfig();
+	if (readConfigurationFile) {
+		readConfig();
+	}
 	if (services.isEmpty()) {
 		initServices();
 		for (int i = 0; i < initApps; i++) {
@@ -617,6 +625,31 @@ public void start() {
 	};
 	schedule.scheduleRepeating(schedule.getTime() + 1.2, print, 1.0);
 
+}
+
+
+public void externalConfiguration(long seed, int maxCycles, int initPlatforms, int initApps,
+    int initServices, int maxPlatforms, int maxApps, int maxServices, int maxLoad) {
+	this.readConfigurationFile = false;
+	System.err.println("Using external launcher");
+	random().setSeed(seed);
+	System.err.println("Ext: seed = " + seed);
+	this.supervised = true;
+	this.initApps = initApps;
+	this.initPlatforms = initPlatforms;
+	this.initServices = initServices;
+	this.maxCycles = maxCycles;
+	this.maxApps = maxApps;
+	this.maxPlatforms = maxPlatforms;
+	this.maxServices = maxServices;
+	this.platformMaxLoad = maxLoad;
+	this.platformMinSize = 0;
+	this.centralized = true;
+}
+
+
+public static void externalLauncher(int runNum) {
+	// for(int cycles = ExternalLauncher.cycles - )
 }
 
 
