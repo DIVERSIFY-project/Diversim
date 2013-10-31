@@ -28,13 +28,13 @@ public static Map<String, Class[]> getLinkingMethods() {
 	Map<String, Class[]> results = new HashMap<String, Class[]>();
 	Class[] args = new Class[1];
 	args[0] = BipartiteGraph.class;
-	results.put("linkingA", args);
+	results.put("linkingANoLoss", args);
 	args = new Class[1];
 	args[0] = BipartiteGraph.class;
-	results.put("linkingB", args);
+	results.put("linkingBNoLoss", args);
 	args = new Class[1];
 	args[0] = BipartiteGraph.class;
-	results.put("linkingC", args);
+	results.put("linkingCNoLoss", args);
 	return results;
 }
 
@@ -42,8 +42,8 @@ public static Map<String, Class[]> getLinkingMethods() {
 public static void linkingA(BipartiteGraph graph) {
 	graph.removeAllEdges();
 	Bag platforms = new Bag(graph.platforms);
-	// platforms.shuffle(graph.random());
-	platforms = shuffle(platforms, graph.random());
+	platforms.shuffle(graph.random());
+	// platforms = shuffle(platforms, graph.random());
 	for(App app: graph.apps) {
 		Bag requiredServices = new Bag(app.getServices());
 		for(Object platform: platforms) {
@@ -54,8 +54,37 @@ public static void linkingA(BipartiteGraph graph) {
 					requiredServices.removeAll(commonServices);
 				}
 			}
+			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
 		}
 		app.dead = requiredServices.size() != 0;
+	}
+}
+
+
+public static void linkingANoLoss(BipartiteGraph graph) {
+	graph.removeAllEdges();
+	Bag platforms = new Bag(graph.platforms);
+	platforms.shuffle(graph.random());
+	// platforms = shuffle(platforms, graph.random());
+	for (App app : graph.apps) {
+		Bag requiredServices = new Bag(app.getServices());
+		for (Object platform : platforms) {
+			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
+				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
+				if (commonServices.size() > 0) {
+					graph.addEdge(app, (Platform)platform, commonServices.size());
+					requiredServices.removeAll(commonServices);
+				}
+			}
+			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
+		}
+		app.dead = requiredServices.size() != 0;
+		if (!app.isAlive()) {
+			// indirected network: no edgesOut
+			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+				graph.removeEdge(app, (Edge)edge);
+			}
+		}
 	}
 }
 
@@ -67,7 +96,7 @@ public static void linkingB(BipartiteGraph graph) {
 
 		@Override
 		public int compare(Entity e, Entity e2) {
-			return e.getServices().size() - e2.getServices().size();
+			return e.getSize() - e2.getSize();
 		}
 	});
 	for (App app : graph.apps) {
@@ -80,8 +109,42 @@ public static void linkingB(BipartiteGraph graph) {
 					requiredServices.removeAll(commonServices);
 				}
 			}
+			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
 		}
 		app.dead = requiredServices.size() != 0;
+	}
+}
+
+
+public static void linkingBNoLoss(BipartiteGraph graph) {
+	graph.removeAllEdges();
+	Bag platforms = new Bag(graph.platforms);
+	platforms.sort(new Comparator<Entity>() {
+
+		@Override
+		public int compare(Entity e, Entity e2) {
+			return e.getSize() - e2.getSize();
+		}
+	});
+	for (App app : graph.apps) {
+		Bag requiredServices = new Bag(app.getServices());
+		for (Object platform : platforms) {
+			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
+				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
+				if (commonServices.size() > 0) {
+					graph.addEdge(app, (Platform)platform, commonServices.size());
+					requiredServices.removeAll(commonServices);
+				}
+			}
+			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
+		}
+		app.dead = requiredServices.size() != 0;
+		if (!app.isAlive()) {
+			// indirected network: no edgesOut
+			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+				graph.removeEdge(app, (Edge)edge);
+			}
+		}
 	}
 }
 
@@ -93,7 +156,7 @@ public static void linkingC(BipartiteGraph graph) {
 
 		@Override
 		public int compare(Entity e, Entity e2) {
-			return e2.getServices().size() - e.getServices().size();
+			return e2.getSize() - e.getSize();
 		}
 	});
 	for (App app : graph.apps) {
@@ -106,8 +169,42 @@ public static void linkingC(BipartiteGraph graph) {
 					requiredServices.removeAll(commonServices);
 				}
 			}
+			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
 		}
 		app.dead = requiredServices.size() != 0;
+	}
+}
+
+
+public static void linkingCNoLoss(BipartiteGraph graph) {
+	graph.removeAllEdges();
+	Bag platforms = new Bag(graph.platforms);
+	platforms.sort(new Comparator<Entity>() {
+
+		@Override
+		public int compare(Entity e, Entity e2) {
+			return e2.getSize() - e.getSize();
+		}
+	});
+	for (App app : graph.apps) {
+		Bag requiredServices = new Bag(app.getServices());
+		for (Object platform : platforms) {
+			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
+				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
+				if (commonServices.size() > 0) {
+					graph.addEdge(app, (Platform)platform, commonServices.size());
+					requiredServices.removeAll(commonServices);
+				}
+			}
+			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
+		}
+		app.dead = requiredServices.size() != 0;
+		if (!app.isAlive()) {
+			// indirected network: no edgesOut
+			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+				graph.removeEdge(app, (Edge)edge);
+			}
+		}
 	}
 }
 
