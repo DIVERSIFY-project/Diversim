@@ -302,4 +302,10 @@ public void setServices(List<Service> services) {
 	for (Service s : services)
 		BipartiteGraph.addUnique(this.services, s);
 }
+
+
+public boolean isAlive() {
+	return !dead;
+}
+
 }
