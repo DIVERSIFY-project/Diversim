@@ -298,14 +298,12 @@ public double getAvgAppSize() {
 
 public double getRobustness() {
 	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
-	//return Robustness.calculateRobustness(this);
 	try {
 		return Robustness.calculateRobustness(this,
 		    LinkStrategyFates.class.getDeclaredMethod("linkingA", BipartiteGraph.class),
 		    KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class));
 	}
-	catch (NoSuchMethodException | SecurityException e) {
-		// TODO Auto-generated catch block
+	catch (Exception e) {
 		e.printStackTrace();
 		return -1;
 	}
@@ -330,21 +328,30 @@ public double getAveDiff() {
 }
 
 
-public double getMaxShannon() {
-	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
-	return Math.log(this.getNumPlatforms());
-}
-
-
-public double getMinGiniSimpson() {
-	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
-	return 1 - 1 / (Double)metrics.getSnapshot().get(MetricsMonitor.NUM_SPECIES_PLATFORM);
-}
+/*
+ * public double getMaxShannon() { if (schedule.getTime() <= Schedule.BEFORE_SIMULATION ||
+ * getNumApps() == 0) return 0.0; return Math.log(this.getNumPlatforms()); } public double
+ * getMinGiniSimpson() { if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0)
+ * return 0.0; return 1 - 1 /
+ * (Double)metrics.getSnapshot().get(MetricsMonitor.NUM_SPECIES_PLATFORM); }
+ */
 
 
 public int getCountSpecies() {
 	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0;
 	return (Integer)metrics.getSnapshot().get(MetricsMonitor.NUM_SPECIES_PLATFORM);
+}
+
+
+public int getAliveAppsNumber() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0;
+	int counter = 0;
+	for (App app : apps) {
+		if (app.isAlive()) {
+			counter++;
+		}
+	}
+	return counter;
 }
 
 
@@ -449,7 +456,7 @@ private void readConfig() {
 	}
 	int seed = Configuration.getInt("seed", 0);
 	if (seed != 0) {
-		random.setSeed(seed);
+		random().setSeed(seed);
 	}
 	System.err.println("Config : seed = " + seed);
 	supervised = Configuration.getBoolean("supervised");
@@ -564,7 +571,6 @@ public void start() {
 		// fout.close();
 		// }
 		// catch (IOException e) {
-		// // TODO Auto-generated catch block
 		// e.printStackTrace();
 		// }
 	}
@@ -572,8 +578,10 @@ public void start() {
 	try {
 		initFate();
 		initPlatform();
+		// System.out.println(platforms);
 		initApp();
-		metrics = MetricsMonitor.createMetricsInstance(INSTANCE);
+		// System.out.println(apps);
+		metrics = MetricsMonitor.createMetricsInstance(this);
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -630,10 +638,10 @@ public static void main(String[] args) {
  */
 public ArrayList<Service> selectServices(int size) {
 	ArrayList<Service> servs = new ArrayList<Service>();
-	if (size < 1) size = (int)((random.nextGaussian() + 3) / 6 * (getNumServices() - 1) + 1);
+	if (size < 1) size = (int)((random().nextGaussian() + 3) / 6 * (getNumServices() - 1) + 1);
 	size = size < 1 ? 1 : size > getNumServices() ? getNumServices() : size;
 	for (int j = 0; j < size; j++) {
-		servs.add(services.get(random.nextInt(getNumServices())));
+		servs.add(services.get(random().nextInt(getNumServices())));
 	}
 
 	return servs;
@@ -641,7 +649,7 @@ public ArrayList<Service> selectServices(int size) {
 
 
 public Service selectSingleService() {
-	return services.get(random.nextInt(getNumServices()));
+	return services.get(random().nextInt(getNumServices()));
 }
 
 
@@ -886,10 +894,12 @@ public static <T> T getElement(List list, Comparable target) {
 public static int addUnique(List set, Comparable item) {
 	int i = Collections.binarySearch(set, item);
 	if (i < 0) {
+		// found
 		i = -i - 1;
 		set.add(i, item);
 		return i;
 	} else {
+		// not found
 		return -1;
 	}
 }
