@@ -22,22 +22,24 @@ public LinkingA() {
 }
 
 
-public void evolve(BipartiteGraph graph, App e) {
+public void evolve(BipartiteGraph graph, App app) {
 	//Remove all links to app
-	Bag edges = graph.bipartiteNetwork.getEdgesIn(e);
+	Bag edges = graph.bipartiteNetwork.getEdgesIn(app);
 	for (Object edge : edges) {
-		graph.removeEdge(e, (Edge)edge);
+		graph.removeEdge(app, (Edge)edge);
 	}
 	
 	//If there are platforms, try and link to them
 	if (graph.getNumPlatforms() > 0) {
 		Bag platforms = new Bag(graph.platforms);
 		platforms.shuffle(graph.random);
-		Bag needLinks = new Bag(e.getServices());
+		Bag needLinks = new Bag(app.getServices());
 		for (Object s : needLinks) {
 			for (Object p : platforms) {
-				if (((Platform)p).getDegree() <= graph.getPlatformMaxLoad() && ((Platform)p).getServices().contains(s)) {
-					graph.addEdge(e, ((Platform)p), ((Platform)p).countCommonServices(e, null));
+				if (((Platform)p).getDegree() <= graph.getPlatformMaxLoad()
+				    && ((Platform)p).getServices().contains(s)) {
+					graph.addEdge(app, ((Platform)p),
+					    new Integer(((Platform)p).countCommonServices(app, null)));
 					break;
 				}
 			}
