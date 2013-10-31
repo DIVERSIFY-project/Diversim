@@ -1,9 +1,11 @@
 package diversim.model;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import sim.engine.SimState;
+import sim.engine.Stoppable;
 import diversim.strategy.Strategy;
 import diversim.util.config.Configuration;
 
@@ -16,7 +18,6 @@ import diversim.util.config.Configuration;
 public class App extends Entity {
 
 double redundancy = 0;
-
 
 public double getRedundancy() {
 	return redundancy > 0 ? redundancy : 0;
@@ -62,7 +63,7 @@ public void step(SimState state) {
 
 	redundancy = ((double)degree) / graph.getNumPlatforms();
 	if (redundancy > 1.0) redundancy = 1.0;
-	printoutCurStep(graph);
+	// printoutCurStep(graph);
 }
 
 
@@ -72,9 +73,4 @@ public String toString() {
 	res += " ; redundancy = " + redundancy;
 	return res;
 }
-
-public boolean isAppAlive() {
-	return getDegree() == getServices().size();	
-}
-
 }

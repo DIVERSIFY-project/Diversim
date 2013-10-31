@@ -1,9 +1,11 @@
 package diversim.model;
 
 
+import java.util.ArrayList;
 import java.util.List;
 
 import sim.engine.SimState;
+import sim.engine.Stoppable;
 import diversim.strategy.Strategy;
 import diversim.util.config.Configuration;
 
@@ -78,10 +80,10 @@ public void step(SimState state) {
 	if (getDegree() >= graph.getPlatformMaxLoad() && getSize() > graph.getPlatformMinSize()) {
 		strategy.evolve(graph, this);
 	}
-	pressure = ((double)degree) / graph.getPlatformMaxLoad();
+	pressure = ((double)getDegree()) / graph.getPlatformMaxLoad();
 	if (pressure > 1.0) pressure = 1.0;
 
-	printoutCurStep(graph);
+	// printoutCurStep(graph);
 }
 
 
