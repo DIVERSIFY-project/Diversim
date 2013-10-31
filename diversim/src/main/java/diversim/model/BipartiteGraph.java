@@ -1,6 +1,7 @@
 package diversim.model;
 
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
@@ -615,11 +616,30 @@ public void start() {
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
 			
 			if (state.schedule.scheduleComplete()) {
-				System.out.println("METRICS HISTORY: " + metrics.getHistory());
+				// System.out.println("METRICS HISTORY: " + metrics.getHistory());
 				// System.out.println("ROBUSTNESS: " +
 				// Robustness.calculateRobustness((BipartiteGraph)state));
-				System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
-				    + Robustness.displayAllRobustness((BipartiteGraph)state));
+				Logger.getLogger(KillFates.class.getName()).setLevel(Level.OFF);
+				Logger.getLogger(CreationFates.class.getName()).setLevel(Level.OFF);
+				Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
+				// System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
+				// + Robustness.displayAllRobustness((BipartiteGraph)state, 10));
+				Map<String, double[]> stats = Robustness.calculateAllRobustness((BipartiteGraph)state, 50);
+				try {
+					FileWriter fout = new FileWriter("stats" + System.currentTimeMillis());
+					fout.write("Name,Min,P25,P50,P75,Max,Mean\n");
+					for (String name : stats.keySet()) {
+						fout.write(name + "," + stats.get(name)[0] + "," + stats.get(name)[1] + ","
+						    + stats.get(name)[2] + "," + stats.get(name)[3] + "," + stats.get(name)[4] + ","
+						    + stats.get(name)[5]);
+						fout.write("\n");
+					}
+					fout.flush();
+					fout.close();
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	};
