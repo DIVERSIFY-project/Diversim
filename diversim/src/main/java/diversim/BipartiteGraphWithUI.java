@@ -136,8 +136,7 @@ private void setupPortrayals() {
       Platform.class, new OvalPortrayal2D() {// inline subclass to override draw()
         public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {
           Platform plat = (Platform)object;
-					paint = new Color((int)(255 * plat.getDegree()), 0, 0);
-          //paint = new Color((int)(255 * plat.services.size() / BipartiteGraph.initServices), 0, 0);
+					paint = new Color((int)(255 * plat.getSize() / BipartiteGraph.initServices), 0, 0);
           double dist = sysSpace.getWidth() / (((BipartiteGraph)state).getNumPlatforms() + 1);
           info.draw.width = ((double)plat.getSize()) / ((BipartiteGraph)state).getNumServices() * dist;
           if (info.draw.width >= dist) info.draw.width = dist * 0.9;
