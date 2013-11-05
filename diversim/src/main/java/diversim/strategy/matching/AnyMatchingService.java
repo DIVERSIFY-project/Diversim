@@ -6,8 +6,8 @@ import diversim.model.Entity;
 import diversim.model.Service;
 
 /**
- * An implementation of the MatchingStrategy interface, this concrete 
- * implementation returns true, if any of the services in the source, 
+ * An implementation of the MatchingStrategy interface, this concrete
+ * implementation returns true, if any of the services in the source,
  * are found in the target.
  *
  * @author Vivek Nallur
@@ -16,7 +16,7 @@ public class AnyMatchingService implements MatchingStrategy{
         public boolean matches(Entity source, Entity target){
                 Set<Service> all_services = new HashSet<Service>(source.services);
 		/*	
-		* Should be inside a logger 
+		* Should be inside a logger
 
 		System.out.println("Services in entity " + source.ID + "are: ");
 		for (Service s: all_services){
@@ -24,7 +24,7 @@ public class AnyMatchingService implements MatchingStrategy{
 		}
 		*/	
                 // Now try to add services from the target to all_services
-                // If there's a single failure, then at least one service from 
+                // If there's a single failure, then at least one service from
                 // the target matches one service in the source
 
                 for (Service srv: target.services){

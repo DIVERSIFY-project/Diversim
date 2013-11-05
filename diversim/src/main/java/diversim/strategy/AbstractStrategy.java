@@ -10,7 +10,7 @@ import sim.engine.Steppable;
  */
 public abstract class AbstractStrategy<T extends Steppable> implements Strategy<T>, Comparable<Object> {
 
-String name;
+protected String name;
 
 protected AbstractStrategy(String n) {
   name = n;
@@ -39,4 +39,6 @@ public String toString() {
   return name + " ( " + this.getClass().getSimpleName() + "#" + this.hashCode() + " )";
 }
 
+
+public void init(String stratId) {}
 }

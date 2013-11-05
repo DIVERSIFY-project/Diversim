@@ -72,9 +72,9 @@ public static String getName() {
 
 private void setPositions() {
   BipartiteGraph graph = (BipartiteGraph)state;
-  
+
   sysSpace.clear();
-  
+
   int i = 1;
   Double2D pos;
   double dist = sysSpace.getWidth() / (graph.getNumApps() + 1);
@@ -122,9 +122,9 @@ private void setupPortrayals() {
           if (info.draw.width >= dist) info.draw.width = dist * 0.9;
           if (info.draw.width < (dist * 0.2)) info.draw.width = dist * 0.25;
           info.draw.height = 50;
-          
-          
-          
+
+
+
           super.draw(object, graphics, info);
           drawServices(graphics, info.draw, app.services, BipartiteGraph.initServices);
         }

@@ -4,33 +4,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 import diversim.strategy.extinction.AgingExtinctionStrategy;
-import diversim.strategy.extinction.AppExtinctionStrategy;
 import diversim.strategy.extinction.AppOrphanExtinctionStrategy;
-import diversim.strategy.extinction.PlatformExtinctionStrategy;
+import diversim.strategy.extinction.ExtinctionStrategy;
 import diversim.strategy.matching.AllMatchingService;
 import diversim.strategy.matching.MatchingStrategy;
 import diversim.strategy.reproduction.AppClonalReproduction;
-import diversim.strategy.reproduction.AppReproductionStrategy;
 import diversim.strategy.reproduction.AppReproductionWithPossibility;
 import diversim.strategy.reproduction.AppSpeciationReproductionByDNA;
 import diversim.strategy.reproduction.DNAExtensionSpeciation;
 import diversim.strategy.reproduction.DNAReductionSpeciation;
-import diversim.strategy.reproduction.PlatformReproductionStrategy;
 import diversim.strategy.reproduction.PlatformReproductionWithPossibility;
 import diversim.strategy.reproduction.PlatformSpeciationReproductionByDNA;
-import ec.util.MersenneTwisterFast;
+import diversim.strategy.reproduction.ReproStrategy;
+
 
 /**
- * 
+ *
  * A StrategyFactory is the nexus between entities and strategies. This is the only
  * where you need to decide what strategies the apps or platforms need to follow.
- * 
- * It is worth noticing that some of strategies are general, such as the current 
- * reproduction ones, whereas some others are specific to entity instances, such as 
+ *
+ * It is worth noticing that some of strategies are general, such as the current
+ * reproduction ones, whereas some others are specific to entity instances, such as
  * the {@ AgingExtinctionStrategy} (because it need to record the birthday of each
  * entity}. For the former one, it is encouraged to utilize static fields to record
  * the instances produced before.
- * 
+ *
  * @author Hui Song
  *
  */
@@ -48,43 +46,43 @@ public class StrategyFactory {
 	//private static AppReproductionStrategy appReproductionStrategy = null;
 	/**
 	 * Currently, reproduction strategy is general, so only one instance is enough
-	 * @param graph
 	 * @return
 	 */
-	public List<AppReproductionStrategy> createAppReproductionStrategy(App app, BipartiteGraph graph){
+public List<ReproStrategy<App>> createAppReproductionStrategy() {
 		
 		if(APP_REPRODUCTION_STRATEGIES != null)
 			return APP_REPRODUCTION_STRATEGIES;
 		
-		List<AppReproductionStrategy> result = new ArrayList<AppReproductionStrategy>();
-		result.add(new AppReproductionWithPossibility(0.01, new AppClonalReproduction()));
-		result.add(new AppReproductionWithPossibility(0.01, 
+	List<ReproStrategy<App>> result = new ArrayList<ReproStrategy<App>>();
+	result.add(new AppReproductionWithPossibility(0.01, new AppClonalReproduction(""))); // TODO
+		result.add(new AppReproductionWithPossibility(0.01,
 				new AppSpeciationReproductionByDNA(
-					new DNAExtensionSpeciation()	
+					new DNAExtensionSpeciation()
 						)));
-		result.add(new AppReproductionWithPossibility(0.01, 
+		result.add(new AppReproductionWithPossibility(0.01,
 				new AppSpeciationReproductionByDNA(
-					new DNAReductionSpeciation()	
+					new DNAReductionSpeciation()
 						)));
 		APP_REPRODUCTION_STRATEGIES = result;
 		return result;
 	}
-	private static List<AppReproductionStrategy> APP_REPRODUCTION_STRATEGIES = null;
+
+private static List<ReproStrategy<App>> APP_REPRODUCTION_STRATEGIES = null;
 	
 	/**
 	 * Now, the platforms always generate a "degenerated child";
 	 * @param allServices
 	 * @return
 	 */
-	public List<PlatformReproductionStrategy> createPlatformReproductionStrategy(Platform platform, BipartiteGraph state){
+public List<ReproStrategy<Platform>> createPlatformReproductionStrategy() { // TODO
 		if(PLATFORM_REPRODUCTION_STRATEGIES != null)
 			return PLATFORM_REPRODUCTION_STRATEGIES;
 		
-		List<PlatformReproductionStrategy> result = new ArrayList<PlatformReproductionStrategy>();
+	List<ReproStrategy<Platform>> result = new ArrayList<ReproStrategy<Platform>>();
 		
 		
 		
-		PlatformReproductionStrategy reducer =	new PlatformReproductionWithPossibility(0.1,
+	ReproStrategy<Platform> reducer = new PlatformReproductionWithPossibility(0.1,
 					new PlatformSpeciationReproductionByDNA(
 						new DNAReductionSpeciation()
 						//new DNAExtensionSpeciation()
@@ -97,24 +95,25 @@ public class StrategyFactory {
 		return result;
 					
 	}
-	private static List<PlatformReproductionStrategy> PLATFORM_REPRODUCTION_STRATEGIES = null;
+
+private static List<ReproStrategy<Platform>> PLATFORM_REPRODUCTION_STRATEGIES = null;
 	
-	public List<AppExtinctionStrategy> createAppExtinctionStrategies(App app, BipartiteGraph graph){
-		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-		List<AppExtinctionStrategy> killers = new ArrayList<AppExtinctionStrategy>();
-		killers.add(new AgingExtinctionStrategy(app, graph, APP_MAX_LIFE));
-		killers.add(new AppOrphanExtinctionStrategy());
+
+public List<ExtinctionStrategy<App>> createAppExtinctionStrategies() {
+	List<ExtinctionStrategy<App>> killers = new ArrayList<ExtinctionStrategy<App>>();
+	killers.add((ExtinctionStrategy)new AgingExtinctionStrategy(APP_MAX_LIFE));
+	killers.add(new AppOrphanExtinctionStrategy("")); // TODO
 		return killers;
 		
 	}
 	
-	public List<PlatformExtinctionStrategy> createPlatformExtinctionStrategies(Platform platform, BipartiteGraph graph){
-		MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-		List<PlatformExtinctionStrategy> killers = new ArrayList<PlatformExtinctionStrategy>();
+
+public List<ExtinctionStrategy<Platform>> createPlatformExtinctionStrategies() {
+	List<ExtinctionStrategy<Platform>> killers = new ArrayList<ExtinctionStrategy<Platform>>();
 		
-		PlatformExtinctionStrategy lifekiller = new AgingExtinctionStrategy(platform, graph, PLATFORM_MAX_LIFE);
+	ExtinctionStrategy<Entity> lifekiller = new AgingExtinctionStrategy(PLATFORM_MAX_LIFE);
 		
-		//-killers.add(lifekiller);
+	killers.add((ExtinctionStrategy)lifekiller);
 		
 		return killers;
 	}

@@ -6,8 +6,8 @@ import diversim.model.Entity;
 import diversim.model.Service;
 
 /**
- * An implementation of the MatchingStrategy interface, this concrete 
- * implementation returns true only if all of the services required by the 
+ * An implementation of the MatchingStrategy interface, this concrete
+ * implementation returns true only if all of the services required by the
  * source, are found in the target. That is, if source is a subset of target.
  *
  * @author Vivek Nallur

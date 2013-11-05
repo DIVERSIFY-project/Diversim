@@ -9,7 +9,12 @@ package diversim.model;
  */
 public class Service implements Comparable<Service> {
 
-    int id;
+/**
+ * counter for the services
+ */
+public static int counter;
+
+int id;
     int name;
     int version;
     ServiceState state;
@@ -42,7 +47,7 @@ public class Service implements Comparable<Service> {
 
     public int getID(){
       return id;
-    } 
+    }
 
     public boolean equals(Object o) {
         if (o instanceof Service)

@@ -1,46 +1,36 @@
 package diversim.strategy.extinction;
 
-import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Entity;
-import diversim.model.Platform;
 
-public class AgingExtinctionStrategy implements AppExtinctionStrategy, PlatformExtinctionStrategy {
+
+public class AgingExtinctionStrategy extends ExtinctionStrategy<Entity> {
 	
-	private Entity entity = null;
-	private int expectedAge = 0;
-	private long born = 0;
+private int expectedAge;
+
 	
-	public AgingExtinctionStrategy(Entity entity, BipartiteGraph graph, int expectedAge){
-		
-		this.born = graph.schedule.getSteps();		
-		this.expectedAge = expectedAge;
-		this.entity = entity;
-		
+public AgingExtinctionStrategy(int expectedAge) {
+	super(""); // TODO
+	this.expectedAge = expectedAge;
+
 	}
 
 
-	public boolean die(BipartiteGraph graph) {
-		long steps = graph.schedule.getSteps();
-		if( steps - born >= expectedAge){
+public boolean die(Entity e, BipartiteGraph graph) {
+	long steps = graph.getCurCycle();
+	if (steps - e.getBirthCycle() >= expectedAge) {
 			return true;
 		}
-		else 
+		else
 			return false;
 		
 	}
 
 
-	@Override
-	public boolean die(Platform platform, BipartiteGraph graph) {
-		return die(graph);
-	}
+@Override
+public void evolve(BipartiteGraph graph, Entity agent) {
+	agent.dead = die(agent, graph);
 
-
-	@Override
-	public boolean die(App app, BipartiteGraph graph) {
-		// TODO Auto-generated method stub
-		return die(graph);
-	}
+}
 
 }

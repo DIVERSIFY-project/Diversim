@@ -1,141 +1,135 @@
 package diversim.model;
 
+
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.HashSet;
 
-import diversim.strategy.extinction.AppExtinctionStrategy;
-import diversim.strategy.extinction.PlatformExtinctionStrategy;
-import diversim.strategy.reproduction.PlatformReproductionStrategy;
-import diversim.model.Service;
-
-import ec.util.MersenneTwisterFast;
 import sim.engine.SimState;
-import sim.util.Bag;
-import sim.field.network.*;
+import diversim.strategy.Strategy;
 
 
 /**
- * Platforms are agents pro-actively modifying their state according to
- * some diversification rules to be included in their step() method.
- * By modifying their state they may also affect the network topology,
- * which should be updated accordingly.
- *
- * @author Marco Biazzini
- * @author Vivek Nallur
+ * Platforms are agents pro-actively modifying their state according to some diversification rules
+ * to be included in their step() method. By modifying their state they may also affect the network
+ * topology, which should be updated accordingly.
  * 
- * Platforms reproduce or kill themselves in the same way as Apps, controlled
- * by the corresponding strategies stored in {@ #reproducers} and {@ #killers},
- * respectively.
- *
+ * @author Marco Biazzini
+ * @author Vivek Nallur Platforms reproduce or kill themselves in the same way as Apps, controlled
+ *         by the corresponding strategies stored in @ #reproducers} and @ #killers} , respectively.
  */
 public class Platform extends Entity {
 
-	// how many apps can one service on this platform  support.
-	private int APP_PER_SERVICE = 1; 
-	
-	public boolean dead = false;
-	
-	public List<App> app = new ArrayList<App>();
-	
-	List<PlatformReproductionStrategy> reproducers;
-	List<PlatformExtinctionStrategy> killers;
-	// ArrayList<Service> supportedServices;
+// how many apps can one service on this platform support.
+private int APP_PER_SERVICE = 1;
 
-	
-	public List<Platform> reproduce(BipartiteGraph state){
-		List<Platform> result = new ArrayList<Platform>();
-		for(PlatformReproductionStrategy reproducer : reproducers){
-			result.addAll(reproducer.reproduce(this, state));
-		}
-		return result;
-	}
-	
-	public void setLoadingFactor(int load){
-		this.APP_PER_SERVICE = load;
-	}
-	
-	public int getLoadingFactor(){
-		return this.APP_PER_SERVICE;
-	}
 
-	public List<Service> getSupportedServices(){
-		return this.services;
-	}	
+public void setLoadingFactor(int load) {
+	this.APP_PER_SERVICE = load;
+}
 
-	public void setSupportedServices(List<Service> other_services){
-		this.services = new ArrayList<Service>(other_services);
-	}
 
-	public void addSupportedServices(List<Service> other_services){
-		Set<Service> current_services = new HashSet<Service>(this.services);
-		for (Service srv: other_services){
-			current_services.add(srv);
-		}
-		this.services = new ArrayList<Service> (current_services);
-	}
-	
-	public Platform(int id, List<Service> servs) {
-	  super(id);
-	  this.services = new ArrayList<Service> (servs); 
-	}
+public int getLoadingFactor() {
+	return this.APP_PER_SERVICE;
+}
 
-	public Platform(int id, List<Service> servs, int loading_factor) {
-	  super(id);
-	  this.services = new ArrayList<Service> (servs); 
-	  this.APP_PER_SERVICE = loading_factor;
-	}
 
-	
-	/*
-	 * (non-Javadoc)
-	 * @see diversim.Entity#step(sim.engine.SimState)
-	 */
-	@Override
-	public void step(SimState state) {
-		
-	  
-	  BipartiteGraph graph = (BipartiteGraph)state;
-	  
-	  if(dieOrNot(graph))
-		  return;
-	  
-	  MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-	  List<Platform> pltfs = reproduce(graph);
-	  for(Platform pltf : pltfs){
-		  graph.addPlatform(pltf);			  
-	  }
-	  
-	  
-	  System.out.println("Step " + state.schedule.getSteps() + " : " + toString());
-	}
-	
+public List<Service> getSupportedServices() {
+	return this.services;
+}
 
-	@Override
-	public String toString() {
-	  String res = super.toString();
-	  return res;
+
+public void setSupportedServices(List<Service> other_services) {
+	this.services = new ArrayList<Service>(other_services);
+}
+
+
+public void addSupportedServices(List<Service> other_services) {
+	Set<Service> current_services = new HashSet<Service>(this.services);
+	for (Service srv : other_services) {
+		current_services.add(srv);
 	}
-	
-	public void initStategies(BipartiteGraph graph){
-		this.reproducers = StrategyFactory.fINSTANCE
-				.createPlatformReproductionStrategy(this, graph);
-		this.killers = StrategyFactory.fINSTANCE
-				.createPlatformExtinctionStrategies(this, graph);
+	this.services = new ArrayList<Service>(current_services);
+}
+
+
+public Platform(int id, List<Service> servs) {
+	super(id);
+	this.services = new ArrayList<Service>(servs);
+	action = "none";
+}
+
+
+public Platform(int id, List<Service> servs, int loading_factor) {
+	super(id);
+	this.services = new ArrayList<Service>(servs);
+	this.APP_PER_SERVICE = loading_factor;
+	action = "none";
+}
+
+double pressure;
+
+public String action;
+
+
+public double getPressure() {
+	return pressure;
+}
+
+
+public String getAction() {
+	return action;
+}
+
+
+public Platform() {}
+
+
+public void init(String entityId, BipartiteGraph graph) {
+	super.init(entityId, graph);
+	for (Service s : graph.selectServices(graph.getMaxServices())) {
+		BipartiteGraph.addUnique(services, s);
 	}
-	
-	public boolean dieOrNot(BipartiteGraph graph){
-		if(dead)
-			return true;
-		for(PlatformExtinctionStrategy killer : killers){
-			if( killer.die(this, graph)){
-				this.dead = true;
-				return true;
-			}
-		}
-		return false;
+	pressure = 0;
+	action = "none";
+}
+
+
+public Platform(int id, List<Service> servs, Strategy<Platform> strategy) {
+	super(id, strategy);
+	for (Service s : servs) {
+		BipartiteGraph.addUnique(services, s);
 	}
-	
-	
+	pressure = 0;
+	action = "none";
+}
+
+
+/*
+ * (non-Javadoc)
+ * @see diversim.model.Entity#step(sim.engine.SimState)
+ */
+@SuppressWarnings("unchecked")
+@Override
+public void step(SimState state) {
+	BipartiteGraph graph = (BipartiteGraph)state;
+	action = "none";
+	if (getDegree() >= graph.getPlatformMaxLoad() && getSize() > graph.getPlatformMinSize()) {
+		strategy.evolve(graph, this);
+	}
+	pressure = ((double)degree) / graph.getPlatformMaxLoad();
+	if (pressure > 1.0) pressure = 1.0;
+
+	printoutCurStep(graph);
+}
+
+
+@Override
+public String toString() {
+	String res = super.toString();
+	res += " ; pressure = " + pressure + " ; action = " + action;
+	return res;
+}
+
 }

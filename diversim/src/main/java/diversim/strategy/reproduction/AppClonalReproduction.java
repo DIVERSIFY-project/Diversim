@@ -1,11 +1,11 @@
 package diversim.strategy.reproduction;
 
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
-import ec.util.MersenneTwisterFast;
+
 
 /**
  * This class implements the clonal reproduction strategy
@@ -15,15 +15,33 @@ import ec.util.MersenneTwisterFast;
  *
  * @author Vivek Nallur
  */
-public class AppClonalReproduction implements AppReproductionStrategy{
-        
+public class AppClonalReproduction extends ReproStrategy<App> {
+
+public AppClonalReproduction(String n) {
+	super(n);
+	// TODO Auto-generated constructor stub
+}
+
+
 		@Override
 		public List<App> reproduce(App parent, BipartiteGraph state) {
-			MersenneTwisterFast rnd = new MersenneTwisterFast(System.nanoTime());
-		  	App child = new App(rnd.nextInt(), parent.getDependencies());
-		  	child.initStrategies(state);
+	App child = state.createApp(""); // TODO
+	child.setServices(parent.getDependencies());
+	child.setStrategy(parent.getStrategy());
 			ArrayList<App> children = new ArrayList<App>();
 			children.add(child);
 			return children;
 		}
+
+    @Override
+    public void evolve(BipartiteGraph graph, App agent) {
+      reproduce(agent, graph);
+    }
+
+
+@Override
+public void init(String stratId) {
+	// TODO Auto-generated method stub
+
+}
 }
