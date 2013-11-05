@@ -25,7 +25,7 @@ public class PlatformSpeciationReproductionByDNA extends ReproStrategy<Platform>
 	Platform pltf = state.createPlatform(""); // TODO
 	pltf.setServices(services);
 	pltf.setStrategy(parent.getStrategy()); // FIXME ??
-	pltf.setLoadingFactor(parent.getLoadingFactor());
+	pltf.setDegree(parent.getDegree());
 		children.add(pltf);
 		return children;
 	}

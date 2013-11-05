@@ -44,9 +44,9 @@ int id;
     public int getName() {
         return name;
     }
-
-    public int getID(){
-      return id;
+    
+    public int getID() {
+    	return id;
     }
 
     public boolean equals(Object o) {

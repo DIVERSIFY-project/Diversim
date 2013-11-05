@@ -22,9 +22,9 @@ protected PlatformClonalReproduction(String n) {
 
 public List<Platform> reproduce(Platform parent, BipartiteGraph state) {
 	Platform child = state.createPlatform(""); // TODO
-	child.setServices(parent.getSupportedServices());
+	child.setServices(parent.getServices());
 	child.setStrategy(parent.getStrategy());
-			child.setLoadingFactor(parent.getLoadingFactor());
+	child.setDegree(parent.getDegree());
 			ArrayList<Platform> children = new ArrayList<Platform>();
 			children.add(child);
 			return children;

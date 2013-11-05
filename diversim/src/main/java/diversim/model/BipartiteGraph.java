@@ -1,6 +1,7 @@
 package diversim.model;
 
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
@@ -10,6 +11,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 import sim.engine.Schedule;
 import sim.engine.SimState;
@@ -17,7 +20,13 @@ import sim.engine.Steppable;
 import sim.field.network.Edge;
 import sim.field.network.Network;
 import sim.util.Bag;
+import diversim.metrics.MetricsMonitor;
+import diversim.metrics.Robustness;
 import diversim.strategy.Strategy;
+import diversim.strategy.fate.CreationFates;
+import diversim.strategy.fate.KillFates;
+import diversim.strategy.fate.LinkStrategyFates;
+import diversim.strategy.fate.MutationFates;
 import diversim.util.config.Configuration;
 import ec.util.MersenneTwisterFast;
 
@@ -26,15 +35,7 @@ import ec.util.MersenneTwisterFast;
  * Build a bipartite graph of platforms and apps linked by services provided/used. Create and
  * schedule entities (platforms and apps) as independent agents. Maintain the network topology in a
  * single data structure and takes care of its consistent updating (see comments about the start()
- * method). More info in the comments of the methods. In a nutshell: We have a two communities of
- * species: platforms and apps Each specie of platform is description of the set of services it
- * supports. Each individual platform-instance is an individual of a particular specie. There can be
- * many species, but a specie with no individual platform-instances is extinct. Each specie of app
- * is a description of the set of services it needs. Each app-instance is an individual of a
- * particular specie. If an app-instance cannot find a platform-instance that supports at least its
- * required set of services, it dies. Each platform-instance supports one app-instance. For
- * visualization purposes: We need to show specie-level interactions, perhaps(?) instead of
- * individual level interactions.
+ * method). More info in the comments of the methods.
  * 
  * @author Marco Biazzini
  * @author Vivek Nallur
@@ -72,19 +73,15 @@ int maxApps;
  */
 int maxServices;
 
-int platformMaxLoad = 4; // FIXME
+/**
+ * Max number of links a platform bears without triggering some diversification rule.
+ */
+int platformMaxLoad;
 
 /**
- * x out of 100 possibility to allow an App to reproduce itself.
+ * Min number of services a platform shall host.
  */
-int platformMinSize = 3;
-
-/**
- * x out of 100 possibility to allow an App to reproduce itself.
- */
-int percentAppReproduce = 1; // 1%
-
-int percentPlatformReproduce = 1; // 1%
+int platformMinSize;
 
 /**
  * Maximum number of scheduled events per agent.
@@ -120,6 +117,9 @@ public Network bipartiteNetwork;
 /**
  * Invisible agent that can affect the history of the simulation by injecting external events.
  */
+public Fate fate;
+
+public static MetricsMonitor metrics;
 
 protected boolean changed;
 
@@ -133,6 +133,14 @@ private static String configPath;
 
 public int stepsPerCycle;
 
+private static Logger logger = Logger.getLogger("BipartiteGraph");
+
+ArrayList<ArrayList<Service>> serviceBundles;
+
+private int nextBundle;
+
+boolean readConfigurationFile = true;
+
 
 /**
  * Getters and setters. Any Java Bean getter/setter is auto-magically included in the GUI. If a
@@ -144,27 +152,15 @@ public int getInitPlatforms() {
 }
 
 
-// public void setInitPlatforms(int p) {
-// initPlatforms = p;
-// }
-
 public int getInitApps() {
 	return initApps;
 }
 
 
-// public void setInitApps(int p) {
-// initApps = p;
-// }
-
 public int getInitServices() {
 	return initServices;
 }
 
-
-// public void setInitServices(int p) {
-// initServices = p;
-// }
 
 public int getMaxPlatforms() {
 	return maxPlatforms;
@@ -295,6 +291,65 @@ public double getAvgAppSize() {
 }
 
 
+public double getRobustness() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	try {
+		return Robustness.calculateRobustness(this,
+		    LinkStrategyFates.class.getDeclaredMethod("linkingA", BipartiteGraph.class),
+		    KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class));
+	}
+	catch (Exception e) {
+		e.printStackTrace();
+		return -1;
+	}
+}
+
+
+public double getShannon() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.SHANNON_PLATFORM);
+}
+
+
+public double getGiniSimpson() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.GS_PLATFORM);
+}
+
+
+public double getAveDiff() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
+	return (Double)metrics.getSnapshot().get(MetricsMonitor.DIFF_PLATFORM);
+}
+
+
+/*
+ * public double getMaxShannon() { if (schedule.getTime() <= Schedule.BEFORE_SIMULATION ||
+ * getNumApps() == 0) return 0.0; return Math.log(this.getNumPlatforms()); } public double
+ * getMinGiniSimpson() { if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0)
+ * return 0.0; return 1 - 1 /
+ * (Double)metrics.getSnapshot().get(MetricsMonitor.NUM_SPECIES_PLATFORM); }
+ */
+
+
+public int getCountSpecies() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0;
+	return (Integer)metrics.getSnapshot().get(MetricsMonitor.NUM_SPECIES_PLATFORM);
+}
+
+
+public int getAliveAppsNumber() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0;
+	int counter = 0;
+	for (App app : apps) {
+		if (app.isAlive()) {
+			counter++;
+		}
+	}
+	return counter;
+}
+
+
 /**
  * Dynamic persistent data structures should be created here.
  */
@@ -306,18 +361,21 @@ private void init() {
 	apps = new ArrayList<App>();
 	services = new ArrayList<Service>();
 	entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
-	try {
-		configPath = System.getenv().get("PWD");
-		configPath += "/neutralModel.conf";
-		Configuration.setConfig(configPath);
-		stepsPerCycle = 0;
-		INSTANCE = this;
-		supervised = true;
+	serviceBundles = new ArrayList<ArrayList<Service>>();
+	if (readConfigurationFile) {
+		try {
+			configPath = System.getProperty("user.dir");
+			configPath += "/bipartiteModel.conf";
+			Configuration.setConfig(configPath);
+		}
+		catch (IOException e) {
+			System.err.println("ERROR : Configuration file not found.");
+			System.exit(1);
+		}
 	}
-	catch (IOException e) {
-		System.err.println("ERROR : Configuration file not found.");
-		System.exit(1);
-	}
+	stepsPerCycle = 0;
+	INSTANCE = this;
+	supervised = true;
 }
 
 
@@ -345,6 +403,44 @@ public BipartiteGraph(long seed, Schedule schedule) {
 }
 
 
+/**
+ * Creates a clone for the sole purpose of the extinction sequence in Robustness calculation
+ * 
+ * @return clone
+ */
+public BipartiteGraph extinctionClone() {
+	BipartiteGraph clone = new BipartiteGraph(random());
+	clone.bipartiteNetwork = new Network(bipartiteNetwork);
+	clone.initPlatforms = initPlatforms;
+	clone.initApps = initApps;
+	clone.initServices = initServices;
+	clone.maxPlatforms = maxPlatforms;
+	clone.maxApps = maxApps;
+	clone.maxServices = maxServices;
+	clone.platformMaxLoad = platformMaxLoad;
+	clone.platformMinSize = platformMinSize;
+	clone.maxCycles = maxCycles;
+	clone.entityStrategies = entityStrategies;
+	clone.platforms = new ArrayList<Platform>(platforms);
+	/*
+	 * for (Platform platform : platforms) { clone.platforms.add(new Platform(platform)); }
+	 */
+	clone.apps = new ArrayList<App>(apps);
+	/*
+	 * for (App app : apps) { clone.apps.add(new App(app)); }
+	 */
+	clone.services = services;
+	clone.fate = fate;
+	clone.changed = changed;
+	clone.centralized = centralized;
+	clone.supervised = supervised;
+	clone.stepsPerCycle = stepsPerCycle;
+	clone.serviceBundles = serviceBundles;
+	clone.nextBundle = nextBundle;
+	return clone;
+}
+
+
 private void readConfig() {
 	if (supervised) {
 		try {
@@ -356,7 +452,7 @@ private void readConfig() {
 	}
 	int seed = Configuration.getInt("seed", 0);
 	if (seed != 0) {
-		random.setSeed(seed);
+		random().setSeed(seed);
 	}
 	System.err.println("Config : seed = " + seed);
 	supervised = Configuration.getBoolean("supervised");
@@ -426,36 +522,68 @@ protected void initServices() {
 }
 
 
+public ArrayList<Service> nextBundle() {
+	return serviceBundles.get(nextBundle++);
+}
+
+
 /**
  * This method is called ONCE at the beginning of every simulation. EVERY field, parameter,
  * structure etc. MUST be initialized here (and not in the constructor).
  */
+public void start(String path) {
+	configPath = path;
+	System.err.println("Config : INFO : Starting with config file: " + path);
+	start();
+}
+
 public void start() {
 	super.start();
 	// reset all parameters and fields
 	platforms.clear();
 	apps.clear();
 	services.clear();
+	serviceBundles.clear();
 	bipartiteNetwork.clear();
 	entityStrategies.clear();
 	changed = true;
 	centralized = false;
 	stepsPerCycle = 0;
+	nextBundle = 0;
+	Service.counter = 0;
+	if (readConfigurationFile) {
+		readConfig();
+	}
+	if (services.isEmpty()) {
+		initServices();
+		for (int i = 0; i < initApps; i++) {
+			serviceBundles.add(selectServices(0));
+		}
+		// try {
+		// FileWriter fout = new FileWriter("services" + System.currentTimeMillis());
+		// for (ArrayList<Service> serviceA : serviceBundles)
+		// for (Service s : serviceA)
+		// fout.write(s.toString() + "\n");
+		// fout.flush();
+		// fout.close();
+		// }
+		// catch (IOException e) {
+		// e.printStackTrace();
+		// }
+	}
 
-	readConfig();
-	initServices();
 	try {
 		initFate();
 		initPlatform();
+		// System.out.println(platforms);
 		initApp();
+		// System.out.println(apps);
+		metrics = MetricsMonitor.createMetricsInstance(this);
 	}
 	catch (Exception e) {
 		e.printStackTrace();
 	}
 	if (!centralized) stepsPerCycle++;
-
-	schedule.scheduleRepeating(schedule.getTime() + 1.1, new ReConnect(), 1.0);
-	stepsPerCycle++;
 
 	if (fate != null) {
 		schedule.scheduleRepeating(schedule.getTime() + 1.3, fate, 1.0);
@@ -472,11 +600,64 @@ public void start() {
 		public void step(SimState state) {
 			if (changed) printoutNetwork();
 			changed = false;
+			System.out.println("METRICS: " + metrics.recordSnapshot());
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
+			
+			if (state.schedule.scheduleComplete()) {
+				// System.out.println("METRICS HISTORY: " + metrics.getHistory());
+				// System.out.println("ROBUSTNESS: " +
+				// Robustness.calculateRobustness((BipartiteGraph)state));
+				Logger.getLogger(KillFates.class.getName()).setLevel(Level.OFF);
+				Logger.getLogger(CreationFates.class.getName()).setLevel(Level.OFF);
+				Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
+				// System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
+				// + Robustness.displayAllRobustness((BipartiteGraph)state, 10));
+				Map<String, double[]> stats = Robustness.calculateAllRobustness((BipartiteGraph)state, 50);
+				try {
+					FileWriter fout = new FileWriter("stats" + System.currentTimeMillis());
+					fout.write("Name,Min,P25,P50,P75,Max,Mean\n");
+					for (String name : stats.keySet()) {
+						fout.write(name + "," + stats.get(name)[0] + "," + stats.get(name)[1] + ","
+						    + stats.get(name)[2] + "," + stats.get(name)[3] + "," + stats.get(name)[4] + ","
+						    + stats.get(name)[5]);
+						fout.write("\n");
+					}
+					fout.flush();
+					fout.close();
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	};
 	schedule.scheduleRepeating(schedule.getTime() + 1.2, print, 1.0);
 
+}
+
+
+public void externalConfiguration(long seed, int maxCycles, int initPlatforms, int initApps,
+    int initServices, int maxPlatforms, int maxApps, int maxServices, int maxLoad) {
+	this.readConfigurationFile = false;
+	System.err.println("Using external launcher");
+	random().setSeed(seed);
+	System.err.println("Ext: seed = " + seed);
+	this.supervised = true;
+	this.initApps = initApps;
+	this.initPlatforms = initPlatforms;
+	this.initServices = initServices;
+	this.maxCycles = maxCycles;
+	this.maxApps = maxApps;
+	this.maxPlatforms = maxPlatforms;
+	this.maxServices = maxServices;
+	this.platformMaxLoad = maxLoad;
+	this.platformMinSize = 0;
+	this.centralized = true;
+}
+
+
+public static void externalLauncher(int runNum) {
+	// for(int cycles = ExternalLauncher.cycles - )
 }
 
 
@@ -492,19 +673,24 @@ public static void main(String[] args) {
  * returned. The number of services returned is always at least 1 and at most
  * {@link #getNumServices()}.
  * 
- * @param n
+ * @param size
  *          Number of services to return.
  * @return A random selection of services.
  */
-public ArrayList<Service> selectServices(int n) {
+public ArrayList<Service> selectServices(int size) {
 	ArrayList<Service> servs = new ArrayList<Service>();
-	if (n < 1) n = (int)((random.nextGaussian() + 3) / 6 * (getNumServices() - 1) + 1);
-	n = n < 1 ? 1 : n > getNumServices() ? getNumServices() : n;
-	for (int j = 0; j < n; j++) {
-		servs.add(services.get(random.nextInt(getNumServices())));
+	if (size < 1) size = (int)((random().nextGaussian() + 3) / 6 * (getNumServices() - 1) + 1);
+	size = size < 1 ? 1 : size > getNumServices() ? getNumServices() : size;
+	for (int j = 0; j < size; j++) {
+		servs.add(services.get(random().nextInt(getNumServices())));
 	}
 
 	return servs;
+}
+
+
+public Service selectSingleService() {
+	return services.get(random().nextInt(getNumServices()));
 }
 
 
@@ -548,7 +734,8 @@ public App createApp(String entityName) {
 		app = (App)createEntity(entityName);
 	}
 	catch (Exception e) {
-		new Exception(e);
+		logger.log(Level.SEVERE, "createApp: error " + e.getMessage());
+		return null;
 	}
 	addUnique(apps, app);
 	return app;
@@ -556,15 +743,16 @@ public App createApp(String entityName) {
 
 
 public Platform createPlatform(String entityName) {
-	Platform app = null;
+	Platform platform = null;
 	try {
-		app = (Platform)createEntity(entityName);
+		platform = (Platform)createEntity(entityName);
 	}
 	catch (Exception e) {
-		new Exception(e);
+		logger.log(Level.SEVERE, "createPlatform: error " + e.getMessage());
+		return null;
 	}
-	addUnique(platforms, app);
-	return app;
+	addUnique(platforms, platform);
+	return platform;
 }
 
 
@@ -584,7 +772,8 @@ public static Strategy<? extends Steppable> getStrategy(String strategyName) {
 		strategy.init(id);
 	}
 	catch (Exception e) {
-		new Exception(e);
+		logger.log(Level.SEVERE, "getStrategy: error " + e.getMessage());
+		return null;
 	}
 
 	return strategy;
@@ -680,6 +869,7 @@ public void createLinks(Entity e, ArrayList<? extends Entity> entities) {
 
 }
 
+
 public void setLink(App app, Platform pltf){
 	bipartiteNetwork.addEdge(app, pltf, 1);
 	app.degree ++;
@@ -704,6 +894,11 @@ private void printoutNetwork() { // TODO
  */
 public String getPrintoutHeader() {
 	return "Cycle " + getCurCycle() + " [" + schedule.getSteps() + "] : ";
+}
+
+
+public MersenneTwisterFast random() {
+	return random;
 }
 
 
@@ -748,10 +943,14 @@ public static <T> T getElement(List list, Comparable target) {
 public static int addUnique(List set, Comparable item) {
 	int i = Collections.binarySearch(set, item);
 	if (i < 0) {
+		// found
 		i = -i - 1;
 		set.add(i, item);
+		return i;
+	} else {
+		// not found
+		return -1;
 	}
-	return i;
 }
 
 

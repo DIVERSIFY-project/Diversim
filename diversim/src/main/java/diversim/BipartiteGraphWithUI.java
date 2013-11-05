@@ -1,9 +1,11 @@
 package diversim;
 
-import diversim.model.App;
-import diversim.model.BipartiteGraph;
-import diversim.model.Platform;
-import diversim.model.Service;
+import java.awt.Color;
+import java.awt.Graphics2D;
+import java.awt.Paint;
+import java.awt.geom.Rectangle2D;
+
+import javax.swing.JFrame;
 
 import sim.display.Console;
 import sim.display.Controller;
@@ -21,14 +23,10 @@ import sim.portrayal.network.SpatialNetwork2D;
 import sim.portrayal.simple.OvalPortrayal2D;
 import sim.portrayal.simple.RectanglePortrayal2D;
 import sim.util.Double2D;
-
-import java.awt.Color;
-import java.awt.Graphics2D;
-import java.awt.List;
-import java.awt.Paint;
-import java.awt.geom.Rectangle2D;
-
-import javax.swing.JFrame;
+import diversim.model.App;
+import diversim.model.BipartiteGraph;
+import diversim.model.Platform;
+import diversim.model.Service;
 
 
 /**
@@ -138,7 +136,7 @@ private void setupPortrayals() {
       Platform.class, new OvalPortrayal2D() {// inline subclass to override draw()
         public void draw(Object object, Graphics2D graphics, DrawInfo2D info) {
           Platform plat = (Platform)object;
-          paint = new Color((int)(255 * plat.getLoadingFactor()), 0, 0);
+					paint = new Color((int)(255 * plat.getDegree()), 0, 0);
           //paint = new Color((int)(255 * plat.services.size() / BipartiteGraph.initServices), 0, 0);
           double dist = sysSpace.getWidth() / (((BipartiteGraph)state).getNumPlatforms() + 1);
           info.draw.width = ((double)plat.getSize()) / ((BipartiteGraph)state).getNumServices() * dist;

@@ -2,7 +2,6 @@ package diversim.metrics;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import diversim.model.Entity;
 import diversim.model.Service;

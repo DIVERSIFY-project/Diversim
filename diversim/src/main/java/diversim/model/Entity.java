@@ -24,7 +24,6 @@ import diversim.util.config.Configuration;
  * access to the correspondent field by double clicking the entity portrayal in the GUI.
  * 
  * @author Marco Biazzini
- * @author Vivek Nallur
  */
 abstract public class Entity implements Steppable, Comparable<Entity> {
 
@@ -61,17 +60,28 @@ protected String kind;
 /**
  * Internal object to be used to kill this entity (i.e. to delete it from the simulator's schedule)
  */
-private Stoppable stoppable;
+protected Stoppable stoppable;
 
 protected Strategy strategy;
 
 public boolean dead;
 
-private int since; // cycle at which the entity is created.
+protected int since; // cycle at which the entity is created.
 
 
 public Entity() {}
 
+
+public Entity(Entity entity) {
+	this.ID = entity.ID;
+	this.services = entity.services;
+	this.degree = entity.degree;
+	this.kind = entity.kind;
+	this.stoppable = entity.stoppable;
+	this.strategy = entity.strategy;
+	this.dead = entity.dead;
+	this.since = entity.since;
+}
 
 Entity(int id, Strategy<? extends Entity> strategy) {
 	ID = id;
@@ -129,6 +139,11 @@ public void setMatchingStrategy(MatchingStrategy ms) {
 
 public int getDegree() {
 	return degree;
+}
+
+
+public void setDegree(int d) {
+	degree = d;
 }
 
 
@@ -258,6 +273,19 @@ public int countCommonServices(Entity e, Integer[] counter) {
 }
 
 
+public List<Service> getCommonServices(Entity entity) {
+	List<Service> result = new ArrayList<Service>();
+	int index = 0;
+	for (Service s : entity.getServices()) {
+		index = Collections.binarySearch(getServices(), s);
+		if (index >= 0) {
+			result.add(getServices().get(index));
+		}
+	}
+	return result;
+}
+
+
 @Override
 public String toString() {
 	String res = "";
@@ -303,4 +331,10 @@ public void setServices(List<Service> services) {
 	for (Service s : services)
 		BipartiteGraph.addUnique(this.services, s);
 }
+
+
+public boolean isAlive() {
+	return !dead;
+}
+
 }

@@ -1,5 +1,6 @@
 package diversim.metrics;
 
+
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
@@ -10,11 +11,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import diversim.BipartiteGraphWithUI;
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.util.config.Configuration;
-
 /**
  * MetricsMonitor is a nexus for all the metrics methods. Each monitor stands 
  * during a single simulation run, and record the snapshots at the time points 
@@ -66,6 +67,10 @@ public class MetricsMonitor {
 	public static final String REDUDANCY_PLATFORM_TO_APP = "RedundancyOfPlatformToApp";
 	public static final String WC_ONE_PLATFORM_FAILURE = "WorstCaseOnePlatformFailure";
 	public static final String WC_FIRST_APP_DIE = "WorstCaseFirstAppDie";
+
+public static final String NUM_APP_ALIVE = "NumOfPlatformAlive";
+
+public static final String AVE_NUM_APP_ALIVE = "AveNumOfPlatformAlive";
     
     /**
      * A list of all the values declared before. Make sure that it contains
@@ -80,7 +85,8 @@ public class MetricsMonitor {
         REDUDANCY_PLATFORM,
         REDUDANCY_PLATFORM_TO_APP,
         WC_ONE_PLATFORM_FAILURE,
-        WC_FIRST_APP_DIE
+ WC_FIRST_APP_DIE, NUM_APP_ALIVE,
+    AVE_NUM_APP_ALIVE
     };
 	
 	public List<Long> steps = new ArrayList<Long>();
@@ -99,6 +105,8 @@ public class MetricsMonitor {
 	SpeciesAndPopulation<Platform> snp_p= null;
 	Redundancy redundancy = null;
 	PlatformFailures pltfFailures = null;
+
+AppFailures appFailures = null;
 	
 	DiffereceOfDNAs<Platform> diff_p = null;
 	
@@ -140,6 +148,8 @@ public class MetricsMonitor {
 				pltfFailures = new PlatformFailures(graph);
 			else if(WC_FIRST_APP_DIE.equals(s) && pltfFailures == null)
 				pltfFailures = new PlatformFailures(graph);
+		else if (AVE_NUM_APP_ALIVE.equals(s) && appFailures == null)
+		  appFailures = new AppFailures(graph);
 			
 			history.put(s, new ArrayList<Object>());
 		}
@@ -147,7 +157,7 @@ public class MetricsMonitor {
     
 
 	
-	protected Map<String, Object> getSnapshot(){
+public Map<String, Object> getSnapshot() {
 		Map<String, Object> snapshot = new HashMap<String, Object> ();
 		for(String s : register){
 			if(SHANNON_PLATFORM.equals(s)){
@@ -179,6 +189,12 @@ public class MetricsMonitor {
 			if(WC_FIRST_APP_DIE.equals(s)){
 				snapshot.put(s, pltfFailures.calculateWorstCaseFirstAppDie());
 			}
+		if (NUM_APP_ALIVE.equals(s)) {
+			snapshot.put(s, graph.getAliveAppsNumber());
+		}
+		if (AVE_NUM_APP_ALIVE.equals(s)) {
+			snapshot.put(s, appFailures.calculateAliveAppsAverage());
+		}
 		}
 		return snapshot;
 	}
@@ -256,9 +272,9 @@ public class MetricsMonitor {
                 }
             }
         }
-        System.out.println(paras);
+        System.out.println("Metrics : Recording " + paras);
         MetricsMonitor metrics = new MetricsMonitor(graph, paras);
-		metrics.filePath = "C:\\Users\\huis\\bitbucket\\divmetrics\\data\\";
+	metrics.filePath = "/home/aelie/Diversify/data";
 		allMetrics.add(metrics);
 		return metrics;
 	}

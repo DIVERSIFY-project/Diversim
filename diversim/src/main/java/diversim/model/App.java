@@ -7,18 +7,18 @@ import java.util.Set;
 
 import sim.engine.SimState;
 import diversim.strategy.Strategy;
-import diversim.util.config.Configuration;
 
 
 /**
- * Apps rely on specific services to function
- * 
- * @author Vivek Nallur In each step, an App has the authority may choose to reproduce itself,
+ * @author Marco Biazzini
+ * @author Vivek Nallur
+ * @author Hui Song
+ *
+ * In each step, an App has the authority may choose to reproduce itself,
  *         either via clone or speciation, decided by the {@link #reproducers}, which are all
  *         instances of @ AppReproductionStrategy} . An App dies if a instance of @
  *         AppExtinctionStrategy} in {@link #killers} suggests so. A {@link #dead} app will not
  *         reproduce, and will also be removed from the bipartite graph.
- * @author Hui Song
  */
 public class App extends Entity {
 
@@ -64,11 +64,10 @@ public App(int id, List<Service> servs, Strategy<App> strategy) {
 public App() {};
 
 
-@Override
 public void init(String entityId, BipartiteGraph graph) {
 	super.init(entityId, graph);
-	int nSer = Configuration.getInt(entityId + ".services");
-	for (Service s : graph.selectServices(nSer)) {
+	// int nSer = Configuration.getInt(entityId + ".services");
+	for (Service s : graph.nextBundle()) {
 		BipartiteGraph.addUnique(services, s);
 	}
 }
@@ -86,7 +85,7 @@ public void step(SimState state) {
 
 	redundancy = ((double)degree) / graph.getNumPlatforms();
 	if (redundancy > 1.0) redundancy = 1.0;
-	printoutCurStep(graph);
+	// printoutCurStep(graph);
 }
 
 
@@ -96,5 +95,4 @@ public String toString() {
 	res += " ; redundancy = " + redundancy;
 	return res;
 }
-
 }
