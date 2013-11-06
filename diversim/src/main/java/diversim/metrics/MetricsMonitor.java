@@ -67,9 +67,9 @@ public class MetricsMonitor {
 	public static final String WC_ONE_PLATFORM_FAILURE = "WorstCaseOnePlatformFailure";
 	public static final String WC_FIRST_APP_DIE = "WorstCaseFirstAppDie";
 
-public static final String NUM_APP_ALIVE = "NumOfPlatformAlive";
+public static final String NUM_APP_ALIVE = "NumOfAppAlive";
 
-public static final String AVE_NUM_APP_ALIVE = "AveNumOfPlatformAlive";
+public static final String AVE_NUM_APP_ALIVE = "AveNumOfAppAlive";
     
     /**
      * A list of all the values declared before. Make sure that it contains
