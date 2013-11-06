@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -79,12 +80,13 @@ public static double calculateRobustness(BipartiteGraph graph, Method linking, M
 }
 
 
-public static Map<String, double[]> calculateAllRobustness(BipartiteGraph graph, int trials) {
-	Map<String, double[]> results = new HashMap<String, double[]>();
+public static Map<String, Map<String, Double>> calculateAllRobustness(BipartiteGraph graph,
+    int trials) {
+	Map<String, Map<String, Double>> results = new HashMap<String, Map<String, Double>>();
 	Method linkingMethod;
 	Method killingMethod;
 	DescriptiveStatistics stats = new DescriptiveStatistics();
-	double[] statResults;
+	Map<String, Double> statResults;
 	for (String linkingName : LinkStrategyFates.getLinkingMethods().keySet()) {
 		for (String killingName : KillFates.getKillingMethods().keySet()) {
 			stats.clear();
@@ -116,13 +118,13 @@ public static Map<String, double[]> calculateAllRobustness(BipartiteGraph graph,
 				}
 				stats.addValue(value);
 			}
-			statResults = new double[6];
-			statResults[0] = stats.getMin();
-			statResults[1] = stats.getPercentile(25);
-			statResults[2] = stats.getPercentile(50);
-			statResults[3] = stats.getPercentile(75);
-			statResults[4] = stats.getMax();
-			statResults[5] = stats.getMean();
+			statResults = new TreeMap<String, Double>();
+			statResults.put("Min", stats.getMin());
+			statResults.put("P25", stats.getPercentile(25));
+			statResults.put("P50", stats.getPercentile(50));
+			statResults.put("P75", stats.getPercentile(75));
+			statResults.put("Max", stats.getMax());
+			statResults.put("Mean", stats.getMean());
 			results.put(linkingName + "-" + killingName, statResults);
 		}
 	}
@@ -133,7 +135,7 @@ public static Map<String, double[]> calculateAllRobustness(BipartiteGraph graph,
 public static String displayAllRobustness(BipartiteGraph graph, int trials) {
 	Logger.getLogger(KillFates.class.getName()).setLevel(Level.WARNING);
 	String result = "";
-	final Map<String, double[]> robustness = calculateAllRobustness(graph, trials);
+	final Map<String, Map<String, Double>> robustness = calculateAllRobustness(graph, trials);
 	ArrayList<String> names = new ArrayList<String>(robustness.keySet());
 	// Collections.sort(names);
 	// Collections.sort(names, new Comparator() {
@@ -145,7 +147,7 @@ public static String displayAllRobustness(BipartiteGraph graph, int trials) {
 	//
 	// });
 	for (String name: names) {
-		result += "  " + name + ": " + Arrays.toString(robustness.get(name))
+		result += "  " + name + ": " + robustness.get(name)
 		    + System.getProperty("line.separator");
 	}
 	return result;
