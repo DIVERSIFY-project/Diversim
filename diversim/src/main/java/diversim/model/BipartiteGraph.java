@@ -20,7 +20,6 @@ import sim.engine.Steppable;
 import sim.field.network.Edge;
 import sim.field.network.Network;
 import sim.util.Bag;
-import diversim.ExternalLauncher;
 import diversim.strategy.Strategy;
 import diversim.strategy.fate.CreationFates;
 import diversim.strategy.fate.KillFates;
@@ -374,10 +373,12 @@ private void init() {
 	serviceBundles = new ArrayList<ArrayList<Service>>();
 	if (readConfigurationFile) {
 		try {
-			// configPath = System.getenv().get("PWD");
-			configPath = System.getProperty("user.dir");
-			// configPath += "/neutralModel.conf";
-			configPath += "/andreModel.conf";
+			if (configPath == null) {
+				// configPath = System.getenv().get("PWD");
+				configPath = System.getProperty("user.dir");
+				// configPath += "/neutralModel.conf";
+				configPath += "/andreModel.conf";
+			}
 			Configuration.setConfig(configPath);
 		}
 		catch (IOException e) {
@@ -648,32 +649,19 @@ public void start() {
 }
 
 
-public void externalConfiguration(long seed, int maxCycles, int initPlatforms, int initApps,
-    int initServices, int maxPlatforms, int maxApps, int maxServices, int maxLoad) {
-	this.readConfigurationFile = false;
-	System.err.println("Using external launcher");
-	random().setSeed(seed);
-	System.err.println("Ext: seed = " + seed);
-	this.supervised = true;
-	this.initApps = initApps;
-	this.initPlatforms = initPlatforms;
-	this.initServices = initServices;
-	this.maxCycles = maxCycles;
-	this.maxApps = maxApps;
-	this.maxPlatforms = maxPlatforms;
-	this.maxServices = maxServices;
-	this.platformMaxLoad = maxLoad;
-	this.platformMinSize = 0;
-	this.centralized = true;
-}
-
-
-public static void externalLauncher(int runNum) {
-	// for(int cycles = ExternalLauncher.cycles - )
-}
-
-
 public static void main(String[] args) {
+	for (int i = 0; i < args.length; i++) {
+		if (args[i].equals("-configuration") && (i + 1) < args.length) {
+			configPath = args[i + 1];
+			System.err.println("WARNING : using command line parameter for configuration file: "
+			    + configPath);
+		}
+		if (args[i].equals("-help")) {
+			System.out.println("Command line options:" + System.getProperty("line.separator")
+			    + "  -help             displays this message" + System.getProperty("line.separator")
+			    + "  -configuration    the configuration file path");
+		}
+	}
 	doLoop(BipartiteGraph.class, args);
 	System.exit(0);
 }
