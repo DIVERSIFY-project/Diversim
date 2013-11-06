@@ -625,14 +625,21 @@ public void start() {
 				Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
 				// System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
 				// + Robustness.displayAllRobustness((BipartiteGraph)state, 10));
-				Map<String, double[]> stats = Robustness.calculateAllRobustness((BipartiteGraph)state, 50);
+				Map<String, Map<String, Double>> stats = Robustness.calculateAllRobustness(
+				    (BipartiteGraph)state, 50);
 				try {
 					FileWriter fout = new FileWriter("stats" + System.currentTimeMillis());
-					fout.write("Name,Min,P25,P50,P75,Max,Mean\n");
+					fout.write("Name,");// Min,P25,P50,P75,Max,Mean\n");
+					String robustnessName = stats.keySet().iterator().next();
+					for (String statType : stats.get(robustnessName).keySet()) {
+						fout.write(statType + ",");
+					}
+					fout.write("\n");
 					for (String name : stats.keySet()) {
-						fout.write(name + "," + stats.get(name)[0] + "," + stats.get(name)[1] + ","
-						    + stats.get(name)[2] + "," + stats.get(name)[3] + "," + stats.get(name)[4] + ","
-						    + stats.get(name)[5]);
+						fout.write(name + ",");
+						for (String statType : stats.get(name).keySet()) {
+							fout.write(stats.get(name).get(statType) + ",");
+						}
 						fout.write("\n");
 					}
 					fout.flush();
