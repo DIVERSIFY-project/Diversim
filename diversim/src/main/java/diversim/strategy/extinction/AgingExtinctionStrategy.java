@@ -6,14 +6,13 @@ import diversim.model.Entity;
 
 public class AgingExtinctionStrategy extends ExtinctionStrategy<Entity> {
 	
-private int expectedAge;
+protected int expectedAge;
 
 	
-public AgingExtinctionStrategy(int expectedAge) {
-	super(""); // TODO
-	this.expectedAge = expectedAge;
+public AgingExtinctionStrategy() {
+	super("aging"); // TODO
 
-	}
+}
 
 
 public boolean die(Entity e, BipartiteGraph graph) {

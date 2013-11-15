@@ -73,7 +73,7 @@ strategy.7
 strategy.8
 {
   name LinkA
-  class diversim.strategy.application.LinkingA
+  class diversim.strategy.application.LinkA
 }
 
 app.1
