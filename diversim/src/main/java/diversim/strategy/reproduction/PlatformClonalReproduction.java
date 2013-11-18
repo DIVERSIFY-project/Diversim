@@ -14,14 +14,16 @@ import diversim.model.Platform;
  */
 public class PlatformClonalReproduction extends ReproStrategy<Platform> {
 
-protected PlatformClonalReproduction(String n) {
+public PlatformClonalReproduction(String n) {
 	super(n);
 	// TODO Auto-generated constructor stub
 }
 
 
 public List<Platform> reproduce(Platform parent, BipartiteGraph state) {
-	Platform child = state.createPlatform(""); // TODO
+    String kind = state.platforms.get(0).getKind();
+	Platform child = state.createPlatform(kind); // TODO
+    child.services.clear();
 	child.setServices(parent.getServices());
 	child.setStrategy(parent.getStrategy());
 	child.setDegree(parent.getDegree());
