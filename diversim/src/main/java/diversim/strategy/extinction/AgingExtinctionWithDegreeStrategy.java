@@ -16,6 +16,8 @@ import diversim.util.config.Configuration;
  */
 public class AgingExtinctionWithDegreeStrategy extends AgingExtinctionStrategy{
     
+    double selection = 0.25;
+    
     @Override
 	public boolean die(Entity e, BipartiteGraph graph){
 		boolean shouldDie = super.die(e, graph);
@@ -30,7 +32,7 @@ public class AgingExtinctionWithDegreeStrategy extends AgingExtinctionStrategy{
 		
 		if(shouldDie && e.getDegree() > 0){
 			
-			if(graph.random.nextDouble() < 0.25 )				
+			if(graph.random.nextDouble() < selection )				
 				shouldDie = false;
 			
 //			if(!shouldDie){
@@ -49,6 +51,7 @@ public class AgingExtinctionWithDegreeStrategy extends AgingExtinctionStrategy{
     
     public void init(String stratId) {
         expectedAge = Configuration.getInt(stratId+".expected");
+        selection = Configuration.getDouble(stratId+".selection");
     }
     
 }
