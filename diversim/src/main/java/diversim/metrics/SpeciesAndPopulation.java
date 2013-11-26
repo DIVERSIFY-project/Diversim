@@ -121,5 +121,22 @@ public class SpeciesAndPopulation<E extends Entity> {
 	public int getNumIndividual(){
 		return entities.size();
 	}
+    
+    public int getUnusedEnitites(){
+        int total = 0;
+        for(Entity entity : entities){
+            if(entity.getDegree() == 0)
+                total += 1;
+        }
+        return total;
+    }
+    
+    public double getAvgServices() {
+        int total = 0;
+        for (E e : entities) {
+            total += e.services.size();
+        }
+        return ((double) total) / entities.size();
+    }
 	
 }

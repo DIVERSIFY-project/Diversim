@@ -8,6 +8,9 @@ import sim.field.network.Edge;
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
+import diversim.model.Service;
+import java.util.ArrayList;
+import java.util.Collection;
 
 public class PlatformFailures {
 	BipartiteGraph graph;
@@ -51,4 +54,45 @@ public class PlatformFailures {
         }
 		return ((double) mindegree) / graph.platforms.size();
 	}
+
+    public double toSupportNewApp() {
+        int succeed = 0;
+        int size = graph.random().nextInt(19) + 1;
+        for (int i = 0; i < size; i++) {
+            Collection<Service> toSupport = graph.selectServices(0);
+            for (Platform p : graph.platforms) {
+                if (p.services.containsAll(toSupport)) {
+                    succeed += 1;
+                    break;
+                }
+
+            }
+        }
+        return  ((double)succeed) / size;
+    }
+
+    public double farFromSupportingNewApp() {
+        int totalDistance = 0;
+        int size = graph.random().nextInt(19) + 1;
+        for (int i = 0; i < size; i++) {
+            int distance = 10000;
+            Collection<Service> toSupport = graph.selectServices(0);
+            ArrayList<Service> copyToSupport = new ArrayList<Service>();
+            for (Platform p : graph.platforms) {
+                copyToSupport.clear();
+                copyToSupport.addAll(toSupport);
+                copyToSupport.removeAll(p.services);
+                int unsupported = copyToSupport.size();
+                if (unsupported < distance) {
+                    distance = unsupported;
+                }
+                if (distance == 0) {
+                    
+                    break;
+                }
+            }
+            totalDistance += distance;
+        }
+        return ( (double)totalDistance) /size;
+    }
 }

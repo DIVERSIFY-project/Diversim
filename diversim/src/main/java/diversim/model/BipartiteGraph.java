@@ -365,7 +365,7 @@ private void init() {
 	if (readConfigurationFile) {
 		try {
 			configPath = System.getProperty("user.dir");
-			configPath += "/bipartiteModel.conf";
+			configPath += "/evolveAndSelectModel.conf";
 			Configuration.setConfig(configPath);
 		}
 		catch (IOException e) {
@@ -454,6 +454,9 @@ private void readConfig() {
 	if (seed != 0) {
 		random().setSeed(seed);
 	}
+    else{
+        random().setSeed(System.currentTimeMillis());
+    }
 	System.err.println("Config : seed = " + seed);
 	supervised = Configuration.getBoolean("supervised");
 	initApps = Configuration.getInt("init_apps");
@@ -600,7 +603,7 @@ public void start() {
 		public void step(SimState state) {
 			if (changed) printoutNetwork();
 			changed = false;
-			System.out.println("METRICS: " + metrics.recordSnapshot());
+            metrics.recordSnapshot();
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
 			
 			if (state.schedule.scheduleComplete()) {
@@ -610,24 +613,16 @@ public void start() {
 				Logger.getLogger(KillFates.class.getName()).setLevel(Level.OFF);
 				Logger.getLogger(CreationFates.class.getName()).setLevel(Level.OFF);
 				Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
+
+                metrics.writeHistoryToFile();
+
+                MetricsMonitor.combineTotal().writeHistoryToFile();
+
+                BipartiteGraph.this.start();  //startover
+
+
 				// System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
 				// + Robustness.displayAllRobustness((BipartiteGraph)state, 10));
-				Map<String, double[]> stats = Robustness.calculateAllRobustness((BipartiteGraph)state, 50);
-				try {
-					FileWriter fout = new FileWriter("stats" + System.currentTimeMillis());
-					fout.write("Name,Min,P25,P50,P75,Max,Mean\n");
-					for (String name : stats.keySet()) {
-						fout.write(name + "," + stats.get(name)[0] + "," + stats.get(name)[1] + ","
-						    + stats.get(name)[2] + "," + stats.get(name)[3] + "," + stats.get(name)[4] + ","
-						    + stats.get(name)[5]);
-						fout.write("\n");
-					}
-					fout.flush();
-					fout.close();
-				}
-				catch (IOException e) {
-					e.printStackTrace();
-				}
 			}
 		}
 	};

@@ -253,7 +253,8 @@ public static String getString(String name) {
   String res = config.getString(name);
   if (res.equals("")) {
     System.err.println("Config : ERROR : property '" + name + "' must be initialized.");
-    System.exit(1);
+    throw new RuntimeException("not found");
+    //System.exit(1);
   }
   return res;
 }
