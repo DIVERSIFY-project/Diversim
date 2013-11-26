@@ -63,7 +63,6 @@ public class MetricsMonitor {
     public static final String NUM_APP_ALIVE = "NumOfAppAlive";
 
     public static final String AVE_NUM_APP_ALIVE = "AveNumOfAppAlive";
-    
     public static final String NUM_UNSPORTEDAPP = "NumOfUnsupportedApp";
 	public static final String AVG_SERVICE_OF_PLATFORMS = "AverageServiceInPlatforms";
 	public static final String TO_SUPPORT_NEW_APP = "AbleToSupportNewApp";

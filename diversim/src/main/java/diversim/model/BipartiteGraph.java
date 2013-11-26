@@ -14,12 +14,6 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
-import sim.engine.Schedule;
-import sim.engine.SimState;
-import sim.engine.Steppable;
-import sim.field.network.Edge;
-import sim.field.network.Network;
-import sim.util.Bag;
 import diversim.metrics.MetricsMonitor;
 import diversim.metrics.Robustness;
 import diversim.strategy.Strategy;
@@ -28,7 +22,6 @@ import diversim.strategy.fate.KillFates;
 import diversim.strategy.fate.LinkStrategyFates;
 import diversim.strategy.fate.MutationFates;
 import diversim.util.config.Configuration;
-import ec.util.MersenneTwisterFast;
 
 
 /**
@@ -364,8 +357,12 @@ private void init() {
 	serviceBundles = new ArrayList<ArrayList<Service>>();
 	if (readConfigurationFile) {
 		try {
-			configPath = System.getProperty("user.dir");
-			configPath += "/evolveAndSelectModel.conf";
+			if (configPath == null) {
+				// configPath = System.getenv().get("PWD");
+				configPath = System.getProperty("user.dir");
+				// configPath += "/neutralModel.conf";
+				configPath += "/andreModel.conf";
+			}
 			Configuration.setConfig(configPath);
 		}
 		catch (IOException e) {
@@ -623,6 +620,30 @@ public void start() {
 
 				// System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
 				// + Robustness.displayAllRobustness((BipartiteGraph)state, 10));
+
+				Map<String, Map<String, Double>> stats = Robustness.calculateAllRobustness(
+				    (BipartiteGraph)state, 50);
+				try {
+					FileWriter fout = new FileWriter("stats" + System.currentTimeMillis());
+					fout.write("Name,");// Min,P25,P50,P75,Max,Mean\n");
+					String robustnessName = stats.keySet().iterator().next();
+					for (String statType : stats.get(robustnessName).keySet()) {
+						fout.write(statType + ",");
+					}
+					fout.write("\n");
+					for (String name : stats.keySet()) {
+						fout.write(name + ",");
+						for (String statType : stats.get(name).keySet()) {
+							fout.write(stats.get(name).get(statType) + ",");
+						}
+						fout.write("\n");
+					}
+					fout.flush();
+					fout.close();
+				}
+				catch (IOException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 	};
@@ -631,32 +652,19 @@ public void start() {
 }
 
 
-public void externalConfiguration(long seed, int maxCycles, int initPlatforms, int initApps,
-    int initServices, int maxPlatforms, int maxApps, int maxServices, int maxLoad) {
-	this.readConfigurationFile = false;
-	System.err.println("Using external launcher");
-	random().setSeed(seed);
-	System.err.println("Ext: seed = " + seed);
-	this.supervised = true;
-	this.initApps = initApps;
-	this.initPlatforms = initPlatforms;
-	this.initServices = initServices;
-	this.maxCycles = maxCycles;
-	this.maxApps = maxApps;
-	this.maxPlatforms = maxPlatforms;
-	this.maxServices = maxServices;
-	this.platformMaxLoad = maxLoad;
-	this.platformMinSize = 0;
-	this.centralized = true;
-}
-
-
-public static void externalLauncher(int runNum) {
-	// for(int cycles = ExternalLauncher.cycles - )
-}
-
-
 public static void main(String[] args) {
+	for (int i = 0; i < args.length; i++) {
+		if (args[i].equals("-configuration") && (i + 1) < args.length) {
+			configPath = args[i + 1];
+			System.err.println("WARNING : using command line parameter for configuration file: "
+			    + configPath);
+		}
+		if (args[i].equals("-help")) {
+			System.out.println("Command line options:" + System.getProperty("line.separator")
+			    + "  -help             displays this message" + System.getProperty("line.separator")
+			    + "  -configuration    the configuration file path");
+		}
+	}
 	doLoop(BipartiteGraph.class, args);
 	System.exit(0);
 }

@@ -142,9 +142,6 @@ public static void obsolescence(BipartiteGraph graph, double populationKillRatio
 	});
 	for (int i = 0; i < counter; i++) {
 		graph.removeEntity(graph.platforms, (Platform)platforms.get(i));
-		if (--counter <= 0) {
-			break;
-		}
 		Logger.getLogger(KillFates.class.getName()).log(Level.INFO,
 		    "Platform <" + (Platform)platforms.get(i) + "> has been killed by Obsolescence");
 	}
@@ -169,9 +166,6 @@ public static void obsolescenceExact(BipartiteGraph graph, int amount) {
 	});
 	for (int i = 0; i < amount; i++) {
 		graph.removeEntity(graph.platforms, (Platform)platforms.get(i));
-		if (--amount <= 0) {
-			break;
-		}
 		Logger.getLogger(KillFates.class.getName()).log(Level.INFO,
 		    "Platform <" + (Platform)platforms.get(i) + "> has been killed by ObsolescenceExact");
 	}
