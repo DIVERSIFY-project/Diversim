@@ -365,7 +365,7 @@ private void init() {
 	if (readConfigurationFile) {
 		try {
 			configPath = System.getProperty("user.dir");
-			configPath += "/bipartiteModel.conf";
+			configPath += "/evolveAndSelectModel.conf";
 			Configuration.setConfig(configPath);
 		}
 		catch (IOException e) {
@@ -454,6 +454,9 @@ private void readConfig() {
 	if (seed != 0) {
 		random().setSeed(seed);
 	}
+    else{
+        random().setSeed(System.currentTimeMillis());
+    }
 	System.err.println("Config : seed = " + seed);
 	supervised = Configuration.getBoolean("supervised");
 	initApps = Configuration.getInt("init_apps");
