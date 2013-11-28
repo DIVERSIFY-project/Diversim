@@ -14,6 +14,12 @@ import java.util.Map.Entry;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+import sim.engine.Schedule;
+import sim.engine.SimState;
+import sim.engine.Steppable;
+import sim.field.network.Edge;
+import sim.field.network.Network;
+import sim.util.Bag;
 import diversim.metrics.MetricsMonitor;
 import diversim.metrics.Robustness;
 import diversim.strategy.Strategy;
@@ -22,6 +28,7 @@ import diversim.strategy.fate.KillFates;
 import diversim.strategy.fate.LinkStrategyFates;
 import diversim.strategy.fate.MutationFates;
 import diversim.util.config.Configuration;
+import ec.util.MersenneTwisterFast;
 
 
 /**
