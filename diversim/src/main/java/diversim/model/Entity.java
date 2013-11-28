@@ -172,7 +172,7 @@ protected void stop() {
 
 
 protected void printoutCurStep(BipartiteGraph g) {
-	System.out.println(g.getPrintoutHeader() + toString());
+	//System.out.println(g.getPrintoutHeader() + toString());
 }
 
 

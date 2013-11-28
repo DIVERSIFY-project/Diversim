@@ -56,6 +56,18 @@ public void evolve(BipartiteGraph graph, App e) {
 	}
 
 }
+/*
+ * Adding a static version of evolve, for the robustness class to pick use this method, while calculating
+ * the robustness values
+ *
+ */
+public static void linkingC(BipartiteGraph graph){
+	LinkingC strategy = new LinkingC();
+	for (App a: graph.apps){
+		strategy.evolve(graph, a);
+	}
+}
+
 
 
 @Override

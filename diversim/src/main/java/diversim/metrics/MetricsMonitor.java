@@ -68,6 +68,7 @@ public class MetricsMonitor {
 	public static final String AVG_SERVICE_OF_PLATFORMS = "AverageServiceInPlatforms";
 	public static final String TO_SUPPORT_NEW_APP = "AbleToSupportNewApp";
 	public static final String FAR_FROM_SUPPORTING_NEW_APP = "FarFromSupportingNewApp";
+	public static final String ROBUSTNESS = "Robustness";
 
     /**
      * A list of all the values declared before. Make sure that it contains all
@@ -87,7 +88,8 @@ public class MetricsMonitor {
         NUM_UNSPORTEDAPP,
         AVG_SERVICE_OF_PLATFORMS,
         TO_SUPPORT_NEW_APP,
-        FAR_FROM_SUPPORTING_NEW_APP
+        FAR_FROM_SUPPORTING_NEW_APP,
+        ROBUSTNESS
     };
 
     public List<Long> steps = new ArrayList<Long>();
@@ -109,6 +111,7 @@ public class MetricsMonitor {
     AppFailures appFailures = null;
 
     DiffereceOfDNAs<Platform> diff_p = null;
+    Robustness robustness = null;
 
     /**
      * Not used any more because now we have the configuration file!
@@ -159,6 +162,9 @@ public class MetricsMonitor {
 				snp_a = new SpeciesAndPopulation<App>(graph.apps);
             else if(AVG_SERVICE_OF_PLATFORMS.equals(s) && snp_p == null){
                 snp_p = new SpeciesAndPopulation<Platform>(graph.platforms);
+            }
+            else if(ROBUSTNESS.equals(s) && robustness == null){
+            	robustness = new Robustness("linkingC", "concentrationRandom");
             }
 
             history.put(s, new ArrayList<Object>());
@@ -215,6 +221,11 @@ public class MetricsMonitor {
             }
             else if(FAR_FROM_SUPPORTING_NEW_APP.equals(s)){
                 snapshot.put(s, pltfFailures.farFromSupportingNewApp());
+            }
+            else if(ROBUSTNESS.equals(s)){
+            	snapshot.put(s, Robustness.calculateRobustness(this.graph,
+            													robustness.getLinkingMethod(),
+            													robustness.getKillingMethod()));
             }
         }
         return snapshot;
@@ -392,10 +403,12 @@ public class MetricsMonitor {
 			return null;
 		MetricsMonitor sample = useful.get(0);
 		
+		/* Printing takes a long time. Can't afford to print to stdout
 		for(String key : sample.history.keySet()){
 			System.out.printf("%s, \t", key);
 		}
-		System.out.println("no use");
+		*/
+		//System.out.println("no use");
 		
 		tot.history = new HashMap<String, List<Object>>();
 		for(String key : sample.history.keySet()){

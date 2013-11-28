@@ -141,6 +141,10 @@ private int nextBundle;
 
 boolean readConfigurationFile = true;
 
+public static int current_simulation_iteration = 0;
+
+public static int simulation_iteration_limit;
+
 
 /**
  * Getters and setters. Any Java Bean getter/setter is auto-magically included in the GUI. If a
@@ -295,7 +299,7 @@ public double getRobustness() {
 	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
 	try {
 		return Robustness.calculateRobustness(this,
-		    LinkStrategyFates.class.getDeclaredMethod("linkingA", BipartiteGraph.class),
+		    LinkStrategyFates.class.getDeclaredMethod("linkingB", BipartiteGraph.class),
 		    KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class));
 	}
 	catch (Exception e) {
@@ -365,7 +369,7 @@ private void init() {
 	if (readConfigurationFile) {
 		try {
 			configPath = System.getProperty("user.dir");
-			configPath += "/evolveAndSelectModel.conf";
+			configPath += "/bipartiteModel.conf";
 			Configuration.setConfig(configPath);
 		}
 		catch (IOException e) {
@@ -472,6 +476,7 @@ private void readConfig() {
 	platformMaxLoad = Configuration.getInt("p_max_load");
 	platformMinSize = Configuration.getInt("p_min_size");
 	centralized = Configuration.getBoolean("centralized");
+	simulation_iteration_limit = Configuration.getInt("simulation_iteration_limit", 1); // default is 1
 }
 
 
@@ -601,7 +606,7 @@ public void start() {
 	Steppable print = new Steppable() {
 
 		public void step(SimState state) {
-			if (changed) printoutNetwork();
+			//if (changed) printoutNetwork();
 			changed = false;
 			//System.out.println("METRICS: " + metrics.recordSnapshot());
             metrics.recordSnapshot();
@@ -611,15 +616,22 @@ public void start() {
 				// System.out.println("METRICS HISTORY: " + metrics.getHistory());
 				// System.out.println("ROBUSTNESS: " +
 				// Robustness.calculateRobustness((BipartiteGraph)state));
-				Logger.getLogger(KillFates.class.getName()).setLevel(Level.OFF);
-				Logger.getLogger(CreationFates.class.getName()).setLevel(Level.OFF);
-				Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
+				//Logger.getLogger(KillFates.class.getName()).setLevel(Level.OFF);
+				//Logger.getLogger(CreationFates.class.getName()).setLevel(Level.OFF);
+				//Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
                 
                 metrics.writeHistoryToFile();
                 
                 MetricsMonitor.combineTotal().writeHistoryToFile();
+                // increase our simulation count
+                current_simulation_iteration++;
                 
-                BipartiteGraph.this.start();  //startover
+                System.out.println("Current sim iteration: " + current_simulation_iteration + 
+                					"| iteration limit: " + simulation_iteration_limit);
+                // check if we've finished running the sim 'n' times
+                if(current_simulation_iteration < simulation_iteration_limit){
+                	BipartiteGraph.this.start();  //startover
+                }
                 
                 
 				// System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
@@ -894,7 +906,7 @@ public void setLink(App app, Platform pltf){
  * Textual printout of the network
  */
 private void printoutNetwork() { // TODO
-	System.out.println(getPrintoutHeader() + bipartiteNetwork.toString());
+//	System.out.println(getPrintoutHeader() + bipartiteNetwork.toString());
 	System.out.flush();
 }
 
