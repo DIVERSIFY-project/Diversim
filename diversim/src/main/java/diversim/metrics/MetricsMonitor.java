@@ -6,6 +6,7 @@ import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -157,7 +158,7 @@ AppFailures appFailures = null;
 
 	
 public Map<String, Object> getSnapshot() {
-		Map<String, Object> snapshot = new HashMap<String, Object> ();
+	Map<String, Object> snapshot = new LinkedHashMap<String, Object>();
 		for(String s : register){
 			if(SHANNON_PLATFORM.equals(s)){
 				snp_p.setEntityList(graph.platforms);
