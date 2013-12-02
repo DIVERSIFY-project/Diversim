@@ -43,4 +43,10 @@ public void setRobustness(double robustness) {
 	this.robustness = robustness;
 }
 
+
+@Override
+public String toString() {
+	return "Rob=" + robustness + " | " + "Apps=" + aliveAppsHistory;
+}
+
 }
