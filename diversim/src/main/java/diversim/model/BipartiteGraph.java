@@ -1,18 +1,23 @@
 package diversim.model;
 
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Logger;
-import java.util.logging.Level;
+import java.util.Set;
+
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import sim.engine.Schedule;
 import sim.engine.SimState;
@@ -21,10 +26,7 @@ import sim.field.network.Edge;
 import sim.field.network.Network;
 import sim.util.Bag;
 import diversim.strategy.Strategy;
-import diversim.strategy.fate.CreationFates;
-import diversim.strategy.fate.KillFates;
-import diversim.strategy.fate.LinkStrategyFates;
-import diversim.strategy.fate.MutationFates;
+import diversim.util.Log;
 import diversim.util.config.Configuration;
 import diversim.metrics.*;
 import ec.util.MersenneTwisterFast;
@@ -130,14 +132,23 @@ private static String configPath;
 
 public int stepsPerCycle;
 
-private static Logger logger = Logger.getLogger("BipartiteGraph");
-
-
+// service bundles for applications
 ArrayList<ArrayList<Service>> serviceBundles;
 
 private int nextBundle;
 
-boolean readConfigurationFile = true;
+// multi run
+static Calendar startingDate;
+
+static int multiRunSeed = -1;
+
+static String simulationDescription;
+
+// Map<metricname, value>
+static Map<String, Object> metricsSnapshot;
+
+// Map<strategy, results>
+static Map<String, RobustnessResults> singleRunRobustnessByStrategy;
 
 /**
  * Getters and setters. Any Java Bean getter/setter is auto-magically included in the GUI. If a
@@ -300,18 +311,13 @@ public double getAvgAppSize() {
 }
 
 
-public double getRobustness() {
-	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
-	try {
-		return Robustness.calculateRobustness(this,
-		    LinkStrategyFates.class.getDeclaredMethod("linkingA", BipartiteGraph.class),
-		    KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class));
-	}
-	catch (Exception e) {
-		e.printStackTrace();
-		return -1;
-	}
-}
+/*
+ * public double getRobustness() { if (schedule.getTime() <= Schedule.BEFORE_SIMULATION ||
+ * getNumApps() == 0) return 0.0; try { return Robustness.calculateRobustness(this,
+ * LinkStrategyFates.class.getDeclaredMethod("linkingA", BipartiteGraph.class),
+ * KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class)); } catch
+ * (Exception e) { e.printStackTrace(); return -1; } }
+ */
 
 
 public double getShannon() {
@@ -371,20 +377,18 @@ private void init() {
 	services = new ArrayList<Service>();
 	entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
 	serviceBundles = new ArrayList<ArrayList<Service>>();
-	if (readConfigurationFile) {
-		try {
-			if (configPath == null) {
-				// configPath = System.getenv().get("PWD");
-				configPath = System.getProperty("user.dir");
-				// configPath += "/neutralModel.conf";
-				configPath += "/andreModel.conf";
-			}
-			Configuration.setConfig(configPath);
+	try {
+		if (configPath == null) {
+			// configPath = System.getenv().get("PWD");
+			configPath = System.getProperty("user.dir");
+			// configPath += "/neutralModel.conf";
+			configPath += "/andreModel.conf";
 		}
-		catch (IOException e) {
-			System.err.println("ERROR : Configuration file not found.");
-			System.exit(1);
-		}
+		Configuration.setConfig(configPath);
+	}
+	catch (IOException e) {
+		System.err.println("ERROR : Configuration file not found.");
+		System.exit(1);
 	}
 	stepsPerCycle = 0;
 	INSTANCE = this;
@@ -434,14 +438,18 @@ public BipartiteGraph extinctionClone() {
 	clone.platformMinSize = platformMinSize;
 	clone.maxCycles = maxCycles;
 	clone.entityStrategies = entityStrategies;
-	clone.platforms = new ArrayList<Platform>(platforms);
-	/*
-	 * for (Platform platform : platforms) { clone.platforms.add(new Platform(platform)); }
-	 */
-	clone.apps = new ArrayList<App>(apps);
-	/*
-	 * for (App app : apps) { clone.apps.add(new App(app)); }
-	 */
+	// clone.platforms = new ArrayList<Platform>(platforms);
+
+	for (Platform platform : platforms) {
+		clone.platforms.add(new Platform(platform));
+	}
+
+	// clone.apps = new ArrayList<App>(apps);
+
+	for (App app : apps) {
+		clone.apps.add(new App(app));
+	}
+
 	clone.services = services;
 	clone.fate = fate;
 	clone.changed = changed;
@@ -463,7 +471,13 @@ private void readConfig() {
 			System.err.println("WARNING : Configuration file not found. Using previous configuration.");
 		}
 	}
-	int seed = Configuration.getInt("seed", 0);
+	int seed;
+	if (multiRunSeed == -1) {
+		seed = Configuration.getInt("seed", 0);
+		multiRunSeed = seed;
+	} else {
+		seed = multiRunSeed;
+	}
 	if (seed != 0) {
 		random().setSeed(seed);
 	}
@@ -482,6 +496,9 @@ private void readConfig() {
 	platformMaxLoad = Configuration.getInt("p_max_load");
 	platformMinSize = Configuration.getInt("p_min_size");
 	centralized = Configuration.getBoolean("centralized");
+	// simulation description string
+	simulationDescription = "Apps=" + initApps + ",Services=" + initServices + ",Cycles=" + maxCycles
+	    + ",Platforms=" + initPlatforms + "/" + maxPlatforms + ",Load=" + platformMaxLoad;
 }
 
 
@@ -544,12 +561,6 @@ public ArrayList<Service> nextBundle() {
  * This method is called ONCE at the beginning of every simulation. EVERY field, parameter,
  * structure etc. MUST be initialized here (and not in the constructor).
  */
-public void start(String path) {
-	configPath = path;
-	System.err.println("Config : INFO : Starting with config file: " + path);
-	start();
-}
-
 public void start() {
 	super.start();
 	// reset all parameters and fields
@@ -564,33 +575,26 @@ public void start() {
 	stepsPerCycle = 0;
 	nextBundle = 0;
 	Service.counter = 0;
-	if (readConfigurationFile) {
-		readConfig();
-	}
+	readConfig();
 	if (services.isEmpty()) {
 		initServices();
 		for (int i = 0; i < initApps; i++) {
 			serviceBundles.add(selectServices(0));
 		}
-		// try {
-		// FileWriter fout = new FileWriter("services" + System.currentTimeMillis());
-		// for (ArrayList<Service> serviceA : serviceBundles)
-		// for (Service s : serviceA)
-		// fout.write(s.toString() + "\n");
-		// fout.flush();
-		// fout.close();
-		// }
-		// catch (IOException e) {
-		// e.printStackTrace();
-		// }
+		// limiting service list to the services actually required by apps
+		Set<Service> requiredServices = new HashSet<Service>();
+		for (ArrayList<Service> bundle : serviceBundles) {
+			requiredServices.addAll(bundle);
+		}
+		int oldSize = services.size();
+		services = new ArrayList<Service>(requiredServices);
+		Log.info("START: Compacted service list, size " + oldSize + " => " + services.size());
 	}
 
 	try {
 		initFate();
 		initPlatform();
-		// System.out.println(platforms);
 		initApp();
-		// System.out.println(apps);
 		metrics = MetricsMonitor.createMetricsInstance(this);
 	}
 	catch (Exception e) {
@@ -611,43 +615,23 @@ public void start() {
 	Steppable print = new Steppable() {
 
 		public void step(SimState state) {
-			if (changed) printoutNetwork();
+			if (changed) {
+				// printoutNetwork();
+			}
 			changed = false;
-			System.out.println("METRICS: " + metrics.recordSnapshot());
+			// System.out.println("METRICS: " + metrics.recordSnapshot());
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
-			
+			if ((getCurCycle() / 100) * 100 == getCurCycle()) {
+				System.out.println("CYCLE " + getCurCycle());
+				System.out
+				    .println("Robustness " + Robustness.calculateAllRobustness((BipartiteGraph)state));
+			}
 			if (state.schedule.scheduleComplete()) {
-				// System.out.println("METRICS HISTORY: " + metrics.getHistory());
-				// System.out.println("ROBUSTNESS: " +
-				// Robustness.calculateRobustness((BipartiteGraph)state));
-				Logger.getLogger(KillFates.class.getName()).setLevel(Level.OFF);
-				Logger.getLogger(CreationFates.class.getName()).setLevel(Level.OFF);
-				Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
-				// System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
-				// + Robustness.displayAllRobustness((BipartiteGraph)state, 10));
-				Map<String, Map<String, Double>> stats = Robustness.calculateAllRobustness(
-				    (BipartiteGraph)state, 50);
-				try {
-					FileWriter fout = new FileWriter("stats" + System.currentTimeMillis());
-					fout.write("Name,");// Min,P25,P50,P75,Max,Mean\n");
-					String robustnessName = stats.keySet().iterator().next();
-					for (String statType : stats.get(robustnessName).keySet()) {
-						fout.write(statType + ",");
-					}
-					fout.write("\n");
-					for (String name : stats.keySet()) {
-						fout.write(name + ",");
-						for (String statType : stats.get(name).keySet()) {
-							fout.write(stats.get(name).get(statType) + ",");
-						}
-						fout.write("\n");
-					}
-					fout.flush();
-					fout.close();
-				}
-				catch (IOException e) {
-					e.printStackTrace();
-				}
+				// multi run results save
+				metricsSnapshot = metrics.getSnapshot();
+				singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
+				// multi run seed randomization
+				multiRunSeed = random().nextInt();
 			}
 		}
 	};
@@ -656,20 +640,233 @@ public void start() {
 }
 
 
-public static void main(String[] args) {
-	for (int i = 0; i < args.length; i++) {
-		if (args[i].equals("-configuration") && (i + 1) < args.length) {
-			configPath = args[i + 1];
-			System.err.println("WARNING : using command line parameter for configuration file: "
-			    + configPath);
+public static String simulate(String[] args, int runsNumber, int currentConfig,
+ String configFile,
+    String title,
+ String resultFolderPath,
+    boolean metricsColumnWritten) {
+	String resultsAsText = "";
+	Map<String, DescriptiveStatistics> metricStat = new LinkedHashMap<String, DescriptiveStatistics>();
+	Map<String, Map<String, DescriptiveStatistics>> robustnessStatByStrategy = new LinkedHashMap<String, Map<String, DescriptiveStatistics>>();
+	boolean polarity = true;
+	long startTime;
+	for (int j = 0; j < runsNumber; j++) {
+		startTime = System.currentTimeMillis();
+		System.err.println("RUN: starting run " + (currentConfig + 1) + "." + (j + 1));
+		// run execution
+		doLoop(BipartiteGraph.class, args);
+		// renewing seed value
+		multiRunSeed += (polarity ? -1 : 1) * (currentConfig + j + 1);
+		polarity = !polarity;
+		// gathering metrics for statistical calculation
+		for (String metric : metricsSnapshot.keySet()) {
+			if (!metricStat.containsKey(metric)) {
+				metricStat.put(metric, new DescriptiveStatistics());
+			}
+			if (metricsSnapshot.get(metric).getClass().getSimpleName().equalsIgnoreCase("double")) {
+				metricStat.get(metric).addValue((double)metricsSnapshot.get(metric));
+			} else {
+				metricStat.get(metric).addValue(new Double((int)metricsSnapshot.get(metric)));
+			}
 		}
+		// gathering robustness results for statistical calculation
+		for (String strategy : singleRunRobustnessByStrategy.keySet()) {
+			RobustnessResults singleRunRobustness = singleRunRobustnessByStrategy.get(strategy);
+			// robustness value
+			if (!robustnessStatByStrategy.containsKey(strategy)) {
+				robustnessStatByStrategy.put(strategy, new LinkedHashMap<String, DescriptiveStatistics>());
+			}
+			Map<String, DescriptiveStatistics> robustnessStat = robustnessStatByStrategy.get(strategy);
+			if (!robustnessStat.containsKey("robustness")) {
+				robustnessStat.put("robustness", new DescriptiveStatistics());
+			}
+			robustnessStat.get("robustness").addValue(singleRunRobustness.getRobustness());
+			// alive apps per step value
+			int numberOfSteps = singleRunRobustness.getAliveAppsHistory().size();
+			for (int k = 0; k < numberOfSteps; k++) {
+				String stepColumnName = "step" + Robustness.nameStep(k, numberOfSteps);
+				if (!robustnessStat.containsKey(stepColumnName)) {
+					robustnessStat.put(stepColumnName, new DescriptiveStatistics());
+				}
+				robustnessStat.get(stepColumnName).addValue(
+				    singleRunRobustness.getAliveAppsHistory().get(k));
+			}
+			robustnessStatByStrategy.put(strategy, robustnessStat);
+		}
+		System.err.println("RUN: ending run " + (currentConfig + 1) + "." + (j + 1) + " | duration = "
+		    + (System.currentTimeMillis() - startTime));
+	}
+
+	// results output
+	// metrics
+	// column titles
+	if (!metricsColumnWritten) {
+		resultsAsText += "configuration,";
+			for (String metricName : metricStat.keySet()) {
+			resultsAsText += metricName + "Mean,";
+			}
+		resultsAsText += "\n";
+	}
+	// data
+	resultsAsText += configFile + ",";
+	for (String metricName : metricStat.keySet()) {
+		resultsAsText += metricStat.get(metricName).getMean() + ",";
+	}
+	// resultsFileWriter.write("\n");
+	resultsAsText += "\n";
+	// robustness
+	FileWriter robustnessFileWriter;
+	String robustnessFileName = "robustness_" + startingDate.getTime() + "_" + configFile + "_"
+	    + title + ".csv";
+	File robustnessFile = new File(resultFolderPath + "/" + robustnessFileName);
+	try {
+		// simulation description
+		robustnessFileWriter = new FileWriter(robustnessFile);
+		// column titles
+		robustnessFileWriter.write(simulationDescription + "\n\n");
+		robustnessFileWriter.write("strategy,P25,Min,Max,P75,Mean");
+		Map<String, DescriptiveStatistics> robustnessStat = robustnessStatByStrategy.values()
+		    .iterator().next();
+		robustnessFileWriter.write("\n");
+		// data
+		for (String strategy : robustnessStatByStrategy.keySet()) {
+			robustnessStat = robustnessStatByStrategy.get(strategy);
+			robustnessFileWriter.write(strategy + ",");
+			robustnessFileWriter.write(robustnessStat.get("robustness").getPercentile(25) + ",");
+			robustnessFileWriter.write(robustnessStat.get("robustness").getMin() + ",");
+			robustnessFileWriter.write(robustnessStat.get("robustness").getMax() + ",");
+			robustnessFileWriter.write(robustnessStat.get("robustness").getPercentile(75) + ",");
+			robustnessFileWriter.write(robustnessStat.get("robustness").getMean() + ",");
+			robustnessFileWriter.write("\n");
+		}
+		robustnessFileWriter.write("\n\n\n");
+		robustnessFileWriter.write("strategy,");
+		for (String robustnessStatName : robustnessStat.keySet()) {
+			if (robustnessStatName.startsWith("step")) {
+				robustnessFileWriter.write(robustnessStatName + "Mean,");
+			}
+		}
+		robustnessFileWriter.write("\n");
+		// data
+		for (String strategy : robustnessStatByStrategy.keySet()) {
+			robustnessStat = robustnessStatByStrategy.get(strategy);
+			robustnessFileWriter.write(strategy + ",");
+			for (String robustnessStatName : robustnessStat.keySet()) {
+				if (robustnessStatName.startsWith("step")) {
+					robustnessFileWriter.write(robustnessStat.get(robustnessStatName).getMean() + ",");
+				}
+			}
+			robustnessFileWriter.write("\n");
+		}
+		robustnessFileWriter.flush();
+		robustnessFileWriter.close();
+	}
+	catch (IOException e) {
+		Log.warn("In method main, can't write robustness result file");
+		e.printStackTrace();
+	}
+	return resultsAsText;
+}
+
+
+public static void main(String[] args) {
+	// loggers levels
+	Log.ERROR();
+	// run starting time
+	startingDate = Calendar.getInstance();
+	// configuration files folder path
+	String configFolderPath = null;
+	String resultFolderPath = System.getProperty("user.dir");
+	// number of runs for statistical calculation
+	int runsNumber = 1;
+	// experimentation title
+	String title = null;
+	// bag of configuration file names (to be sorted)
+	Bag configList;
+	// reading command line parameters
+	for (int i = 0; i < args.length; i++) {
 		if (args[i].equals("-help")) {
 			System.out.println("Command line options:" + System.getProperty("line.separator")
 			    + "  -help             displays this message" + System.getProperty("line.separator")
+			    + "  -size             number of runs for statistical results"
+			    + System.getProperty("line.separator")
+			    + "  -configfolder     folder path to a set of .conf files (multirun)"
+			    + System.getProperty("line.separator")
+			    + "  -resultfolder     folder path to store the result files"
+			    + System.getProperty("line.separator")
 			    + "  -configuration    the configuration file path");
 		}
+		if (args[i].equals("-configuration") && (i + 1) < args.length) {
+			configPath = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: configuration file = "
+			    + configPath);
+		}
+		if (args[i].equals("-configfolder") && (i + 1) < args.length) {
+			configFolderPath = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: configuration files folder path = "
+			    + configFolderPath);
+		}
+		if (args[i].equals("-resultfolder") && (i + 1) < args.length) {
+			resultFolderPath = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: result files folder path = " + resultFolderPath);
+		}
+		if (args[i].equals("-size") && (i + 1) < args.length) {
+			runsNumber = Integer.parseInt(args[i + 1]);
+			System.err.println("COMMAND LINE PARAMETER: statistical sample size = " + runsNumber);
+		}
+		if (args[i].equals("-title") && (i + 1) < args.length) {
+			title = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: title = " + title);
+		}
 	}
-	doLoop(BipartiteGraph.class, args);
+	// reading config folder to gather config files
+	if (configFolderPath != null) {
+		configList = new Bag();
+		File confFolder = new File(configFolderPath);
+		if (confFolder.isDirectory()) {
+			File[] configFiles = confFolder.listFiles();
+			for (int i = 0; i < configFiles.length; i++) {
+				if (configFiles[i].getAbsolutePath().endsWith(".conf")) {
+					configList.add(configFiles[i].getAbsolutePath());
+					System.err.println("CONFIG: found configuration file " + configFiles[i].getName());
+				}
+			}
+		}
+		configList.sort();
+		// multi run: #config files X #runs
+		boolean metricsColumnWritten = false;
+		String metricsFileName = "metrics_" + startingDate.getTime()
+		    + (title != null ? "_" + title : "") + ".csv";
+		File metricsFile = new File(resultFolderPath + "/" + metricsFileName);
+		String resultsAsText = "";
+		String allSimulationDescription = "";
+		for (int currentConfigNumber = 0; currentConfigNumber < configList.size(); currentConfigNumber++) {
+			configPath = (String)configList.get(currentConfigNumber);
+			String currentConfigFile = new File(configPath).getName();
+			currentConfigFile = currentConfigFile.substring(0, currentConfigFile.length() - 5);
+			System.err.println("RUN: starting run for configuration " + configPath);
+			resultsAsText += simulate(args, runsNumber, currentConfigNumber, currentConfigFile, title,
+			    resultFolderPath,
+			    // resultsFileWriter,
+			    metricsColumnWritten);
+			multiRunSeed = -1;
+			metricsColumnWritten = true;
+			allSimulationDescription += simulationDescription + "\n";
+		}
+		try {
+			FileWriter resultsFileWriter = new FileWriter(metricsFile);
+			resultsFileWriter.write(allSimulationDescription);
+			resultsFileWriter.write("\n");
+			resultsFileWriter.write(resultsAsText);
+			resultsFileWriter.flush();
+			resultsFileWriter.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	} else {
+		doLoop(BipartiteGraph.class, args);
+	}
 	System.exit(0);
 }
 
@@ -741,7 +938,7 @@ public App createApp(String entityName) {
 		app = (App)createEntity(entityName);
 	}
 	catch (Exception e) {
-		logger.log(Level.SEVERE, "createApp: error " + e.getMessage());
+		Log.error("createApp: error " + e.getMessage());
 		return null;
 	}
 	addUnique(apps, app);
@@ -755,7 +952,7 @@ public Platform createPlatform(String entityName) {
 		platform = (Platform)createEntity(entityName);
 	}
 	catch (Exception e) {
-		logger.log(Level.SEVERE, "createPlatform: error " + e.getMessage());
+		Log.error("createPlatform: error " + e.getMessage());
 		return null;
 	}
 	addUnique(platforms, platform);
@@ -779,7 +976,7 @@ public static Strategy<? extends Steppable> getStrategy(String strategyName) {
 		strategy.init(id);
 	}
 	catch (Exception e) {
-		logger.log(Level.SEVERE, "getStrategy: error " + e.getMessage());
+		Log.error("getStrategy: error " + e.getMessage());
 		return null;
 	}
 
