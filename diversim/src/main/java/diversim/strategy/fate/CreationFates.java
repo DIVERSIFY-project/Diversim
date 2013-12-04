@@ -2,14 +2,16 @@ package diversim.strategy.fate;
 
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.util.Set;
 
 import sim.util.Bag;
+import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
+import diversim.util.Log;
 
 
 public class CreationFates {
@@ -35,12 +37,10 @@ public static void cloningMutateRandom(BipartiteGraph graph, double populationCr
 				BipartiteGraph.addUnique(clone.getServices(), s);
 			}
 			clone.setStrategy(source.getStrategy());
-			Logger.getLogger(CreationFates.class.getName()).log(Level.INFO,
-			    "Platform <" + source + "> has been cloned");
+			Log.debug("Platform <" + source + "> has been cloned");
 		}
 	} else {
-		Logger.getLogger(CreationFates.class.getName()).log(Level.FINEST,
-		    "CloningMutate: max number of Platforms reached");
+		Log.debug("CloningMutate: max number of Platforms reached");
 	}
 }
 
@@ -65,14 +65,11 @@ public static void split(BipartiteGraph graph, double servicesTransmitted, doubl
 			clone1.setStrategy(source.getStrategy());
 			clone2.setStrategy(source.getStrategy());
 			graph.removeEntity(graph.platforms, source);
-			Logger.getLogger(CreationFates.class.getName()).log(
-			    Level.INFO,
-			    "Platform <" + source + "> has been split into platforms <" + clone1 + "> & <" + clone2
-			        + ">");
+			Log.debug("Platform <" + source + "> has been split into platforms <" + clone1 + "> & <"
+			    + clone2 + ">");
 		}
 	} else {
-		Logger.getLogger(CreationFates.class.getName()).log(Level.FINEST,
-		    "Split: max number of Platforms reached");
+		Log.debug("Split: max number of Platforms reached");
 	}
 }
 
@@ -96,14 +93,11 @@ public static void splitExact(BipartiteGraph graph, double servicesTransmitted, 
 			}
 			clone2.setStrategy(source.getStrategy());
 			graph.removeEntity(graph.platforms, source);
-			Logger.getLogger(CreationFates.class.getName()).log(
-			    Level.INFO,
-			    "Platform <" + source + "> has been split into platforms <" + clone1 + "> & <" + clone2
-			        + ">");
+			Log.debug("Platform <" + source + "> has been split into platforms <" + clone1 + "> & <"
+			    + clone2 + ">");
 		}
 	} else {
-		Logger.getLogger(CreationFates.class.getName()).log(Level.FINEST,
-		    "SplitExact: max number of Platforms reached");
+		Log.debug("SplitExact: max number of Platforms reached");
 	}
 }
 }
