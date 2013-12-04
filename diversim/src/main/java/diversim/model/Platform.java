@@ -1,11 +1,9 @@
 package diversim.model;
 
 
-import java.util.ArrayList;
 import java.util.List;
 
 import sim.engine.SimState;
-import sim.engine.Stoppable;
 import diversim.strategy.Strategy;
 import diversim.util.config.Configuration;
 

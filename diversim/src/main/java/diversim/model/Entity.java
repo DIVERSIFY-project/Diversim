@@ -266,7 +266,7 @@ public int getId() {
 public String toString() {
 	String res = "";
 	res += this.getClass().getSimpleName() + " " + ID + " : degree = " + degree + " ; size = "
-			+ getSize();
+	    + getSize();
 	// + " ; composition = " + getComposition();
 	return res;
 }
