@@ -257,6 +257,11 @@ public List<Service> getCommonServices(Entity entity) {
 }
 
 
+public int getId() {
+	return ID;
+}
+
+
 @Override
 public String toString() {
 	String res = "";
