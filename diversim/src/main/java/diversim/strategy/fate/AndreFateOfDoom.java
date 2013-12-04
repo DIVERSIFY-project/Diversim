@@ -1,12 +1,6 @@
 package diversim.strategy.fate;
 
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
-import sim.util.Bag;
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Fate;
@@ -27,10 +21,6 @@ public AndreFateOfDoom() {
 @SuppressWarnings("unchecked")
 @Override
 public void evolve(BipartiteGraph graph, Fate agent) {
-	Logger.getLogger(KillFates.class.getName()).setLevel(Level.OFF);
-	Logger.getLogger(CreationFates.class.getName()).setLevel(Level.OFF);
-	Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
-
 	// managePopulation(graph);
 	/*
 	 * Bag platforms = new Bag(graph.platforms); platforms.sort(new Comparator() {
@@ -39,13 +29,15 @@ public void evolve(BipartiteGraph graph, Fate agent) {
 	 */
 	// KillFates.serveOrDie(graph);
 	// KillFates.gasFactory(graph, (int)(graph.getNumServices() * 0.9), 0.1);
+	//
 	KillFates.concentrationRandom(graph);
 	CreationFates.split(graph, 0.9, 0.15);
 	// mutation
 	// MutationFates.bugCorrected(graph);
+	//
 	MutationFates.random(graph, 0.1, 0.1);
 	// linking
-	LinkStrategyFates.linkingANoLoss(graph);
+	// LinkStrategyFates.linkingANoLoss(graph);
 	for (App app : graph.apps) {
 		app.step(graph);
 	}
