@@ -25,7 +25,7 @@ import diversim.util.Log;
 public class Robustness {
 
 public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method linking,
-    Method killing, int totalNumStrategies, int currentStrategyIndex) {
+    Method killing) {
 	RobustnessResults robustnessResult = new RobustnessResults();
 	// saving graph status
 	/*
@@ -37,7 +37,6 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 	BipartiteGraph clone = graph.extinctionClone();
 	double robustness = 0;
 	double maxRobustness = clone.getNumApps() * clone.getNumPlatforms();
-	int initNumPlatforms = clone.getNumPlatforms();
 	for (int i = clone.getNumPlatforms() - 1; i >= 0; i--) {
 		// System.out.println("EXTINCTION " + linking.getName() + "-" + killing.getName() + "("
 		// + currentStrategyIndex + "/" + totalNumStrategies + "): step = "
@@ -88,12 +87,8 @@ public static Map<String, Map<String, Double>> calculateStatAllRobustness(Bipart
 		statHistoryList.add(new DescriptiveStatistics());
 	}
 	Map<String, Double> statResults;
-	int totalNumStrategies = LinkStrategyFates.getLinkingMethods().size()
-	    * KillFates.getKillingMethods().size();
-	int currentStrategyIndex = 0;
 	for (String linkingName : LinkStrategyFates.getLinkingMethods().keySet()) {
 		for (String killingName : KillFates.getKillingMethods().keySet()) {
-			currentStrategyIndex++;
 			statResult.clear();
 			for (DescriptiveStatistics stat : statHistoryList) {
 				stat.clear();
@@ -118,7 +113,7 @@ public static Map<String, Map<String, Double>> calculateStatAllRobustness(Bipart
 				}
 				if (linkingMethod != null && killingMethod != null) {
 					RobustnessResults robustnessResult = calculateRobustness(graph, linkingMethod,
-					    killingMethod, totalNumStrategies, currentStrategyIndex);
+					    killingMethod);
 					statResult.addValue(robustnessResult.getRobustness());
 					for (int j = 0; j < robustnessResult.getAliveAppsHistory().size(); j++) {
 						statHistoryList.get(j).addValue(robustnessResult.getAliveAppsHistory().get(j));
@@ -163,15 +158,11 @@ public static Map<String, RobustnessResults> calculateAllRobustness(BipartiteGra
 	Map<String, RobustnessResults> results = new HashMap<String, RobustnessResults>();
 	Method linkingMethod;
 	Method killingMethod;
-	int totalNumStrategies = LinkStrategyFates.getLinkingMethods().size()
-	    * KillFates.getKillingMethods().size();
-	int currentStrategyIndex = 0;
 	ExecutorService executor = Executors.newCachedThreadPool();
 	RobustnessRun robustnessRun;
 	Map<String, Future<RobustnessResults>> robustnessFutureList = new LinkedHashMap<String, Future<RobustnessResults>>();
 	for (String linkingName : LinkStrategyFates.getLinkingMethods().keySet()) {
 		for (String killingName : KillFates.getKillingMethods().keySet()) {
-			currentStrategyIndex++;
 			try {
 				linkingMethod = LinkStrategyFates.class.getDeclaredMethod(linkingName, LinkStrategyFates
 				    .getLinkingMethods().get(linkingName));
@@ -190,11 +181,8 @@ public static Map<String, RobustnessResults> calculateAllRobustness(BipartiteGra
 				killingMethod = null;
 			}
 			if (linkingMethod != null && killingMethod != null) {
-				robustnessRun = new RobustnessRun(graph, linkingMethod, killingMethod, totalNumStrategies,
-				    currentStrategyIndex);
+				robustnessRun = new RobustnessRun(graph, linkingMethod, killingMethod);
 				robustnessFutureList.put(linkingName + "-" + killingName, executor.submit(robustnessRun));
-				// RobustnessResults robustnessResult = calculateRobustness(graph, linkingMethod,
-				// killingMethod, totalNumStrategies, currentStrategyIndex);
 			}
 		}
 	}
