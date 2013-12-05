@@ -71,6 +71,8 @@ public class MetricsMonitor {
 public static final String NUM_APP_ALIVE = "NumOfAppAlive";
 
 public static final String AVE_NUM_APP_ALIVE = "AveNumOfAppAlive";
+
+public static final String MEAN_NUM_PLATFORM_PER_SPECIE = "MeanNumPlatformPerSpecie";
     
     /**
      * A list of all the values declared before. Make sure that it contains
@@ -86,7 +88,7 @@ public static final String AVE_NUM_APP_ALIVE = "AveNumOfAppAlive";
         REDUDANCY_PLATFORM_TO_APP,
         WC_ONE_PLATFORM_FAILURE,
  WC_FIRST_APP_DIE, NUM_APP_ALIVE,
-    AVE_NUM_APP_ALIVE
+    AVE_NUM_APP_ALIVE, MEAN_NUM_PLATFORM_PER_SPECIE
     };
 	
 	public List<Long> steps = new ArrayList<Long>();
@@ -149,7 +151,9 @@ AppFailures appFailures = null;
 			else if(WC_FIRST_APP_DIE.equals(s) && pltfFailures == null)
 				pltfFailures = new PlatformFailures(graph);
 		else if (AVE_NUM_APP_ALIVE.equals(s) && appFailures == null)
-		  appFailures = new AppFailures(graph);
+			appFailures = new AppFailures(graph);
+		else if (MEAN_NUM_PLATFORM_PER_SPECIE.equals(s) && snp_p == null)
+		  snp_p = new SpeciesAndPopulation<Platform>(graph.platforms);
 			
 			history.put(s, new ArrayList<Object>());
 		}
@@ -194,6 +198,9 @@ public Map<String, Object> getSnapshot() {
 		}
 		if (AVE_NUM_APP_ALIVE.equals(s)) {
 			snapshot.put(s, appFailures.calculateAliveAppsAverage());
+		}
+		if (MEAN_NUM_PLATFORM_PER_SPECIE.equals(s)) {
+			snapshot.put(s, snp_p.getMeanSizeSpecies());
 		}
 		}
 		return snapshot;
