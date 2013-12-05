@@ -46,8 +46,8 @@ public static void cloningMutateRandom(BipartiteGraph graph, double populationCr
 
 
 public static void split(BipartiteGraph graph, double servicesTransmitted, double populationCreationRatio) {
-	if (graph.getNumPlatforms() * (1 + populationCreationRatio) < graph.getMaxPlatforms()) {
-		for (int i = 0; i < graph.getNumPlatforms() * populationCreationRatio; i++) {
+	for (int i = 0; i < graph.getNumPlatforms() * populationCreationRatio; i++) {
+		if (graph.getNumPlatforms() < graph.getMaxPlatforms()) {
 			Platform source = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
 			Platform clone1 = graph.createPlatform(source.getKind());
 			clone1.getServices().clear();
@@ -67,9 +67,9 @@ public static void split(BipartiteGraph graph, double servicesTransmitted, doubl
 			graph.removeEntity(graph.platforms, source);
 			Log.debug("Platform <" + source + "> has been split into platforms <" + clone1 + "> & <"
 			    + clone2 + ">");
+		} else {
+			Log.debug("Split: max number of Platforms reached");
 		}
-	} else {
-		Log.debug("Split: max number of Platforms reached");
 	}
 }
 
