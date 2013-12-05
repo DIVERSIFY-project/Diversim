@@ -15,25 +15,17 @@ Method linkingMethod;
 
 Method killingMethod;
 
-int totalNumStrategies;
 
-int currentStrategyIndex;
-
-
-public RobustnessRun(BipartiteGraph graph, Method linkingMethod, Method killingMethod,
-    int totalNumStrategies, int currentStrategyIndex) {
+public RobustnessRun(BipartiteGraph graph, Method linkingMethod, Method killingMethod) {
 	this.graph = graph;
 	this.linkingMethod = linkingMethod;
 	this.killingMethod = killingMethod;
-	this.totalNumStrategies = totalNumStrategies;
-	this.currentStrategyIndex = currentStrategyIndex;
 }
 
 
 @Override
 public RobustnessResults call() {
-	return Robustness.calculateRobustness(graph, linkingMethod, killingMethod, totalNumStrategies,
-	    currentStrategyIndex);
+	return Robustness.calculateRobustness(graph, linkingMethod, killingMethod);
 }
 
 }
