@@ -122,4 +122,9 @@ public class SpeciesAndPopulation<E extends Entity> {
 		return entities.size();
 	}
 	
+
+public double getMeanSizeSpecies() {
+	return (double)getNumIndividual() / (double)getNumSpecies();
+}
+
 }
