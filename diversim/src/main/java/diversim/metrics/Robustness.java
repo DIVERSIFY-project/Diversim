@@ -91,7 +91,7 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 		robustnessResult.getAliveAppsHistory().add(aliveAppsCounter);
 		robustness += aliveAppsCounter;
 		try {
-			killing.invoke(null, clone);
+			killing.invoke(null, clone, 0.18);
 		}
 		catch (Exception e) {
 			Log.warn("In calculateRobustness, could not load killing method <" + killing.getName() + ">");

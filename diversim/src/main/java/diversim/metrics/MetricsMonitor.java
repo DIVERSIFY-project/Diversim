@@ -1,7 +1,9 @@
 package diversim.metrics;
 
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -73,10 +75,10 @@ public class MetricsMonitor {
 
     public static final String AVE_NUM_APP_ALIVE = "AveNumOfAppAlive";
     public static final String NUM_UNSPORTEDAPP = "NumOfUnsupportedApp";
-	public static final String AVG_SERVICE_OF_PLATFORMS = "AverageServiceInPlatforms";
-	public static final String TO_SUPPORT_NEW_APP = "AbleToSupportNewApp";
-	public static final String FAR_FROM_SUPPORTING_NEW_APP = "FarFromSupportingNewApp";
-	public static final String ROBUSTNESS = "Robustness";
+        public static final String AVG_SERVICE_OF_PLATFORMS = "AverageServiceInPlatforms";
+        public static final String TO_SUPPORT_NEW_APP = "AbleToSupportNewApp";
+        public static final String FAR_FROM_SUPPORTING_NEW_APP = "FarFromSupportingNewApp";
+        public static final String ROBUSTNESS = "Robustness";
 
 public static final String MEAN_NUM_PLATFORM_PER_SPECIE = "MeanNumPlatformPerSpecie";
 
@@ -136,7 +138,7 @@ public static final String PLATFORM_COST = "PlatformCost";
 
     public MetricsMonitor(BipartiteGraph graph, List<String> paras) {
         this.graph = graph;
-	this.register = new ArrayList<String>(paras);
+        this.register = new ArrayList<String>(paras);
         _init();
     }
 
@@ -162,29 +164,29 @@ public static final String PLATFORM_COST = "PlatformCost";
                 appFailures = new AppFailures(graph);
             }
             else if(TO_SUPPORT_NEW_APP.equals(s) && pltfFailures == null)
-				pltfFailures = new PlatformFailures(graph);
-			else if(FAR_FROM_SUPPORTING_NEW_APP.equals(s) && pltfFailures == null)
-				pltfFailures = new PlatformFailures(graph);
+                                pltfFailures = new PlatformFailures(graph);
+                        else if(FAR_FROM_SUPPORTING_NEW_APP.equals(s) && pltfFailures == null)
+                                pltfFailures = new PlatformFailures(graph);
             else if(NUM_UNSPORTEDAPP.equals(s) && snp_a == null)
-				snp_a = new SpeciesAndPopulation<App>(graph.apps);
+                                snp_a = new SpeciesAndPopulation<App>(graph.apps);
             else if(AVG_SERVICE_OF_PLATFORMS.equals(s) && snp_p == null){
                 snp_p = new SpeciesAndPopulation<Platform>(graph.platforms);
             }
             else if(ROBUSTNESS.equals(s) && robustness == null){
-            	robustness = new Robustness("linkingC", "concentrationRandom");
+                robustness = new Robustness("linkingC", "concentrationRandom");
             }
-		    else if (AVE_NUM_APP_ALIVE.equals(s) && appFailures == null)
-			    appFailures = new AppFailures(graph);
-		    else if (MEAN_NUM_PLATFORM_PER_SPECIE.equals(s) && snp_p == null)
-		        snp_p = new SpeciesAndPopulation<Platform>(graph.platforms);
+                    else if (AVE_NUM_APP_ALIVE.equals(s) && appFailures == null)
+                            appFailures = new AppFailures(graph);
+                    else if (MEAN_NUM_PLATFORM_PER_SPECIE.equals(s) && snp_p == null)
+                        snp_p = new SpeciesAndPopulation<Platform>(graph.platforms);
 
-			history.put(s, new ArrayList<Object>());
-		}
+                        history.put(s, new ArrayList<Object>());
+                }
     }
 
-    public Map<String, Object> getSnapshot() {
-        Map<String, Object> snapshot = new HashMap<String, Object>();
-        for (String s : register) {
+   public Map<String, Object> getSnapshot() {
+      Map<String, Object> snapshot = new HashMap<String, Object>();
+      for (String s : register) {
             if (SHANNON_PLATFORM.equals(s)) {
                 snp_p.setEntityList(graph.platforms);
                 snapshot.put(s, snp_p.calculateShannon());
@@ -222,8 +224,8 @@ public static final String PLATFORM_COST = "PlatformCost";
                 snapshot.put(s, appFailures.calculateAliveAppsAverage());
             }
             else if(NUM_UNSPORTEDAPP.equals(s)){
-				snapshot.put(s, snp_a.getUnusedEnitites());
-			}
+                                snapshot.put(s, snp_a.getUnusedEnitites());
+                        }
             else if(AVG_SERVICE_OF_PLATFORMS.equals(s)){
                 snapshot.put(s, snp_p.getAvgServices());
             }
@@ -234,74 +236,112 @@ public static final String PLATFORM_COST = "PlatformCost";
                 snapshot.put(s, pltfFailures.farFromSupportingNewApp());
             }
             else if(ROBUSTNESS.equals(s)){
-            	snapshot.put(s, Robustness.calculateRobustness(this.graph,
-            													robustness.getLinkingMethod(),
-            													robustness.getKillingMethod()));
-		} else if (MEAN_NUM_PLATFORM_PER_SPECIE.equals(s)) {
-			snapshot.put(s, snp_p.getMeanSizeSpecies());
-		}
-		else if (MEAN_PLATFORM_SIZE.equals(s)) {
-			snapshot.put(s, graph.getMeanPlatformSize());
-		}
-		else if (MEAN_PLATFORM_LOAD.equals(s)) {
-			snapshot.put(s, graph.getMeanPlatformLoad());
-		}
-		else if (PLATFORM_COST.equals(s)) {
-			snapshot.put(s, graph.getCostPlatforms());
-		}
-		}
-		return snapshot;
-	}
-	
-	public Map<String, Object> recordSnapshot(){
-		Map<String, Object> snapshot = getSnapshot();
-		for(Entry<String,Object> entry: snapshot.entrySet()){
-			history.get(entry.getKey()).add(entry.getValue());
-		}
-		steps.add(graph.schedule.getSteps());
-		return snapshot;
-	}
-	
-	public String filePath = null;
-	
-	public void writeHistoryToFile(){
-		writeHistoryToFile(this.filePath);
-	}
-	
+                snapshot.put(s, Robustness.calculateRobustness(this.graph,
+                                                                                                                robustness.getLinkingMethod(),
+                                                                                                                robustness.getKillingMethod()));
+                } else if (MEAN_NUM_PLATFORM_PER_SPECIE.equals(s)) {
+                        snapshot.put(s, snp_p.getMeanSizeSpecies());
+                }
+                else if (MEAN_PLATFORM_SIZE.equals(s)) {
+                        snapshot.put(s, graph.getMeanPlatformSize());
+                }
+                else if (MEAN_PLATFORM_LOAD.equals(s)) {
+                        snapshot.put(s, graph.getMeanPlatformLoad());
+                }
+                else if (PLATFORM_COST.equals(s)) {
+                        snapshot.put(s, graph.getCostPlatforms());
+                }
+      }
+      return snapshot;
+   }
+        
+   public Map<String, Object> recordSnapshot() {
+        Map<String, Object> snapshot = getSnapshot();
+        for (Entry<String, Object> entry : snapshot.entrySet()) {
+            history.get(entry.getKey()).add(entry.getValue());
+        }
+        steps.add(graph.schedule.getSteps());
+        return snapshot;
+   }
 
-public void writeHistoryToFile(String filePath) {
-	PrintWriter writer = null;
-	try {
-		for (Entry<String, List<Object>> entry : history.entrySet()) {
-			String fullFileName = filePath + entry.getKey() + ".data";
-			try {
-				writer = new PrintWriter(fullFileName, "UTF-8");
-				int i = 1;
-				for (Object obj : entry.getValue()) {
-					if (obj instanceof Double)
-						writer.println(String.format("%d\t%.2f", i, ((Double)obj).doubleValue()));
-					else if (obj instanceof Integer)
-						writer.println(String.format("%d\t%d", i, ((Integer)obj).intValue()));
-					i++;
-				}
-				writer.println("0");
-				writer.flush();
-				writer.close();
-			}
-			catch (FileNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-			catch (UnsupportedEncodingException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-	}
-	finally {
-		if (writer != null) writer.close();
-	}
-}
+   public String filePath = null;
+
+   private void createNecessaryDir(String fullDirPath) throws IOException{
+      File theDir = new File(fullDirPath);
+      theDir.mkdirs();
+    }
+
+
+    public void writeHistoryToFile() {
+        writeHistoryToFile(this.filePath);
+    }
+
+    public void writeHistoryToFile(String filePath) {
+        try{
+                String dirPath = filePath + "cummulative/";
+                createNecessaryDir(dirPath);    
+        }catch(IOException e){
+                e.printStackTrace();
+        }
+        for (Entry<String, List<Object>> entry : history.entrySet()) {
+            String fullFileName = filePath + entry.getKey() + ".data";
+            try {
+                PrintWriter writer = new PrintWriter(fullFileName, "UTF-8");
+                int i = 1;
+                for (Object obj : entry.getValue()) {
+                    if (obj instanceof Double) {
+                        writer.println(String.format("%d\t%.2f", i, ((Double) obj).doubleValue()));
+                    } else if (obj instanceof Integer) {
+                        writer.println(String.format("%d\t%d", i, ((Integer) obj).intValue()));
+                    }
+                    i++;
+                }
+                writer.close();
+            } catch (FileNotFoundException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            } catch (UnsupportedEncodingException e) {
+                // TODO Auto-generated catch block
+                e.printStackTrace();
+            }
+        }
+        
+        PrintWriter writer = null;
+        String summaryName = filePath + "summary.data";
+        List<Object> sample = history.values().iterator().next();
+        try {
+            writer = new PrintWriter(summaryName, "UTF-8");
+            writer.printf("index,\t");
+            for(String key : history.keySet())                
+                writer.printf("%s,\t", key);
+            writer.println("no-use");
+            for(int i = 0; i < sample.size(); i++){
+                int max_circle = Configuration.getInt("max_cycles");
+                writer.printf("%d,\t", i % max_circle);
+                for(List<Object> values : history.values()){
+                     Object obj = values.get(i);
+                     if(obj instanceof Double)
+                        writer.printf("%.2f,\t", ((Double)obj).doubleValue());
+                     else if(obj instanceof Integer)
+                        writer.printf("%d,\t", ((Integer)obj).intValue());
+                }
+                writer.println("0");
+                writer.flush();
+                writer.close();
+            }
+        }
+        catch (FileNotFoundException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        catch (UnsupportedEncodingException e) {
+            // TODO Auto-generated catch block
+            e.printStackTrace();
+        }
+        finally {
+                if (writer != null) writer.close();
+        }
+   }
 
     public void clear() {
         steps.clear();
@@ -325,9 +365,12 @@ public void writeHistoryToFile(String filePath) {
                 }
             }
         }
-        System.out.println("Metrics : Recording " + paras);
+        //System.out.println("Metrics : Recording " + paras);
         MetricsMonitor metrics = new MetricsMonitor(graph, paras);
         metrics.filePath = Configuration.getString(metrics_para_prefix + ".filepath");
+        String linkingMethod = Configuration.getString("robustness.linkingStrategy");
+        String extinctionMethod = Configuration.getString("robustness.extinctionStrategy");
+        metrics.filePath = metrics.filePath + linkingMethod + "-" + extinctionMethod + "/";
         allMetrics.add(metrics);
         return metrics;
     }
@@ -343,7 +386,7 @@ public void writeHistoryToFile(String filePath) {
      * steps. On the hand, it is the average between several runs.
      */
     public static MetricsMonitor calculateAverage() {
-	MetricsMonitor avg = new MetricsMonitor(null, null);
+        MetricsMonitor avg = new MetricsMonitor(null, null);
 
         List<MetricsMonitor> useful = screenOutIncomplete();
 
@@ -375,30 +418,26 @@ public void writeHistoryToFile(String filePath) {
     }
     
     public static MetricsMonitor combineTotal(){
-	MetricsMonitor tot = new MetricsMonitor(null, null);
-        tot.filePath = allMetrics.get(0).filePath + "tot/";
-		
-		List<MetricsMonitor> useful = screenOutIncomplete();
-		
-		
-		
-		if(useful.size() == 0)
-			return null;
-		MetricsMonitor sample = useful.get(0);
-		
-		tot.history = new HashMap<String, List<Object>>();
-		for(String key : sample.history.keySet()){
-			ArrayList<Object> avglist = new ArrayList<Object>();			
-			tot.history.put(key, avglist);			
-				
-			for(MetricsMonitor mec : useful){
-				avglist.addAll(mec.history.get(key));
-			}
-			
-		}
-		return tot;
-	}
-
+        MetricsMonitor tot = new MetricsMonitor(null);
+        tot.filePath = allMetrics.get(0).filePath + "cummulative/";
+        List<MetricsMonitor> useful = screenOutIncomplete();
+        
+        if(useful.size() == 0)
+                return null;
+        MetricsMonitor sample = useful.get(0);
+        
+        tot.history = new HashMap<String, List<Object>>();
+        for(String key : sample.history.keySet()){
+                ArrayList<Object> avglist = new ArrayList<Object>();
+                tot.history.put(key, avglist);                  
+                        
+                for(MetricsMonitor mec : useful){
+                        avglist.addAll(mec.history.get(key));
+                }
+                
+        }
+        return tot;
+    }
     public static List<MetricsMonitor> screenOutIncomplete() {
         List<MetricsMonitor> useful = new ArrayList<MetricsMonitor>();
         int maxsteps = 0;
@@ -408,17 +447,12 @@ public void writeHistoryToFile(String filePath) {
                 maxsteps = current;
             }
         }
-
         for (MetricsMonitor m : allMetrics) {
             int current = m.history.values().iterator().next().size();
             if (current == maxsteps) {
                 useful.add(m);
             }
-
         }
-
         return useful;
-
     }
-
 }

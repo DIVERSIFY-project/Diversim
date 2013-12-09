@@ -3,6 +3,9 @@ package diversim.model;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.io.PrintWriter;
+import java.io.BufferedWriter;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
@@ -327,10 +330,11 @@ public double getAvgAppSize() {
 public double getRobustness() {
 	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
 	try {
+		String linkingMethod = Configuration.getString("robustness.linkingStrategy");
+		String extinctionMethod = Configuration.getString("robustness.extinctionStrategy");
 		return Robustness.calculateRobustness(this,
-		    LinkStrategyFates.class.getDeclaredMethod("linkingB", BipartiteGraph.class),
-				KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class))
-				.getRobustness();
+		    LinkStrategyFates.class.getDeclaredMethod(linkingMethod, BipartiteGraph.class),
+		    KillFates.class.getDeclaredMethod(extinctionMethod, BipartiteGraph.class, double.class)).getRobustness();
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -684,19 +688,42 @@ public void start() {
 				    robustnessLinkingMethod, robustnessKillingMethod));
 			}
 			if (state.schedule.scheduleComplete()) {
-				// metrics.writeHistoryToFile();
-				// MetricsMonitor.combineTotal().writeHistoryToFile();
-				// BipartiteGraph.this.start(); //startover FIXME check if needed
-				// multi run results save
+                                // metrics.writeHistoryToFile();
+                                // MetricsMonitor.combineTotal().writeHistoryToFile();
+                                // BipartiteGraph.this.start(); //startover FIXME check if needed
+                                // multi run results save
 				metricsSnapshot = metrics.getSnapshot();
 				singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
 				// multi run seed randomization
 				multiRunSeed = random().nextInt();
+                                
+                                metrics.writeHistoryToFile();
+                                MetricsMonitor.combineTotal().writeHistoryToFile();
+
+				String dataPath = Configuration.getString("metrics.filepath");
+				String linkingMethod = Configuration.getString("robustness.linkingStrategy");
+				String extinctionMethod = Configuration.getString("robustness.extinctionStrategy");
+				String robustnessFileName = dataPath + linkingMethod + "-" + extinctionMethod + "/Robustness.data";
+				double robustnessValue = getRobustness();	
+				PrintWriter pw = null;
+				try{
+					pw = new PrintWriter(new BufferedWriter(new FileWriter(robustnessFileName, true)));
+					pw.printf("%s,\t",current_simulation_iteration);
+					pw.printf("%s", robustnessValue);
+					pw.println();
+				}catch(FileNotFoundException e){
+					e.printStackTrace();
+				}catch(IOException e){
+					e.printStackTrace();
+				}finally{
+					if (pw != null){
+						pw.close();
+					}
+				}
 			}
 		}
 	};
 	schedule.scheduleRepeating(schedule.getTime() + 1.2, print, 1.0);
-
 }
 
 
@@ -1214,7 +1241,11 @@ static public void printAny(Object data, String trailer, PrintStream out) {
 
 public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
 	eList.remove(Collections.binarySearch(eList, entity));
-	if (!centralized) entity.stop();
+	if (!centralized){
+		if (!schedule.scheduleComplete()){
+			entity.stop(); //if schedule is complete, no need to call stop. entity has already stopped
+		}
+	}
 	Bag edges = bipartiteNetwork.getEdgesIn(entity); // edgesIn = edgesOut
 	for (Object o : edges) {
 		((Entity)((Edge)o).getOtherNode(entity)).decDegree();
