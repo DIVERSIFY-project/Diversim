@@ -19,7 +19,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import javax.swing.JFrame;
+
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.data.xy.DefaultXYDataset;
+import org.jfree.data.xy.XYSeries;
+import org.jfree.data.xy.XYSeriesCollection;
 
 import sim.engine.Schedule;
 import sim.engine.SimState;
@@ -146,9 +154,11 @@ static Calendar startingDate;
 
 static int multiRunSeed = -1;
 
-static String simulationDescription;
-
 static int dataCycleStep;
+
+static double costPlatform = 10;
+
+static double costService = 1;
 
 static Method robustnessLinkingMethod;
 
@@ -379,6 +389,37 @@ public int getAliveAppsNumber() {
 }
 
 
+public double getMeanPlatformSize() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumPlatforms() == 0) return 0;
+	double counter = 0;
+	for (Platform platform : platforms) {
+		counter += platform.getSize();
+	}
+	return (counter / (double)getNumPlatforms())/* / (double)getInitServices() */;
+}
+
+
+public double getMeanPlatformLoad() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumPlatforms() == 0) return 0;
+	double counter = 0;
+	for (Platform platform : platforms) {
+		counter += platform.getDegree();
+	}
+	return (counter / (double)getNumPlatforms())/* / (double)getPlatformMaxLoad() */;
+}
+
+
+public double getCostPlatforms() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumPlatforms() == 0) return 0;
+	// double maxCostPlatforms = getMaxPlatforms() * (costPlatform + costService * getInitServices());
+	double counter = 0;
+	for (Platform platform : platforms) {
+		counter += costPlatform + costService * platform.getSize();
+	}
+	return counter /* / maxCostPlatforms */;
+}
+
+
 /**
  * Dynamic persistent data structures should be created here.
  */
@@ -510,9 +551,6 @@ private void readConfig() {
 	platformMaxLoad = Configuration.getInt("p_max_load");
 	platformMinSize = Configuration.getInt("p_min_size");
 	centralized = Configuration.getBoolean("centralized");
-	// simulation description string
-	simulationDescription = "Apps=" + initApps + ",Services=" + initServices + ",Cycles=" + maxCycles
-	    + ",Platforms=" + initPlatforms + "/" + maxPlatforms + ",Load=" + platformMaxLoad;
 }
 
 
@@ -613,8 +651,7 @@ public void start() {
 		metricsSnapshotHistory = new LinkedList<Map<String, Object>>();
 		robustnessHistory = new LinkedList<RobustnessResults>();
 		robustnessLinkingMethod = LinkStrategyFates.class.getDeclaredMethod("linkingC",
-		    LinkStrategyFates
-		    .getLinkingMethods().get("linkingC"));
+		    LinkStrategyFates.getLinkingMethods().get("linkingC"));
 		robustnessKillingMethod = KillFates.class.getDeclaredMethod("unattendedExact", KillFates
 		    .getKillingMethods().get("unattendedExact"));
 	}
@@ -640,15 +677,12 @@ public void start() {
 				// printoutNetwork();
 			}
 			changed = false;
-			// System.out.println("METRICS: " + metrics.recordSnapshot());
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
 			if ((getCurCycle() / dataCycleStep) * dataCycleStep == getCurCycle()) {
 				System.out.println("CYCLE " + getCurCycle());
 				metricsSnapshotHistory.add(metrics.getSnapshot());
 				robustnessHistory.add(Robustness.calculateRobustness((BipartiteGraph)state,
 				    robustnessLinkingMethod, robustnessKillingMethod));
-				// System.out
-				// .println("Robustness " + Robustness.calculateAllRobustness((BipartiteGraph)state));
 			}
 			if (state.schedule.scheduleComplete()) {
 				// multi run results save
@@ -669,7 +703,7 @@ private static String organizeResults(String header,
 	String result = "";
 	int cycle;
 	for (int i = 0; i < metricsSnapshotHistory.size(); i++) {
-		cycle = i * dataCycleStep;
+		cycle = (i + 1) * dataCycleStep;
 		result += header;
 		result += cycle + ",";
 		result += robustnessHistory.get(i).getRobustness() + ",";
@@ -678,22 +712,33 @@ private static String organizeResults(String header,
 		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.NUM_APP_ALIVE) + ",";
 		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.NUM_SPECIES_PLATFORM) + ",";
 		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.MEAN_NUM_PLATFORM_PER_SPECIE) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.MEAN_PLATFORM_SIZE) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.MEAN_PLATFORM_LOAD) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.PLATFORM_COST) + ",";
+		result += Configuration.getInt("max_cycles") + ",";
+		result += Configuration.getInt("init_platforms") + ",";
+		result += Configuration.getInt("init_apps") + ",";
+		result += Configuration.getInt("init_services") + ",";
+		result += Configuration.getInt("max_platforms") + ",";
+		result += Configuration.getInt("max_apps") + ",";
+		result += Configuration.getInt("max_services") + ",";
+		result += Configuration.getInt("p_max_load") + ",";
+		result += costPlatform + ",";
+		result += costService + ",";
 		result += System.getProperty("line.separator");
 	}
 	return result;
 }
 
 
-public static String simulate(String[] args, int runsNumber, int currentConfig,
- String configFile,
-    String title,
- String resultFolderPath,
-    boolean metricsColumnWritten) {
-	String resultsAsText = "";
-	String allResults = "Configuration,Run,Cycle,Robustness,Shannon,NumPlat,NumAppAlive,NumSpecies,MeanSpecieSize"
-	    + System.getProperty("line.separator");
-	Map<String, DescriptiveStatistics> metricStat = new LinkedHashMap<String, DescriptiveStatistics>();
-	Map<String, Map<String, DescriptiveStatistics>> robustnessStatByStrategy = new LinkedHashMap<String, Map<String, DescriptiveStatistics>>();
+public static String simulate(String[] args, int runsNumber, int currentConfig, String configFile,
+    String title, String resultFolderPath, boolean resultsColumnWritten) {
+	String allResults = (resultsColumnWritten ? "" : "Configuration," + "Run," + "Cycle,"
+	    + "Robustness," + "Shannon," + "NumPlat," + "NumAppAlive," + "NumSpecies,"
+	    + "MeanSpecieSize," + "MeanPlatSize," + "MeanPlatLoad," + "PlatformCost," + "MaxCycles,"
+	    + "InitNumPlat," + "InitNumApps," + "InitNumServices," + "MaxNumPlat," + "MaxNumApps,"
+	    + "MaxNumServices," + "MaxPlatLoad," + "CostPlat," + "CostService,"
+	    + System.getProperty("line.separator"));
 	boolean polarity = true;
 	long startTime;
 	for (int j = 0; j < runsNumber; j++) {
@@ -706,70 +751,28 @@ public static String simulate(String[] args, int runsNumber, int currentConfig,
 		polarity = !polarity;
 		allResults += organizeResults(configFile + "," + ("run" + j) + ",", metricsSnapshotHistory,
 		    robustnessHistory);
-		/*
-		 * // gathering metrics for statistical calculation for (String metric :
-		 * metricsSnapshot.keySet()) { if (!metricStat.containsKey(metric)) { metricStat.put(metric, new
-		 * DescriptiveStatistics()); } if
-		 * (metricsSnapshot.get(metric).getClass().getSimpleName().equalsIgnoreCase("double")) {
-		 * metricStat.get(metric).addValue((double)metricsSnapshot.get(metric)); } else {
-		 * metricStat.get(metric).addValue(new Double((int)metricsSnapshot.get(metric))); } } //
-		 * gathering robustness results for statistical calculation for (String strategy :
-		 * singleRunRobustnessByStrategy.keySet()) { RobustnessResults singleRunRobustness =
-		 * singleRunRobustnessByStrategy.get(strategy); // robustness value if
-		 * (!robustnessStatByStrategy.containsKey(strategy)) { robustnessStatByStrategy.put(strategy,
-		 * new LinkedHashMap<String, DescriptiveStatistics>()); } Map<String, DescriptiveStatistics>
-		 * robustnessStat = robustnessStatByStrategy.get(strategy); if
-		 * (!robustnessStat.containsKey("robustness")) { robustnessStat.put("robustness", new
-		 * DescriptiveStatistics()); }
-		 * robustnessStat.get("robustness").addValue(singleRunRobustness.getRobustness()); // alive apps
-		 * per step value int numberOfSteps = singleRunRobustness.getAliveAppsHistory().size(); for (int
-		 * k = 0; k < numberOfSteps; k++) { String stepColumnName = "step" + Robustness.nameStep(k,
-		 * numberOfSteps); if (!robustnessStat.containsKey(stepColumnName)) {
-		 * robustnessStat.put(stepColumnName, new DescriptiveStatistics()); }
-		 * robustnessStat.get(stepColumnName).addValue(
-		 * singleRunRobustness.getAliveAppsHistory().get(k)); } robustnessStatByStrategy.put(strategy,
-		 * robustnessStat); }
-		 */
 		System.err.println("RUN: ending run " + (currentConfig + 1) + "." + (j + 1) + " | duration = "
 		    + (System.currentTimeMillis() - startTime));
 	}
-
-
-	/*
-	 * // results output // metrics // column titles if (!metricsColumnWritten) { resultsAsText +=
-	 * "configuration,"; for (String metricName : metricStat.keySet()) { resultsAsText += metricName +
-	 * "Mean,"; } resultsAsText += "\n"; } // data resultsAsText += configFile + ","; for (String
-	 * metricName : metricStat.keySet()) { resultsAsText += metricStat.get(metricName).getMean() +
-	 * ","; } // resultsFileWriter.write("\n"); resultsAsText += "\n"; // robustness FileWriter
-	 * robustnessFileWriter; String robustnessFileName = "robustness_" + startingDate.getTime() + "_"
-	 * + configFile + "_" + title + ".csv"; File robustnessFile = new File(resultFolderPath + "/" +
-	 * robustnessFileName); try { // simulation description robustnessFileWriter = new
-	 * FileWriter(robustnessFile); // column titles robustnessFileWriter.write(simulationDescription +
-	 * "\n\n"); robustnessFileWriter.write("strategy,P25,Min,Max,P75,Mean"); Map<String,
-	 * DescriptiveStatistics> robustnessStat = robustnessStatByStrategy.values() .iterator().next();
-	 * robustnessFileWriter.write("\n"); // data for (String strategy :
-	 * robustnessStatByStrategy.keySet()) { robustnessStat = robustnessStatByStrategy.get(strategy);
-	 * robustnessFileWriter.write(strategy + ",");
-	 * robustnessFileWriter.write(robustnessStat.get("robustness").getPercentile(25) + ",");
-	 * robustnessFileWriter.write(robustnessStat.get("robustness").getMin() + ",");
-	 * robustnessFileWriter.write(robustnessStat.get("robustness").getMax() + ",");
-	 * robustnessFileWriter.write(robustnessStat.get("robustness").getPercentile(75) + ",");
-	 * robustnessFileWriter.write(robustnessStat.get("robustness").getMean() + ",");
-	 * robustnessFileWriter.write("\n"); } robustnessFileWriter.write("\n\n\n");
-	 * robustnessFileWriter.write("strategy,"); for (String robustnessStatName :
-	 * robustnessStat.keySet()) { if (robustnessStatName.startsWith("step")) {
-	 * robustnessFileWriter.write(robustnessStatName + "Mean,"); } } robustnessFileWriter.write("\n");
-	 * // data for (String strategy : robustnessStatByStrategy.keySet()) { robustnessStat =
-	 * robustnessStatByStrategy.get(strategy); robustnessFileWriter.write(strategy + ","); for (String
-	 * robustnessStatName : robustnessStat.keySet()) { if (robustnessStatName.startsWith("step")) {
-	 * robustnessFileWriter.write(robustnessStat.get(robustnessStatName).getMean() + ","); } }
-	 * robustnessFileWriter.write("\n"); } robustnessFileWriter.flush(); robustnessFileWriter.close();
-	 * } catch (IOException e) { Log.warn("In method main, can't write robustness result file");
-	 * e.printStackTrace(); } return resultsAsText;
-	 */
 	return allResults;
 }
 
+
+/*
+ * public String standAloneSimulation(String[] args, int runsNumber, int currentConfig, String
+ * configFile, String title, String resultFolderPath, boolean metricsColumnWritten, Calendar start,
+ * int step, String configuration, int seed) { startingDate = start; dataCycleStep = step;
+ * configPath = configuration; multiRunSeed = seed; String allResults =
+ * "Configuration,Run,Cycle,Robustness,Shannon,NumPlat,NumAppAlive,NumSpecies,MeanSpecieSize,MeanPlatformSize,MeanPlatformLoad,PlatformCost"
+ * + System.getProperty("line.separator"); boolean polarity = true; long startTime; for (int j = 0;
+ * j < runsNumber; j++) { startTime = System.currentTimeMillis();
+ * System.err.println("RUN: starting run " + (currentConfig + 1) + "." + (j + 1)); // run execution
+ * doLoop(BipartiteGraph.class, args); // renewing seed value multiRunSeed += (polarity ? -1 : 1) *
+ * (currentConfig + j + 1); polarity = !polarity; allResults += organizeResults(configFile + "," +
+ * ("run" + j) + ",", metricsSnapshotHistory, robustnessHistory);
+ * System.err.println("RUN: ending run " + (currentConfig + 1) + "." + (j + 1) + " | duration = " +
+ * (System.currentTimeMillis() - startTime)); } return allResults; }
+ */
 
 public static void main(String[] args) {
 	// loggers levels
@@ -837,38 +840,23 @@ public static void main(String[] args) {
 		}
 		configList.sort();
 		// multi run: #config files X #runs
-		boolean metricsColumnWritten = false;
-		/*
-		 * String metricsFileName = "metrics_" + startingDate.getTime() + (title != null ? "_" + title :
-		 * "") + ".csv"; File metricsFile = new File(resultFolderPath + "/" + metricsFileName);
-		 */
+		boolean resultsColumnWritten = false;
 		String resultsFileName = "results" + startingDate.getTime()
 		    + (title != null ? "_" + title : "") + ".csv";
 		File resultsFile = new File(resultFolderPath + "/" + resultsFileName);
 		String resultsAsText = "";
-		String allSimulationDescription = "";
 		for (int currentConfigNumber = 0; currentConfigNumber < configList.size(); currentConfigNumber++) {
 			configPath = (String)configList.get(currentConfigNumber);
 			String currentConfigFile = new File(configPath).getName();
 			currentConfigFile = currentConfigFile.substring(0, currentConfigFile.length() - 5);
 			System.err.println("RUN: starting run for configuration " + configPath);
 			resultsAsText += simulate(args, runsNumber, currentConfigNumber, currentConfigFile, title,
-			    resultFolderPath,
-			    metricsColumnWritten);
+			    resultFolderPath, resultsColumnWritten);
 			multiRunSeed = -1;
-			metricsColumnWritten = true;
-			allSimulationDescription += simulationDescription + "\n";
+			resultsColumnWritten = true;
 		}
-		/*
-		 * try { FileWriter resultsFileWriter = new FileWriter(metricsFile);
-		 * resultsFileWriter.write(allSimulationDescription); resultsFileWriter.write("\n");
-		 * resultsFileWriter.write(resultsAsText); resultsFileWriter.flush(); resultsFileWriter.close();
-		 * } catch (IOException e) { e.printStackTrace(); }
-		 */
 		try {
 			FileWriter resultsFileWriter = new FileWriter(resultsFile);
-			// resultsFileWriter.write(allSimulationDescription);
-			// resultsFileWriter.write("\n");
 			resultsFileWriter.write(resultsAsText);
 			resultsFileWriter.flush();
 			resultsFileWriter.close();
