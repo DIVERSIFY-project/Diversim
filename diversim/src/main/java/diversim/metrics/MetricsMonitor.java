@@ -73,6 +73,12 @@ public static final String NUM_APP_ALIVE = "NumOfAppAlive";
 public static final String AVE_NUM_APP_ALIVE = "AveNumOfAppAlive";
 
 public static final String MEAN_NUM_PLATFORM_PER_SPECIE = "MeanNumPlatformPerSpecie";
+
+public static final String MEAN_PLATFORM_SIZE = "MeanPlatformSize";
+
+public static final String MEAN_PLATFORM_LOAD = "MeanPlatformLoad";
+
+public static final String PLATFORM_COST = "PlatformCost";
     
     /**
      * A list of all the values declared before. Make sure that it contains
@@ -88,7 +94,8 @@ public static final String MEAN_NUM_PLATFORM_PER_SPECIE = "MeanNumPlatformPerSpe
         REDUDANCY_PLATFORM_TO_APP,
         WC_ONE_PLATFORM_FAILURE,
  WC_FIRST_APP_DIE, NUM_APP_ALIVE,
-    AVE_NUM_APP_ALIVE, MEAN_NUM_PLATFORM_PER_SPECIE
+    AVE_NUM_APP_ALIVE, MEAN_NUM_PLATFORM_PER_SPECIE, MEAN_PLATFORM_SIZE,
+    MEAN_PLATFORM_LOAD, PLATFORM_COST
     };
 	
 	public List<Long> steps = new ArrayList<Long>();
@@ -154,7 +161,7 @@ AppFailures appFailures = null;
 			appFailures = new AppFailures(graph);
 		else if (MEAN_NUM_PLATFORM_PER_SPECIE.equals(s) && snp_p == null)
 		  snp_p = new SpeciesAndPopulation<Platform>(graph.platforms);
-			
+
 			history.put(s, new ArrayList<Object>());
 		}
     }
@@ -201,6 +208,15 @@ public Map<String, Object> getSnapshot() {
 		}
 		if (MEAN_NUM_PLATFORM_PER_SPECIE.equals(s)) {
 			snapshot.put(s, snp_p.getMeanSizeSpecies());
+		}
+		if (MEAN_PLATFORM_SIZE.equals(s)) {
+			snapshot.put(s, graph.getMeanPlatformSize());
+		}
+		if (MEAN_PLATFORM_LOAD.equals(s)) {
+			snapshot.put(s, graph.getMeanPlatformLoad());
+		}
+		if (PLATFORM_COST.equals(s)) {
+			snapshot.put(s, graph.getCostPlatforms());
 		}
 		}
 		return snapshot;
