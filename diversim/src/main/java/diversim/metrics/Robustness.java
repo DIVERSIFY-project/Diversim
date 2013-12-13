@@ -22,9 +22,41 @@ import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.strategy.fate.KillFates;
 import diversim.strategy.fate.LinkStrategyFates;
-
+import diversim.strategy.extinction.AgingExtinctionWithDegreeStrategy;
+import diversim.strategy.application.AllMatchingLinkStrategy;
+import diversim.strategy.application.LinkingC;
 
 public class Robustness {
+	
+	private Method linkingMethod;
+	private Method killingMethod;
+	//private BipartiteGraph graph;
+	
+	public Robustness(String linkMethodName, String killMethodName){
+		//this.graph = graph;
+		try{
+			this.linkingMethod = LinkingC.class.getDeclaredMethod(linkMethodName, BipartiteGraph.class);
+		}catch(Exception e){
+			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
+				    "In calculateAllRobustness, could not load linking method <" + linkMethodName + ">");
+				this.linkingMethod = null;
+		}
+		try{
+			this.killingMethod = KillFates.class.getDeclaredMethod(killMethodName, BipartiteGraph.class);
+		}catch(Exception e){
+			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
+				    "In calculateAllRobustness, could not load killing method <" + killMethodName + ">");
+				this.killingMethod = null;
+		}
+	}
+	
+	public Method getLinkingMethod(){
+		return this.linkingMethod;
+	}
+	
+	public Method getKillingMethod(){
+		return this.killingMethod;
+	}
 
 
 public static double calculateRobustness(BipartiteGraph graph, Method linking, Method killing) {
@@ -59,7 +91,7 @@ public static double calculateRobustness(BipartiteGraph graph, Method linking, M
 		// System.out.println("---" + aliveAppsCounter);
 		// clone.removeEntity(clone.platforms, clone.platforms.get(i));
 		try {
-			killing.invoke(null, clone, 1);
+			killing.invoke(null, clone);
 		}
 		catch (Exception e) {
 			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,

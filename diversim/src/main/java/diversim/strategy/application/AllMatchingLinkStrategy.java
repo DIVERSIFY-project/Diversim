@@ -34,7 +34,7 @@ public class AllMatchingLinkStrategy extends AbstractStrategy<App> {
     }
 
     public void init(String stratId) {
-        this.name = "LinkStrategy";
+        this.name = "allmatching";
     }
 
     protected void removeLinkFor(BipartiteGraph graph, App e) {
@@ -45,5 +45,18 @@ public class AllMatchingLinkStrategy extends AbstractStrategy<App> {
             graph.removeEdge(e, (Edge) edge);
         }
     }
+    
+    /*
+     * Adding a static version of evolve, for the robustness class to pick use this method, while calculating
+     * the robustness values
+     *
+     */
+    public static void allmatching(BipartiteGraph graph){
+    	AllMatchingLinkStrategy strategy = new AllMatchingLinkStrategy();
+    	for (App a: graph.apps){
+    		strategy.evolve(graph, a);
+    	}
+    }
+    
 
 }

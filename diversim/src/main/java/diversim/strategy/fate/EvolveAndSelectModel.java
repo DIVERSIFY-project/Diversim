@@ -48,6 +48,7 @@ public class EvolveAndSelectModel extends AbstractStrategy<Fate>{
         List<Platform> originals = new ArrayList<Platform>();
         originals.addAll(graph.platforms);
         
+        
         List<Platform> toRemoves =  new ArrayList<Platform>();
         for(Platform pltf : originals){
             if(killer.die(pltf, graph))
@@ -57,6 +58,9 @@ public class EvolveAndSelectModel extends AbstractStrategy<Fate>{
         for(Platform pltf : toRemoves){
             graph.removeEntity(graph.platforms, pltf);
         }
+        
+        
+       // KillFates.random(graph, 1); // This bit to be changed whenever we're changing the killing strategy
         
         originals.clear();
         originals.addAll(graph.platforms);

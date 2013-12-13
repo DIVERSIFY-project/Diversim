@@ -141,6 +141,10 @@ private int nextBundle;
 
 boolean readConfigurationFile = true;
 
+public static int current_simulation_iteration = 0;
+
+public static int simulation_iteration_limit;
+
 
 /**
  * Getters and setters. Any Java Bean getter/setter is auto-magically included in the GUI. If a
@@ -295,7 +299,7 @@ public double getRobustness() {
 	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
 	try {
 		return Robustness.calculateRobustness(this,
-		    LinkStrategyFates.class.getDeclaredMethod("linkingA", BipartiteGraph.class),
+		    LinkStrategyFates.class.getDeclaredMethod("linkingB", BipartiteGraph.class),
 		    KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class));
 	}
 	catch (Exception e) {
@@ -476,6 +480,7 @@ private void readConfig() {
 	platformMaxLoad = Configuration.getInt("p_max_load");
 	platformMinSize = Configuration.getInt("p_min_size");
 	centralized = Configuration.getBoolean("centralized");
+	simulation_iteration_limit = Configuration.getInt("simulation_iteration_limit", 1); // default is 1
 }
 
 
@@ -605,7 +610,7 @@ public void start() {
 	Steppable print = new Steppable() {
 
 		public void step(SimState state) {
-			if (changed) printoutNetwork();
+			//if (changed) printoutNetwork();
 			changed = false;
             metrics.recordSnapshot();
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
@@ -892,7 +897,7 @@ public void setLink(App app, Platform pltf){
  * Textual printout of the network
  */
 private void printoutNetwork() { // TODO
-	System.out.println(getPrintoutHeader() + bipartiteNetwork.toString());
+//	System.out.println(getPrintoutHeader() + bipartiteNetwork.toString());
 	System.out.flush();
 }
 

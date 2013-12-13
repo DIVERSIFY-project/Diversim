@@ -1,4 +1,6 @@
 <project name="BipartiteGraphWithUI" basedir="." default="main">
+	
+	
    
    <!-- Setting properties for this build -->
    <property name="src.dir" value="src/main/java" />    
@@ -6,9 +8,13 @@
    <property name="build.dir" value="build" />    
    <property name="classes.dir" value="${build.dir}/classes" />    
    <property name="jar.dir" value="${build.dir}/jar" />    
+   <property name="expName" value="concentrationRandom-linkingC" />
 
    <!-- Property for the mainfest file in the jar -->
-   <property name="main-class" value="diversim.BipartiteGraphWithUI" />    
+   <property name="main-class" value="diversim.BipartiteGraphWithUI" />
+	
+	<!--Property name for running a headless version of the simulation -->
+	<property name="headless-class" value="diversim.model.BipartiteGraph" />
 
    <path id="classpath">
       <fileset dir="${lib.dir}" includes="**/*.jar" />
@@ -22,11 +28,9 @@
         <mkdir dir="${classes.dir}"/>
         <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeAntRuntime="no" />
         <!-- Ensure that the conf files are copied to the appropriate place -->
-         <copy todir="${classes.dir}">
-            <fileset dir=".">
-               <include name="**/*.conf" />
-            </fileset>
-         </copy>
+         <copy file="evolveAndSelectModel.conf" tofile="${classes.dir}/bipartiteModel.conf" />
+    	
+         
     </target>
 
     <target name="jar" depends="compile">
@@ -36,19 +40,47 @@
                 <attribute name="Main-Class" value="${main-class}"/>
             </manifest>
         </jar>
+    	<copy file="${classes.dir}/bipartiteModel.conf" todir="${jar.dir}" />
     </target>
 
-    <target name="run" depends="jar">
-        <java fork="true" classname="${main-class}">
+    <target name="run">
+    	<property name="myclasspath" refid="classpath"/>                       
+    	<!-- Emit the property to the ant console -->                          
+    	<echo message="Classpath = ${myclasspath}"/>
+    	<!-- Create a data directory for the application to write data -->
+    	<!-- <mkdir dir="${jar.dir}/data" /> -->
+        <java fork="true" classname="${main-class}" dir="${jar.dir}">
             <classpath>
                <path refid="classpath" />
                <path location="${jar.dir}/${ant.project.name}.jar"  />
             </classpath>
          </java>
     </target>
+	
+	<target name="run-headless">
+	    	<property name="myclasspath" refid="classpath"/>                       
+	    	<!-- Emit the property to the ant console -->                          
+	    	<echo message="Classpath = ${myclasspath}"/>
+	    	<!-- Create a data directory for the application to write data -->
+	    	<!-- <mkdir dir="${jar.dir}/data" /> -->
+	        <java fork="true" classname="${headless-class}" dir="${jar.dir}">
+	            <classpath>
+	               <path refid="classpath" />
+	               <path location="${jar.dir}/${ant.project.name}.jar"  />
+	            </classpath>
+	        	<jvmarg value="-Xmx512M" />
+	         </java>
+	    </target>
+
+        <target name="archive">
+                <zip destfile="/home/vivek/git/${expName}.zip"
+                        basedir="/home/vivek/git/data"
+                />
+                        
+        </target>
 
    <target name="clean-build" depends="clean,jar" />
 
-   <target name="main" depends="clean,run" />
+   <target name="main" depends="clean-build,run-headless, archive" />
 
 </project>
