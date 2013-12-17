@@ -268,32 +268,40 @@ public static final String PLATFORM_COST = "PlatformCost";
 		writeHistoryToFile(this.filePath);
 	}
 	
-	public void writeHistoryToFile(String filePath){
-		for(Entry<String, List<Object>> entry : history.entrySet()){
+
+public void writeHistoryToFile(String filePath) {
+	PrintWriter writer = null;
+	try {
+		for (Entry<String, List<Object>> entry : history.entrySet()) {
 			String fullFileName = filePath + entry.getKey() + ".data";
 			try {
-				PrintWriter writer = new PrintWriter(fullFileName, "UTF-8");
+				writer = new PrintWriter(fullFileName, "UTF-8");
 				int i = 1;
-				for(Object obj : entry.getValue()){
-					if(obj instanceof Double)
+				for (Object obj : entry.getValue()) {
+					if (obj instanceof Double)
 						writer.println(String.format("%d\t%.2f", i, ((Double)obj).doubleValue()));
-					else if(obj instanceof Integer)
+					else if (obj instanceof Integer)
 						writer.println(String.format("%d\t%d", i, ((Integer)obj).intValue()));
 					i++;
 				}
 				writer.println("0");
-			}
-		} catch (FileNotFoundException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (UnsupportedEncodingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally{
-			if(writer != null)
+				writer.flush();
 				writer.close();
+			}
+			catch (FileNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			catch (UnsupportedEncodingException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
-    }
+	}
+	finally {
+		if (writer != null) writer.close();
+	}
+}
 
     public void clear() {
         steps.clear();
