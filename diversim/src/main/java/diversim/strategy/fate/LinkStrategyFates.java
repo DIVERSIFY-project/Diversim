@@ -2,7 +2,6 @@ package diversim.strategy.fate;
 
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -28,13 +27,13 @@ public static Map<String, Class[]> getLinkingMethods() {
 	Map<String, Class[]> results = new HashMap<String, Class[]>();
 	Class[] args = new Class[1];
 	args[0] = BipartiteGraph.class;
-	results.put("linkingANoLoss", args);
+	results.put("linkingA", args);
 	args = new Class[1];
 	args[0] = BipartiteGraph.class;
-	results.put("linkingBNoLoss", args);
+	results.put("linkingB", args);
 	args = new Class[1];
 	args[0] = BipartiteGraph.class;
-	results.put("linkingCNoLoss", args);
+	results.put("linkingC", args);
 	return results;
 }
 
@@ -43,34 +42,12 @@ public static void linkingA(BipartiteGraph graph) {
 	graph.removeAllEdges();
 	Bag platforms = new Bag(graph.platforms);
 	platforms.shuffle(graph.random());
-	// platforms = shuffle(platforms, graph.random());
-	for(App app: graph.apps) {
-		Bag requiredServices = new Bag(app.getServices());
-		for(Object platform: platforms) {
-			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
-				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
-				if (commonServices.size() > 0) {
-					graph.addEdge(app, (Platform)platform, commonServices.size());
-					requiredServices.removeAll(commonServices);
-				}
-			}
-			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
-		}
-		app.dead = requiredServices.size() != 0;
-	}
-}
-
-
-public static void linkingANoLoss(BipartiteGraph graph) {
-	graph.removeAllEdges();
-	Bag platforms = new Bag(graph.platforms);
-	platforms.shuffle(graph.random());
-	// platforms = shuffle(platforms, graph.random());
+	List<Service> commonServices;
 	for (App app : graph.apps) {
 		Bag requiredServices = new Bag(app.getServices());
 		for (Object platform : platforms) {
 			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
-				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
+				commonServices = getCommonServices((Platform)platform, requiredServices);
 				if (commonServices.size() > 0) {
 					graph.addEdge(app, (Platform)platform, commonServices.size());
 					requiredServices.removeAll(commonServices);
@@ -99,38 +76,12 @@ public static void linkingB(BipartiteGraph graph) {
 			return e.getSize() - e2.getSize();
 		}
 	});
+	List<Service> commonServices;
 	for (App app : graph.apps) {
 		Bag requiredServices = new Bag(app.getServices());
 		for (Object platform : platforms) {
 			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
-				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
-				if (commonServices.size() > 0) {
-					graph.addEdge(app, (Platform)platform, commonServices.size());
-					requiredServices.removeAll(commonServices);
-				}
-			}
-			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
-		}
-		app.dead = requiredServices.size() != 0;
-	}
-}
-
-
-public static void linkingBNoLoss(BipartiteGraph graph) {
-	graph.removeAllEdges();
-	Bag platforms = new Bag(graph.platforms);
-	platforms.sort(new Comparator<Entity>() {
-
-		@Override
-		public int compare(Entity e, Entity e2) {
-			return e.getSize() - e2.getSize();
-		}
-	});
-	for (App app : graph.apps) {
-		Bag requiredServices = new Bag(app.getServices());
-		for (Object platform : platforms) {
-			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
-				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
+				commonServices = getCommonServices((Platform)platform, requiredServices);
 				if (commonServices.size() > 0) {
 					graph.addEdge(app, (Platform)platform, commonServices.size());
 					requiredServices.removeAll(commonServices);
@@ -159,38 +110,12 @@ public static void linkingC(BipartiteGraph graph) {
 			return e2.getSize() - e.getSize();
 		}
 	});
+	List<Service> commonServices;
 	for (App app : graph.apps) {
 		Bag requiredServices = new Bag(app.getServices());
 		for (Object platform : platforms) {
 			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
-				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
-				if (commonServices.size() > 0) {
-					graph.addEdge(app, (Platform)platform, commonServices.size());
-					requiredServices.removeAll(commonServices);
-				}
-			}
-			((Platform)platform).dead = ((Platform)platform).getDegree() == 0;
-		}
-		app.dead = requiredServices.size() != 0;
-	}
-}
-
-
-public static void linkingCNoLoss(BipartiteGraph graph) {
-	graph.removeAllEdges();
-	Bag platforms = new Bag(graph.platforms);
-	platforms.sort(new Comparator<Entity>() {
-
-		@Override
-		public int compare(Entity e, Entity e2) {
-			return e2.getSize() - e.getSize();
-		}
-	});
-	for (App app : graph.apps) {
-		Bag requiredServices = new Bag(app.getServices());
-		for (Object platform : platforms) {
-			if (((Platform)platform).getDegree() < graph.getPlatformMaxLoad()) {
-				List<Service> commonServices = getCommonServices((Platform)platform, requiredServices);
+				commonServices = getCommonServices((Platform)platform, requiredServices);
 				if (commonServices.size() > 0) {
 					graph.addEdge(app, (Platform)platform, commonServices.size());
 					requiredServices.removeAll(commonServices);
@@ -219,18 +144,5 @@ public static List<Service> getCommonServices(Platform platform, Bag appServices
 		}
 	}
 	return result;
-}
-
-
-public static Bag shuffle(Bag entities, MersenneTwisterFast random) {
-	List<Object> temp = new ArrayList<Object>();
-	entities.sort();
-	while (temp.size() < entities.size()) {
-		Object entity = entities.get(random.nextInt(entities.size()));
-		if (!temp.contains(entity)) {
-			temp.add(entity);
-		}
-	}
-	return new Bag(temp);
 }
 }

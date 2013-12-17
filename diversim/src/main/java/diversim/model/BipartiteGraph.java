@@ -1,17 +1,22 @@
 package diversim.model;
 
 
+import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.logging.Level;
+import java.util.Set;
 import java.util.logging.Logger;
 
 import sim.engine.Schedule;
@@ -22,11 +27,11 @@ import sim.field.network.Network;
 import sim.util.Bag;
 import diversim.metrics.MetricsMonitor;
 import diversim.metrics.Robustness;
+import diversim.metrics.RobustnessResults;
 import diversim.strategy.Strategy;
-import diversim.strategy.fate.CreationFates;
 import diversim.strategy.fate.KillFates;
 import diversim.strategy.fate.LinkStrategyFates;
-import diversim.strategy.fate.MutationFates;
+import diversim.util.Log;
 import diversim.util.config.Configuration;
 import ec.util.MersenneTwisterFast;
 
@@ -135,11 +140,35 @@ public int stepsPerCycle;
 
 private static Logger logger = Logger.getLogger("BipartiteGraph");
 
+// service bundles for applications
 ArrayList<ArrayList<Service>> serviceBundles;
 
 private int nextBundle;
 
-boolean readConfigurationFile = true;
+// multi run
+static Calendar startingDate;
+
+static int multiRunSeed = -1;
+
+static int dataCycleStep;
+
+static double costPlatform = 10;
+
+static double costService = 1;
+
+static Method robustnessLinkingMethod;
+
+static Method robustnessKillingMethod;
+
+// Map<metricname, value>
+static Map<String, Object> metricsSnapshot;
+
+static List<Map<String, Object>> metricsSnapshotHistory;
+
+// Map<strategy, results>
+static Map<String, RobustnessResults> singleRunRobustnessByStrategy;
+
+static List<RobustnessResults> robustnessHistory;
 
 public static int current_simulation_iteration = 0;
 
@@ -300,7 +329,8 @@ public double getRobustness() {
 	try {
 		return Robustness.calculateRobustness(this,
 		    LinkStrategyFates.class.getDeclaredMethod("linkingB", BipartiteGraph.class),
-		    KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class));
+				KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class))
+				.getRobustness();
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -354,6 +384,37 @@ public int getAliveAppsNumber() {
 }
 
 
+public double getMeanPlatformSize() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumPlatforms() == 0) return 0;
+	double counter = 0;
+	for (Platform platform : platforms) {
+		counter += platform.getSize();
+	}
+	return (counter / (double)getNumPlatforms())/* / (double)getInitServices() */;
+}
+
+
+public double getMeanPlatformLoad() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumPlatforms() == 0) return 0;
+	double counter = 0;
+	for (Platform platform : platforms) {
+		counter += platform.getDegree();
+	}
+	return (counter / (double)getNumPlatforms())/* / (double)getPlatformMaxLoad() */;
+}
+
+
+public double getCostPlatforms() {
+	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumPlatforms() == 0) return 0;
+	// double maxCostPlatforms = getMaxPlatforms() * (costPlatform + costService * getInitServices());
+	double counter = 0;
+	for (Platform platform : platforms) {
+		counter += costPlatform + costService * platform.getSize();
+	}
+	return counter /* / maxCostPlatforms */;
+}
+
+
 /**
  * Dynamic persistent data structures should be created here.
  */
@@ -366,20 +427,18 @@ private void init() {
 	services = new ArrayList<Service>();
 	entityStrategies = new ArrayList<Strategy<? extends Steppable>>();
 	serviceBundles = new ArrayList<ArrayList<Service>>();
-	if (readConfigurationFile) {
-		try {
-			if (configPath == null) {
-				// configPath = System.getenv().get("PWD");
-				configPath = System.getProperty("user.dir");
-				// configPath += "/neutralModel.conf";
-				configPath += "/andreModel.conf";
-			}
-			Configuration.setConfig(configPath);
+	try {
+		if (configPath == null) {
+			// configPath = System.getenv().get("PWD");
+			configPath = System.getProperty("user.dir");
+			// configPath += "/neutralModel.conf";
+			configPath += "/andreModel.conf";
 		}
-		catch (IOException e) {
-			System.err.println("ERROR : Configuration file not found.");
-			System.exit(1);
-		}
+		Configuration.setConfig(configPath);
+	}
+	catch (IOException e) {
+		System.err.println("ERROR : Configuration file not found.");
+		System.exit(1);
 	}
 	stepsPerCycle = 0;
 	INSTANCE = this;
@@ -429,14 +488,18 @@ public BipartiteGraph extinctionClone() {
 	clone.platformMinSize = platformMinSize;
 	clone.maxCycles = maxCycles;
 	clone.entityStrategies = entityStrategies;
-	clone.platforms = new ArrayList<Platform>(platforms);
-	/*
-	 * for (Platform platform : platforms) { clone.platforms.add(new Platform(platform)); }
-	 */
-	clone.apps = new ArrayList<App>(apps);
-	/*
-	 * for (App app : apps) { clone.apps.add(new App(app)); }
-	 */
+	// clone.platforms = new ArrayList<Platform>(platforms);
+
+	for (Platform platform : platforms) {
+		clone.platforms.add(new Platform(platform));
+	}
+
+	// clone.apps = new ArrayList<App>(apps);
+
+	for (App app : apps) {
+		clone.apps.add(new App(app));
+	}
+
 	clone.services = services;
 	clone.fate = fate;
 	clone.changed = changed;
@@ -458,7 +521,13 @@ private void readConfig() {
 			System.err.println("WARNING : Configuration file not found. Using previous configuration.");
 		}
 	}
-	int seed = Configuration.getInt("seed", 0);
+	int seed;
+	if (multiRunSeed == -1) {
+		seed = Configuration.getInt("seed", 0);
+		multiRunSeed = seed;
+	} else {
+		seed = multiRunSeed;
+	}
 	if (seed != 0) {
 		random().setSeed(seed);
 	}
@@ -543,12 +612,6 @@ public ArrayList<Service> nextBundle() {
  * This method is called ONCE at the beginning of every simulation. EVERY field, parameter,
  * structure etc. MUST be initialized here (and not in the constructor).
  */
-public void start(String path) {
-	configPath = path;
-	System.err.println("Config : INFO : Starting with config file: " + path);
-	start();
-}
-
 public void start() {
 	super.start();
 	// reset all parameters and fields
@@ -563,34 +626,33 @@ public void start() {
 	stepsPerCycle = 0;
 	nextBundle = 0;
 	Service.counter = 0;
-	if (readConfigurationFile) {
-		readConfig();
-	}
+	readConfig();
 	if (services.isEmpty()) {
 		initServices();
 		for (int i = 0; i < initApps; i++) {
 			serviceBundles.add(selectServices(0));
 		}
-		// try {
-		// FileWriter fout = new FileWriter("services" + System.currentTimeMillis());
-		// for (ArrayList<Service> serviceA : serviceBundles)
-		// for (Service s : serviceA)
-		// fout.write(s.toString() + "\n");
-		// fout.flush();
-		// fout.close();
-		// }
-		// catch (IOException e) {
-		// e.printStackTrace();
-		// }
+		// limiting service list to the services actually required by apps
+		Set<Service> requiredServices = new HashSet<Service>();
+		for (ArrayList<Service> bundle : serviceBundles) {
+			requiredServices.addAll(bundle);
+		}
+		int oldSize = services.size();
+		services = new ArrayList<Service>(requiredServices);
+		Log.info("START: Compacted service list, size " + oldSize + " => " + services.size());
 	}
 
 	try {
 		initFate();
 		initPlatform();
-		// System.out.println(platforms);
 		initApp();
-		// System.out.println(apps);
 		metrics = MetricsMonitor.createMetricsInstance(this);
+		metricsSnapshotHistory = new LinkedList<Map<String, Object>>();
+		robustnessHistory = new LinkedList<RobustnessResults>();
+		robustnessLinkingMethod = LinkStrategyFates.class.getDeclaredMethod("linkingC",
+		    LinkStrategyFates.getLinkingMethods().get("linkingC"));
+		robustnessKillingMethod = KillFates.class.getDeclaredMethod("unattendedExact", KillFates
+		    .getKillingMethods().get("unattendedExact"));
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -610,52 +672,26 @@ public void start() {
 	Steppable print = new Steppable() {
 
 		public void step(SimState state) {
-			//if (changed) printoutNetwork();
+			if (changed) {
+				// printoutNetwork();
+			}
 			changed = false;
-            metrics.recordSnapshot();
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
-			
+			if ((getCurCycle() / dataCycleStep) * dataCycleStep == getCurCycle()) {
+				System.out.println("CYCLE " + getCurCycle());
+				metricsSnapshotHistory.add(metrics.getSnapshot());
+				robustnessHistory.add(Robustness.calculateRobustness((BipartiteGraph)state,
+				    robustnessLinkingMethod, robustnessKillingMethod));
+			}
 			if (state.schedule.scheduleComplete()) {
-				// System.out.println("METRICS HISTORY: " + metrics.getHistory());
-				// System.out.println("ROBUSTNESS: " +
-				// Robustness.calculateRobustness((BipartiteGraph)state));
-				Logger.getLogger(KillFates.class.getName()).setLevel(Level.OFF);
-				Logger.getLogger(CreationFates.class.getName()).setLevel(Level.OFF);
-				Logger.getLogger(MutationFates.class.getName()).setLevel(Level.OFF);
-
-                metrics.writeHistoryToFile();
-
-                MetricsMonitor.combineTotal().writeHistoryToFile();
-
-                BipartiteGraph.this.start();  //startover
-
-
-				// System.out.println("ROBUSTNESS: " + System.getProperty("line.separator")
-				// + Robustness.displayAllRobustness((BipartiteGraph)state, 10));
-
-				Map<String, Map<String, Double>> stats = Robustness.calculateAllRobustness(
-				    (BipartiteGraph)state, 50);
-				try {
-					FileWriter fout = new FileWriter("stats" + System.currentTimeMillis());
-					fout.write("Name,");// Min,P25,P50,P75,Max,Mean\n");
-					String robustnessName = stats.keySet().iterator().next();
-					for (String statType : stats.get(robustnessName).keySet()) {
-						fout.write(statType + ",");
-					}
-					fout.write("\n");
-					for (String name : stats.keySet()) {
-						fout.write(name + ",");
-						for (String statType : stats.get(name).keySet()) {
-							fout.write(stats.get(name).get(statType) + ",");
-						}
-						fout.write("\n");
-					}
-					fout.flush();
-					fout.close();
-				}
-				catch (IOException e) {
-					e.printStackTrace();
-				}
+				// metrics.writeHistoryToFile();
+				// MetricsMonitor.combineTotal().writeHistoryToFile();
+				// BipartiteGraph.this.start(); //startover FIXME check if needed
+				// multi run results save
+				metricsSnapshot = metrics.getSnapshot();
+				singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
+				// multi run seed randomization
+				multiRunSeed = random().nextInt();
 			}
 		}
 	};
@@ -664,20 +700,175 @@ public void start() {
 }
 
 
+private static String organizeResults(String header,
+    List<Map<String, Object>> metricsSnapshotHistory, List<RobustnessResults> robustnessHistory) {
+	String result = "";
+	int cycle;
+	for (int i = 0; i < metricsSnapshotHistory.size(); i++) {
+		cycle = (i + 1) * dataCycleStep;
+		result += header;
+		result += cycle + ",";
+		result += robustnessHistory.get(i).getRobustness() + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.SHANNON_PLATFORM) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.NUM_PLATFORM) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.NUM_APP_ALIVE) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.NUM_SPECIES_PLATFORM) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.MEAN_NUM_PLATFORM_PER_SPECIE) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.MEAN_PLATFORM_SIZE) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.MEAN_PLATFORM_LOAD) + ",";
+		result += metricsSnapshotHistory.get(i).get(MetricsMonitor.PLATFORM_COST) + ",";
+		result += Configuration.getInt("max_cycles") + ",";
+		result += Configuration.getInt("init_platforms") + ",";
+		result += Configuration.getInt("init_apps") + ",";
+		result += Configuration.getInt("init_services") + ",";
+		result += Configuration.getInt("max_platforms") + ",";
+		result += Configuration.getInt("max_apps") + ",";
+		result += Configuration.getInt("max_services") + ",";
+		result += Configuration.getInt("p_max_load") + ",";
+		result += costPlatform + ",";
+		result += costService + ",";
+		result += System.getProperty("line.separator");
+	}
+	return result;
+}
+
+
+public static String simulate(String[] args, int runsNumber, int currentConfig, String configFile,
+    String title, String resultFolderPath, boolean resultsColumnWritten) {
+	String allResults = (resultsColumnWritten ? "" : "Configuration," + "Run," + "Cycle,"
+	    + "Robustness," + "Shannon," + "NumPlat," + "NumAppAlive," + "NumSpecies,"
+	    + "MeanSpecieSize," + "MeanPlatSize," + "MeanPlatLoad," + "PlatformCost," + "MaxCycles,"
+	    + "InitNumPlat," + "InitNumApps," + "InitNumServices," + "MaxNumPlat," + "MaxNumApps,"
+	    + "MaxNumServices," + "MaxPlatLoad," + "CostPlat," + "CostService,"
+	    + System.getProperty("line.separator"));
+	boolean polarity = true;
+	long startTime;
+	for (int j = 0; j < runsNumber; j++) {
+		startTime = System.currentTimeMillis();
+		System.err.println("RUN: starting run " + (currentConfig + 1) + "." + (j + 1));
+		// run execution
+		doLoop(BipartiteGraph.class, args);
+		// renewing seed value
+		multiRunSeed += (polarity ? -1 : 1) * (currentConfig + j + 1);
+		polarity = !polarity;
+		allResults += organizeResults(configFile + "," + ("run" + j) + ",", metricsSnapshotHistory,
+		    robustnessHistory);
+		System.err.println("RUN: ending run " + (currentConfig + 1) + "." + (j + 1) + " | duration = "
+		    + (System.currentTimeMillis() - startTime));
+	}
+	return allResults;
+}
+
+
+/*
+ * public String standAloneSimulation(String[] args, int runsNumber, int currentConfig, String
+ * configFile, String title, String resultFolderPath, boolean metricsColumnWritten, Calendar start,
+ * int step, String configuration, int seed) { startingDate = start; dataCycleStep = step;
+ * configPath = configuration; multiRunSeed = seed; String allResults =
+ * "Configuration,Run,Cycle,Robustness,Shannon,NumPlat,NumAppAlive,NumSpecies,MeanSpecieSize,MeanPlatformSize,MeanPlatformLoad,PlatformCost"
+ * + System.getProperty("line.separator"); boolean polarity = true; long startTime; for (int j = 0;
+ * j < runsNumber; j++) { startTime = System.currentTimeMillis();
+ * System.err.println("RUN: starting run " + (currentConfig + 1) + "." + (j + 1)); // run execution
+ * doLoop(BipartiteGraph.class, args); // renewing seed value multiRunSeed += (polarity ? -1 : 1) *
+ * (currentConfig + j + 1); polarity = !polarity; allResults += organizeResults(configFile + "," +
+ * ("run" + j) + ",", metricsSnapshotHistory, robustnessHistory);
+ * System.err.println("RUN: ending run " + (currentConfig + 1) + "." + (j + 1) + " | duration = " +
+ * (System.currentTimeMillis() - startTime)); } return allResults; }
+ */
+
 public static void main(String[] args) {
+	// loggers levels
+	Log.ERROR();
+	// run starting time
+	startingDate = Calendar.getInstance();
+	dataCycleStep = 10;
+	// configuration files folder path
+	String configFolderPath = null;
+	String resultFolderPath = System.getProperty("user.dir");
+	// number of runs for statistical calculation
+	int runsNumber = 1;
+	// experimentation title
+	String title = null;
+	// bag of configuration file names (to be sorted)
+	Bag configList;
+	// reading command line parameters
 	for (int i = 0; i < args.length; i++) {
-		if (args[i].equals("-configuration") && (i + 1) < args.length) {
-			configPath = args[i + 1];
-			System.err.println("WARNING : using command line parameter for configuration file: "
-			    + configPath);
-		}
 		if (args[i].equals("-help")) {
 			System.out.println("Command line options:" + System.getProperty("line.separator")
 			    + "  -help             displays this message" + System.getProperty("line.separator")
+			    + "  -size             number of runs for statistical results"
+			    + System.getProperty("line.separator")
+			    + "  -configfolder     folder path to a set of .conf files (multirun)"
+			    + System.getProperty("line.separator")
+			    + "  -resultfolder     folder path to store the result files"
+			    + System.getProperty("line.separator")
 			    + "  -configuration    the configuration file path");
 		}
+		if (args[i].equals("-configuration") && (i + 1) < args.length) {
+			configPath = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: configuration file = "
+			    + configPath);
+		}
+		if (args[i].equals("-configfolder") && (i + 1) < args.length) {
+			configFolderPath = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: configuration files folder path = "
+			    + configFolderPath);
+		}
+		if (args[i].equals("-resultfolder") && (i + 1) < args.length) {
+			resultFolderPath = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: result files folder path = " + resultFolderPath);
+		}
+		if (args[i].equals("-size") && (i + 1) < args.length) {
+			runsNumber = Integer.parseInt(args[i + 1]);
+			System.err.println("COMMAND LINE PARAMETER: statistical sample size = " + runsNumber);
+		}
+		if (args[i].equals("-title") && (i + 1) < args.length) {
+			title = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: title = " + title);
+		}
 	}
-	doLoop(BipartiteGraph.class, args);
+	// reading config folder to gather config files
+	if (configFolderPath != null) {
+		configList = new Bag();
+		File confFolder = new File(configFolderPath);
+		if (confFolder.isDirectory()) {
+			File[] configFiles = confFolder.listFiles();
+			for (int i = 0; i < configFiles.length; i++) {
+				if (configFiles[i].getAbsolutePath().endsWith(".conf")) {
+					configList.add(configFiles[i].getAbsolutePath());
+					System.err.println("CONFIG: found configuration file " + configFiles[i].getName());
+				}
+			}
+		}
+		configList.sort();
+		// multi run: #config files X #runs
+		boolean resultsColumnWritten = false;
+		String resultsFileName = "results" + startingDate.getTime()
+		    + (title != null ? "_" + title : "") + ".csv";
+		File resultsFile = new File(resultFolderPath + "/" + resultsFileName);
+		String resultsAsText = "";
+		for (int currentConfigNumber = 0; currentConfigNumber < configList.size(); currentConfigNumber++) {
+			configPath = (String)configList.get(currentConfigNumber);
+			String currentConfigFile = new File(configPath).getName();
+			currentConfigFile = currentConfigFile.substring(0, currentConfigFile.length() - 5);
+			System.err.println("RUN: starting run for configuration " + configPath);
+			resultsAsText += simulate(args, runsNumber, currentConfigNumber, currentConfigFile, title,
+			    resultFolderPath, resultsColumnWritten);
+			multiRunSeed = -1;
+			resultsColumnWritten = true;
+		}
+		try {
+			FileWriter resultsFileWriter = new FileWriter(resultsFile);
+			resultsFileWriter.write(resultsAsText);
+			resultsFileWriter.flush();
+			resultsFileWriter.close();
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
+	} else {
+		doLoop(BipartiteGraph.class, args);
+	}
 	System.exit(0);
 }
 
@@ -749,7 +940,7 @@ public App createApp(String entityName) {
 		app = (App)createEntity(entityName);
 	}
 	catch (Exception e) {
-		logger.log(Level.SEVERE, "createApp: error " + e.getMessage());
+		Log.error("createApp: error " + e.getMessage());
 		return null;
 	}
 	addUnique(apps, app);
@@ -763,7 +954,7 @@ public Platform createPlatform(String entityName) {
 		platform = (Platform)createEntity(entityName);
 	}
 	catch (Exception e) {
-		logger.log(Level.SEVERE, "createPlatform: error " + e.getMessage());
+		Log.error("createPlatform: error " + e.getMessage());
 		return null;
 	}
 	addUnique(platforms, platform);
@@ -787,7 +978,7 @@ public static Strategy<? extends Steppable> getStrategy(String strategyName) {
 		strategy.init(id);
 	}
 	catch (Exception e) {
-		logger.log(Level.SEVERE, "getStrategy: error " + e.getMessage());
+		Log.error("getStrategy: error " + e.getMessage());
 		return null;
 	}
 

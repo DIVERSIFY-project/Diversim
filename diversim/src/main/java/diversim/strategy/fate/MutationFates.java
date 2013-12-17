@@ -4,13 +4,12 @@ package diversim.strategy.fate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import sim.util.Bag;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
+import diversim.util.Log;
 
 
 public class MutationFates {
@@ -26,10 +25,8 @@ public static void bugCorrected(BipartiteGraph graph) {
 		if (i >= 0) {
 			platform.getServices().remove(i);
 			BipartiteGraph.addUnique(platform.getServices(), replacement);
-			Logger.getLogger(MutationFates.class.getName()).log(
-			    Level.INFO,
-			    "Platform <" + platform + "> has mutated: Service <" + obsolete + "> replaced with Service <"
- + replacement + "> by BugCorrected");
+			Log.debug("Platform <" + platform + "> has mutated: Service <" + obsolete
+			    + "> replaced with Service <" + replacement + "> by BugCorrected");
 		}
 	}
 }
@@ -51,9 +48,8 @@ public static void upgrade(BipartiteGraph graph, int upgradedServicesNumber) {
 	for (Service service : upgradedServices) {
 		BipartiteGraph.addUnique(upgradedPlatform.getServices(), service);
 	}
-	Logger.getLogger(MutationFates.class.getName()).log(
-	    Level.INFO,
-	    "Platform <" + upgradedPlatform + "> has upgraded Services <" + removedServices + "> into <"
+	Log.debug("Platform <" + upgradedPlatform + "> has upgraded Services <" + removedServices
+	    + "> into <"
 	        + upgradedServices + "> by Upgrade");
 }
 
@@ -83,8 +79,7 @@ public static void random(BipartiteGraph graph, double populationSize, double mu
 				break;
 			}
 		}
-		Logger.getLogger(MutationFates.class.getName()).log(Level.INFO,
-		    "Platform <" + platform + "> has mutated " + removedServices + " Services by Random");
+		Log.debug("Platform <" + platform + "> has mutated " + removedServices + " Services by Random");
 		if (--counterPopulation <= 0) {
 			break;
 		}
