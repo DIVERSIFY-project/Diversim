@@ -21,6 +21,10 @@ public double getRedundancy() {
 }
 
 
+public void setRedundancy(BipartiteGraph graph) {
+	redundancy = ((double)degree) / graph.getNumPlatforms();
+}
+
 public App(int id, List<Service> servs, Strategy<App> strategy) {
 	super(id, strategy);
 	for (Service s : servs) {
