@@ -984,6 +984,33 @@ public static Strategy<? extends Steppable> getStrategy(String strategyName) {
 }
 
 
+public static ArrayList<Service> removableServices(Bag needLinks, ArrayList<Service> available,
+    int howMany) {
+	@SuppressWarnings("unchecked")
+	ArrayList<Service> needed = new ArrayList<Service>(needLinks);
+	return removableServices(needed, available, howMany);
+}
+
+
+public static ArrayList<Service> removableServices(ArrayList<Service> needLinks,
+    ArrayList<Service> available, int howMany) {
+	if (!Configuration.contains("weighted_links") || !Configuration.getBoolean("weighted_links"))
+	  howMany = available.size();
+	ArrayList<Service> removable = new ArrayList<Service>();
+	if (howMany > 0 && needLinks.size() > 0 && available.size() > 0) {
+		int counter = 0;
+		Iterator<Service> needed = needLinks.iterator();
+		while (needed.hasNext() && counter <= howMany) {
+			Service next = needed.next();
+			if (Collections.binarySearch(available, next) >= 0) {
+				removable.add(next);
+				counter++;
+			}
+		}
+	}
+	return removable;
+}
+
 public void addEdge(Entity from, Entity to, Object info) {
 	bipartiteNetwork.addEdge(from, to, info);
 	from.incDegree();
