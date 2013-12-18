@@ -12,14 +12,11 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
-import diversim.strategy.application.LinkingC;
 import diversim.strategy.fate.KillFates;
 import diversim.strategy.fate.LinkStrategyFates;
 import diversim.util.Log;
@@ -27,53 +24,36 @@ import diversim.util.Log;
 
 public class Robustness {
 	
-	private Method linkingMethod;
-	private Method killingMethod;
-	//private BipartiteGraph graph;
-	
-	public Robustness(String linkMethodName, String killMethodName){
-		//this.graph = graph;
-		try{
-			this.linkingMethod = LinkingC.class.getDeclaredMethod(linkMethodName, BipartiteGraph.class);
-		}catch(Exception e){
-			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
-				    "In calculateAllRobustness, could not load linking method <" + linkMethodName + ">");
-				this.linkingMethod = null;
-		}
-		try{
-			this.killingMethod = KillFates.class.getDeclaredMethod(killMethodName, BipartiteGraph.class);
-		}catch(Exception e){
-			Logger.getLogger(Robustness.class.getName()).log(Level.WARNING,
-				    "In calculateAllRobustness, could not load killing method <" + killMethodName + ">");
-				this.killingMethod = null;
-		}
-	}
-	
-	public Method getLinkingMethod(){
-		return this.linkingMethod;
-	}
-	
-	public Method getKillingMethod(){
-		return this.killingMethod;
-	}
+private Method linkingMethod;
 
+private Method killingMethod;
+	
+
+public Robustness(Method robustnessLinkingMethod, Method robustnessKillingMethod) {
+	linkingMethod = robustnessLinkingMethod;
+	killingMethod = robustnessKillingMethod;
+}
+	
+
+public Method getLinkingMethod() {
+	return this.linkingMethod;
+}
+
+
+public Method getKillingMethod() {
+	return this.killingMethod;
+}
+
+@SuppressWarnings("unchecked")
 public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method linking,
     Method killing) {
 	RobustnessResults robustnessResult = new RobustnessResults();
-	// saving graph status
-	/*
-	 * List<Boolean> deadAppList = new ArrayList<Boolean>(); for (App app : graph.apps) {
-	 * deadAppList.add(!app.isAlive()); } List<Boolean> deadPlatformList = new ArrayList<Boolean>();
-	 * for (Platform platform : graph.platforms) { deadPlatformList.add(!platform.isAlive()); }
-	 */
 	// shallow cloning
 	BipartiteGraph clone = graph.extinctionClone();
 	double robustness = 0;
 	double maxRobustness = clone.getNumApps() * clone.getNumPlatforms();
 	for (int i = clone.getNumPlatforms() - 1; i >= 0; i--) {
-		// System.out.println("EXTINCTION " + linking.getName() + "-" + killing.getName() + "("
-		// + currentStrategyIndex + "/" + totalNumStrategies + "): step = "
-		// + (initNumPlatforms - i) + "/" + initNumPlatforms);
+		Log.trace("In calculateRobustness, using linking method<" + linking.getName() + ">");
 		try {
 			linking.invoke(null, clone);
 		}
@@ -91,7 +71,7 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 		robustnessResult.getAliveAppsHistory().add(aliveAppsCounter);
 		robustness += aliveAppsCounter;
 		try {
-			killing.invoke(null, clone, 0.18);
+			killing.invoke(null, clone, 1);
 		}
 		catch (Exception e) {
 			Log.warn("In calculateRobustness, could not load killing method <" + killing.getName() + ">");
@@ -99,11 +79,6 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 			return null;
 		}
 	}
-	/*
-	 * for (int i = 0; i < deadAppList.size(); i++) { graph.apps.get(i).dead = deadAppList.get(i); }
-	 * for (int i = 0; i < deadPlatformList.size(); i++) { graph.platforms.get(i).dead =
-	 * deadPlatformList.get(i); }
-	 */
 	robustnessResult.setRobustness(robustness / maxRobustness);
 	return robustnessResult;
 }

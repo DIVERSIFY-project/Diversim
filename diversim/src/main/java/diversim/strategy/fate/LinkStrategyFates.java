@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import sim.field.network.Edge;
 import sim.util.Bag;
@@ -15,6 +16,7 @@ import diversim.model.BipartiteGraph;
 import diversim.model.Entity;
 import diversim.model.Platform;
 import diversim.model.Service;
+import diversim.util.Log;
 import ec.util.MersenneTwisterFast;
 
 
@@ -34,6 +36,9 @@ public static Map<String, Class[]> getLinkingMethods() {
 	args = new Class[1];
 	args[0] = BipartiteGraph.class;
 	results.put("linkingC", args);
+	args = new Class[1];
+	args[0] = BipartiteGraph.class;
+	results.put("bestFitFirst", args);
 	return results;
 }
 
@@ -131,6 +136,64 @@ public static void linkingC(BipartiteGraph graph) {
 			}
 		}
 	}
+}
+
+
+public static void bestFitFirst(BipartiteGraph graph) {
+	graph.removeAllEdges();
+	Bag platforms = new Bag(graph.platforms);
+	for (App app : graph.apps) {
+		ArrayList<Service> needLinks = new ArrayList<Service>(app.getServices());
+		TreeMap<Integer, Object[]> platformsSorted = sortByConnectable(graph, needLinks, platforms);
+
+		while ((needLinks.size() > 0) && platformsSorted.size() > 0) {
+			Map.Entry<Integer, Object[]> pltSet = platformsSorted.pollFirstEntry();
+			Platform p = (Platform)(pltSet.getValue())[0];
+			@SuppressWarnings("unchecked")
+			ArrayList<Service> removable = (ArrayList<Service>)(pltSet.getValue())[1];
+			if (removable.size() > 0) {
+				needLinks.removeAll(removable);
+				graph.addEdge(app, p, removable.size());
+				platformsSorted = sortByConnectable(graph, needLinks, platforms);
+			} else {
+				break;
+			}
+		}
+
+		app.dead = needLinks.size() != 0;
+		// If app does not have all service needs fulfilled, unlink it and make it dead
+		if (!app.isAlive()) {
+			// indirected network: no edgesOut
+			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+				graph.removeEdge(app, (Edge)edge);
+			}
+		}
+		app.setRedundancy(graph);
+		Log.debug("---" + app.getId() + "---" + graph.getCurCycle() + "---"
+		    + graph.networkType + "---");
+	}
+	// graph.displayGraph();
+}
+
+
+/*
+ * Sort a list of platforms by the number of available links it can provide out of the needed links
+ */
+private static TreeMap<Integer, Object[]> sortByConnectable(BipartiteGraph graph,
+    ArrayList<Service> needLinks, Bag platforms) {
+	TreeMap<Integer, Object[]> platformsSorted = new TreeMap<Integer, Object[]>();
+	if (needLinks.size() > 0 && platforms.size() > 0) {
+		for (Object p : platforms) {
+			ArrayList<Service> connectableServices = BipartiteGraph.removableServices(needLinks,
+			    ((Platform)p).getServices(), (graph.getPlatformMaxLoad() - ((Platform)p).getDegree()));
+			// Platforms with the highest number of connectable services first
+			if (connectableServices.size() > 0) {
+				Object[] result = {p, connectableServices};
+				platformsSorted.put(-(connectableServices.size()), result);
+			}
+		}
+	}
+	return platformsSorted;
 }
 
 
