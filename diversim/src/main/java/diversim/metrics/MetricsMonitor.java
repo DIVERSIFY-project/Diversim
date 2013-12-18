@@ -3,6 +3,7 @@ package diversim.metrics;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,32 +60,46 @@ import diversim.util.config.Configuration;
  */
 public class MetricsMonitor {
 
-    public static final String SHANNON_PLATFORM = "ShannonPlatform";
-    public static final String GS_PLATFORM = "GiniSimpsonPlatforms";
-    public static final String DIFF_PLATFORM = "AveDiffPlatform";
-    public static final String NUM_PLATFORM = "NumOfPlatform";
-    public static final String NUM_SPECIES_PLATFORM = "NumOfPlatformSpecies";
-    public static final String REDUDANCY_PLATFORM = "RedundancyOfPlatform";
-    public static final String REDUDANCY_PLATFORM_TO_APP = "RedundancyOfPlatformToApp";
-    public static final String WC_ONE_PLATFORM_FAILURE = "WorstCaseOnePlatformFailure";
-    public static final String WC_FIRST_APP_DIE = "WorstCaseFirstAppDie";
+public static final String SHANNON_PLATFORM = "ShannonPlatform";
 
-    public static final String NUM_APP_ALIVE = "NumOfAppAlive";
+public static final String GS_PLATFORM = "GiniSimpsonPlatforms";
 
-    public static final String AVE_NUM_APP_ALIVE = "AveNumOfAppAlive";
-    public static final String NUM_UNSPORTEDAPP = "NumOfUnsupportedApp";
-	public static final String AVG_SERVICE_OF_PLATFORMS = "AverageServiceInPlatforms";
-	public static final String TO_SUPPORT_NEW_APP = "AbleToSupportNewApp";
-	public static final String FAR_FROM_SUPPORTING_NEW_APP = "FarFromSupportingNewApp";
-	public static final String ROBUSTNESS = "Robustness";
+public static final String DIFF_PLATFORM = "AveDiffPlatform";
 
+public static final String NUM_PLATFORM = "NumOfPlatform";
+
+public static final String NUM_SPECIES_PLATFORM = "NumOfPlatformSpecies";
+
+public static final String REDUDANCY_PLATFORM = "RedundancyOfPlatform";
+
+public static final String REDUDANCY_PLATFORM_TO_APP = "RedundancyOfPlatformToApp";
+
+public static final String WC_ONE_PLATFORM_FAILURE = "WorstCaseOnePlatformFailure";
+
+public static final String WC_FIRST_APP_DIE = "WorstCaseFirstAppDie";
+
+public static final String NUM_APP_ALIVE = "NumOfAppAlive";
+
+public static final String AVE_NUM_APP_ALIVE = "AveNumOfAppAlive";
+
+public static final String NUM_UNSPORTEDAPP = "NumOfUnsupportedApp";
+
+public static final String AVG_SERVICE_OF_PLATFORMS = "AverageServiceInPlatforms";
+
+public static final String TO_SUPPORT_NEW_APP = "AbleToSupportNewApp";
+
+public static final String FAR_FROM_SUPPORTING_NEW_APP = "FarFromSupportingNewApp";
+
+public static final String ROBUSTNESS = "Robustness";
 public static final String MEAN_NUM_PLATFORM_PER_SPECIE = "MeanNumPlatformPerSpecie";
-
 public static final String MEAN_PLATFORM_SIZE = "MeanPlatformSize";
-
 public static final String MEAN_PLATFORM_LOAD = "MeanPlatformLoad";
 
 public static final String PLATFORM_COST = "PlatformCost";
+
+Method robustnessLinkingMethod;
+
+Method robustnessKillingMethod;
 
     /**
      * A list of all the values declared before. Make sure that it contains
@@ -134,9 +149,13 @@ public static final String PLATFORM_COST = "PlatformCost";
     DiffereceOfDNAs<Platform> diff_p = null;
     Robustness robustness = null;
 
-    public MetricsMonitor(BipartiteGraph graph, List<String> paras) {
+
+public MetricsMonitor(BipartiteGraph graph, List<String> paras, Method robustnessLinkingMethod,
+    Method robustnessKillingMethod) {
         this.graph = graph;
 	this.register = new ArrayList<String>(paras);
+	this.robustnessLinkingMethod = robustnessLinkingMethod;
+	this.robustnessKillingMethod = robustnessKillingMethod;
         _init();
     }
 
@@ -171,7 +190,7 @@ public static final String PLATFORM_COST = "PlatformCost";
                 snp_p = new SpeciesAndPopulation<Platform>(graph.platforms);
             }
             else if(ROBUSTNESS.equals(s) && robustness == null){
-            	robustness = new Robustness("linkingC", "concentrationRandom");
+			robustness = new Robustness(robustnessLinkingMethod, robustnessKillingMethod);
             }
 		    else if (AVE_NUM_APP_ALIVE.equals(s) && appFailures == null)
 			    appFailures = new AppFailures(graph);
@@ -315,7 +334,8 @@ public void writeHistoryToFile(String filePath) {
      *
      * @param graph
      */
-    public static MetricsMonitor createMetricsInstance(BipartiteGraph graph) {
+public static MetricsMonitor createMetricsInstance(BipartiteGraph graph,
+    Method robustnessLinkingMethod, Method robustnessKillingMethod) {
         String metrics_para_prefix = "metrics";
         List<String> paras = new ArrayList<String>();
         if (Configuration.getBoolean(metrics_para_prefix)) {
@@ -326,7 +346,8 @@ public void writeHistoryToFile(String filePath) {
             }
         }
         System.out.println("Metrics : Recording " + paras);
-        MetricsMonitor metrics = new MetricsMonitor(graph, paras);
+	MetricsMonitor metrics = new MetricsMonitor(graph, paras, robustnessLinkingMethod,
+	    robustnessKillingMethod);
         metrics.filePath = Configuration.getString(metrics_para_prefix + ".filepath");
         allMetrics.add(metrics);
         return metrics;
@@ -343,7 +364,7 @@ public void writeHistoryToFile(String filePath) {
      * steps. On the hand, it is the average between several runs.
      */
     public static MetricsMonitor calculateAverage() {
-	MetricsMonitor avg = new MetricsMonitor(null, null);
+	MetricsMonitor avg = new MetricsMonitor(null, null, null, null);
 
         List<MetricsMonitor> useful = screenOutIncomplete();
 
@@ -375,7 +396,7 @@ public void writeHistoryToFile(String filePath) {
     }
     
     public static MetricsMonitor combineTotal(){
-	MetricsMonitor tot = new MetricsMonitor(null, null);
+	MetricsMonitor tot = new MetricsMonitor(null, null, null, null);
         tot.filePath = allMetrics.get(0).filePath + "tot/";
 		
 		List<MetricsMonitor> useful = screenOutIncomplete();

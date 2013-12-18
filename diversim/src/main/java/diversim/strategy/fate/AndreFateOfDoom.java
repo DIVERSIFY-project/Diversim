@@ -37,7 +37,8 @@ public void evolve(BipartiteGraph graph, Fate agent) {
 	//
 	MutationFates.random(graph, 0.1, 0.1);
 	// linking
-	LinkStrategyFates.linkingC(graph);
+	// LinkStrategyFates.linkingC(graph);
+	// LinkStrategyFates.bestFitFirst(graph);
 	for (App app : graph.apps) {
 		app.step(graph);
 	}

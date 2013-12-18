@@ -12,6 +12,7 @@ import java.util.Calendar;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -138,7 +139,7 @@ private static String configPath;
 
 public int stepsPerCycle;
 
-private static Logger logger = Logger.getLogger("BipartiteGraph");
+public String networkType = "Regular";
 
 // service bundles for applications
 ArrayList<ArrayList<Service>> serviceBundles;
@@ -156,8 +157,10 @@ static double costPlatform = 10;
 
 static double costService = 1;
 
+static String robustnessLinkingMethodName;
 static Method robustnessLinkingMethod;
 
+static String robustnessKillingMethodName;
 static Method robustnessKillingMethod;
 
 // Map<metricname, value>
@@ -327,10 +330,14 @@ public double getAvgAppSize() {
 public double getRobustness() {
 	if (schedule.getTime() <= Schedule.BEFORE_SIMULATION || getNumApps() == 0) return 0.0;
 	try {
-		return Robustness.calculateRobustness(this,
-		    LinkStrategyFates.class.getDeclaredMethod("linkingB", BipartiteGraph.class),
-				KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class))
-				.getRobustness();
+		return Robustness.calculateRobustness(
+		    this,
+		    LinkStrategyFates.class.getDeclaredMethod(robustnessLinkingMethodName, LinkStrategyFates
+		        .getLinkingMethods().get(robustnessLinkingMethodName)),
+		    KillFates.class.getDeclaredMethod(robustnessKillingMethodName, KillFates
+		        .getKillingMethods().get(robustnessKillingMethodName))).getRobustness();
+		// LinkStrategyFates.class.getDeclaredMethod("linkingB", BipartiteGraph.class),
+		// KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class))
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -508,6 +515,7 @@ public BipartiteGraph extinctionClone() {
 	clone.stepsPerCycle = stepsPerCycle;
 	clone.serviceBundles = serviceBundles;
 	clone.nextBundle = nextBundle;
+	clone.networkType = "Clone";
 	return clone;
 }
 
@@ -550,6 +558,8 @@ private void readConfig() {
 	platformMinSize = Configuration.getInt("p_min_size");
 	centralized = Configuration.getBoolean("centralized");
 	simulation_iteration_limit = Configuration.getInt("simulation_iteration_limit", 1); // default is 1
+	robustnessLinkingMethodName = Configuration.getString("metrics.linking", "bestFitFirst");
+	robustnessKillingMethodName = Configuration.getString("metrics.killing", "unattendedExact");
 }
 
 
@@ -646,13 +656,15 @@ public void start() {
 		initFate();
 		initPlatform();
 		initApp();
-		metrics = MetricsMonitor.createMetricsInstance(this);
+		robustnessLinkingMethod = LinkStrategyFates.class.getDeclaredMethod(
+		    robustnessLinkingMethodName,
+		    LinkStrategyFates.getLinkingMethods().get(robustnessLinkingMethodName));
+		robustnessKillingMethod = KillFates.class.getDeclaredMethod(robustnessKillingMethodName,
+		    KillFates.getKillingMethods().get(robustnessKillingMethodName));
+		metrics = MetricsMonitor.createMetricsInstance(this, robustnessLinkingMethod,
+		    robustnessKillingMethod);
 		metricsSnapshotHistory = new LinkedList<Map<String, Object>>();
 		robustnessHistory = new LinkedList<RobustnessResults>();
-		robustnessLinkingMethod = LinkStrategyFates.class.getDeclaredMethod("linkingC",
-		    LinkStrategyFates.getLinkingMethods().get("linkingC"));
-		robustnessKillingMethod = KillFates.class.getDeclaredMethod("unattendedExact", KillFates
-		    .getKillingMethods().get("unattendedExact"));
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -679,6 +691,7 @@ public void start() {
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
 			if ((getCurCycle() / dataCycleStep) * dataCycleStep == getCurCycle()) {
 				System.out.println("CYCLE " + getCurCycle());
+				LinkStrategyFates.bestFitFirst((BipartiteGraph)state);
 				metricsSnapshotHistory.add(metrics.getSnapshot());
 				robustnessHistory.add(Robustness.calculateRobustness((BipartiteGraph)state,
 				    robustnessLinkingMethod, robustnessKillingMethod));
@@ -689,7 +702,11 @@ public void start() {
 				// BipartiteGraph.this.start(); //startover FIXME check if needed
 				// multi run results save
 				metricsSnapshot = metrics.getSnapshot();
-				singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
+				// singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
+				singleRunRobustnessByStrategy = new LinkedHashMap<String, RobustnessResults>();
+				singleRunRobustnessByStrategy.put("BestFitFirst-Unattended", Robustness
+				    .calculateRobustness((BipartiteGraph)state, robustnessLinkingMethod,
+				        robustnessKillingMethod));
 				// multi run seed randomization
 				multiRunSeed = random().nextInt();
 			}
@@ -828,22 +845,31 @@ public static void main(String[] args) {
 		}
 	}
 	// reading config folder to gather config files
-	if (configFolderPath != null) {
+	if (configFolderPath != null || configPath != null) {
 		configList = new Bag();
-		File confFolder = new File(configFolderPath);
-		if (confFolder.isDirectory()) {
-			File[] configFiles = confFolder.listFiles();
-			for (int i = 0; i < configFiles.length; i++) {
-				if (configFiles[i].getAbsolutePath().endsWith(".conf")) {
-					configList.add(configFiles[i].getAbsolutePath());
-					System.err.println("CONFIG: found configuration file " + configFiles[i].getName());
+		if (configFolderPath != null) {
+			File confFolder = new File(configFolderPath);
+			if (confFolder.isDirectory()) {
+				File[] configFiles = confFolder.listFiles();
+				for (int i = 0; i < configFiles.length; i++) {
+					if (configFiles[i].getAbsolutePath().endsWith(".conf")) {
+						configList.add(configFiles[i].getAbsolutePath());
+						System.err.println("CONFIG: found configuration file " + configFiles[i].getName());
+					}
 				}
+			}
+		}
+		if (configPath != null) {
+			File configFile = new File(configPath);
+			if (configFile.getAbsolutePath().endsWith(".conf")) {
+				configList.add(configFile.getAbsolutePath());
+				System.err.println("CONFIG: using configuration file " + configFile.getName());
 			}
 		}
 		configList.sort();
 		// multi run: #config files X #runs
 		boolean resultsColumnWritten = false;
-		String resultsFileName = "results" + startingDate.getTime()
+		String resultsFileName = "results" + System.currentTimeMillis()
 		    + (title != null ? "_" + title : "") + ".csv";
 		File resultsFile = new File(resultFolderPath + "/" + resultsFileName);
 		String resultsAsText = "";
@@ -985,6 +1011,33 @@ public static Strategy<? extends Steppable> getStrategy(String strategyName) {
 	return strategy;
 }
 
+
+public static ArrayList<Service> removableServices(Bag needLinks, ArrayList<Service> available,
+    int howMany) {
+	@SuppressWarnings("unchecked")
+	ArrayList<Service> needed = new ArrayList<Service>(needLinks);
+	return removableServices(needed, available, howMany);
+}
+
+
+public static ArrayList<Service> removableServices(ArrayList<Service> needLinks,
+    ArrayList<Service> available, int howMany) {
+	if (!Configuration.contains("weighted_links") || !Configuration.getBoolean("weighted_links"))
+	  howMany = available.size();
+	ArrayList<Service> removable = new ArrayList<Service>();
+	if (howMany > 0 && needLinks.size() > 0 && available.size() > 0) {
+		int counter = 0;
+		Iterator<Service> needed = needLinks.iterator();
+		while (needed.hasNext() && counter <= howMany) {
+			Service next = needed.next();
+			if (Collections.binarySearch(available, next) >= 0) {
+				removable.add(next);
+				counter++;
+			}
+		}
+	}
+	return removable;
+}
 
 public void addEdge(Entity from, Entity to, Object info) {
 	bipartiteNetwork.addEdge(from, to, info);
@@ -1221,6 +1274,35 @@ public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
 	}
 	bipartiteNetwork.removeNode(entity);
 	changed = true;
+}
+
+
+public void displayGraph() {
+	String graph = "";
+	if (apps.size() + platforms.size() < 100) {
+		graph += "A[";
+		for (App app : apps) {
+			graph += "(" + app.getId() + "|d" + app.getDegree() + "|s" + app.getSize() + ")";
+		}
+		graph += "]" + System.getProperty("line.separator") + "P[";
+		for (Platform platform : platforms) {
+			graph += "(" + platform.getId() + "|d" + platform.getDegree() + "|s" + platform.getSize()
+			    + ")";
+		}
+		graph += "]" + System.getProperty("line.separator") + "L[";
+		for (App app : apps) {
+			graph += "(";
+			for (Object edge : bipartiteNetwork.getEdgesIn(app)) {
+				graph += "{" + ((App)((Edge)edge).from()).getId() + "-(" + ((Edge)edge).getWeight() + ")->"
+				    + ((Platform)((Edge)edge).to()).getId() + "}";
+			}
+			graph += ")";
+		}
+		graph += "]";
+	} else {
+		graph += "Graph too big";
+	}
+	System.out.println(graph);
 }
 
 }
