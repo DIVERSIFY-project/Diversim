@@ -144,6 +144,8 @@ private static String configPath;
 
 public int stepsPerCycle;
 
+public String networkType = "Regular";
+
 // service bundles for applications
 ArrayList<ArrayList<Service>> serviceBundles;
 
@@ -513,6 +515,7 @@ public BipartiteGraph extinctionClone() {
 	clone.stepsPerCycle = stepsPerCycle;
 	clone.serviceBundles = serviceBundles;
 	clone.nextBundle = nextBundle;
+	clone.networkType = "Clone";
 	return clone;
 }
 
@@ -831,22 +834,31 @@ public static void main(String[] args) {
 		}
 	}
 	// reading config folder to gather config files
-	if (configFolderPath != null) {
+	if (configFolderPath != null || configPath != null) {
 		configList = new Bag();
-		File confFolder = new File(configFolderPath);
-		if (confFolder.isDirectory()) {
-			File[] configFiles = confFolder.listFiles();
-			for (int i = 0; i < configFiles.length; i++) {
-				if (configFiles[i].getAbsolutePath().endsWith(".conf")) {
-					configList.add(configFiles[i].getAbsolutePath());
-					System.err.println("CONFIG: found configuration file " + configFiles[i].getName());
+		if (configFolderPath != null) {
+			File confFolder = new File(configFolderPath);
+			if (confFolder.isDirectory()) {
+				File[] configFiles = confFolder.listFiles();
+				for (int i = 0; i < configFiles.length; i++) {
+					if (configFiles[i].getAbsolutePath().endsWith(".conf")) {
+						configList.add(configFiles[i].getAbsolutePath());
+						System.err.println("CONFIG: found configuration file " + configFiles[i].getName());
+					}
 				}
+			}
+		}
+		if (configPath != null) {
+			File configFile = new File(configPath);
+			if (configFile.getAbsolutePath().endsWith(".conf")) {
+				configList.add(configFile.getAbsolutePath());
+				System.err.println("CONFIG: using configuration file " + configFile.getName());
 			}
 		}
 		configList.sort();
 		// multi run: #config files X #runs
 		boolean resultsColumnWritten = false;
-		String resultsFileName = "results" + startingDate.getTime()
+		String resultsFileName = "results" + System.currentTimeMillis()
 		    + (title != null ? "_" + title : "") + ".csv";
 		File resultsFile = new File(resultFolderPath + "/" + resultsFileName);
 		String resultsAsText = "";
