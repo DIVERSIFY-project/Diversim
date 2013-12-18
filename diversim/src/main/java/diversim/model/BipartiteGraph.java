@@ -650,8 +650,8 @@ public void start() {
 		metrics = MetricsMonitor.createMetricsInstance(this);
 		metricsSnapshotHistory = new LinkedList<Map<String, Object>>();
 		robustnessHistory = new LinkedList<RobustnessResults>();
-		robustnessLinkingMethod = LinkStrategyFates.class.getDeclaredMethod("linkingC",
-		    LinkStrategyFates.getLinkingMethods().get("linkingC"));
+		robustnessLinkingMethod = LinkStrategyFates.class.getDeclaredMethod("bestFitFirst",
+		    LinkStrategyFates.getLinkingMethods().get("bestFitFirst"));
 		robustnessKillingMethod = KillFates.class.getDeclaredMethod("unattendedExact", KillFates
 		    .getKillingMethods().get("unattendedExact"));
 	}
@@ -680,6 +680,7 @@ public void start() {
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
 			if ((getCurCycle() / dataCycleStep) * dataCycleStep == getCurCycle()) {
 				System.out.println("CYCLE " + getCurCycle());
+				LinkStrategyFates.bestFitFirst((BipartiteGraph)state);
 				metricsSnapshotHistory.add(metrics.getSnapshot());
 				robustnessHistory.add(Robustness.calculateRobustness((BipartiteGraph)state,
 				    robustnessLinkingMethod, robustnessKillingMethod));
@@ -687,7 +688,11 @@ public void start() {
 			if (state.schedule.scheduleComplete()) {
 				// multi run results save
 				metricsSnapshot = metrics.getSnapshot();
-				singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
+				// singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
+				singleRunRobustnessByStrategy = new LinkedHashMap<String, RobustnessResults>();
+				singleRunRobustnessByStrategy.put("BestFitFirst-Unattended", Robustness
+				    .calculateRobustness((BipartiteGraph)state, robustnessLinkingMethod,
+				        robustnessKillingMethod));
 				// multi run seed randomization
 				multiRunSeed = random().nextInt();
 			}
