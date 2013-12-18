@@ -1240,4 +1240,33 @@ public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
 	changed = true;
 }
 
+
+public void displayGraph() {
+	String graph = "";
+	if (apps.size() + platforms.size() < 100) {
+		graph += "A[";
+		for (App app : apps) {
+			graph += "(" + app.getId() + "|d" + app.getDegree() + "|s" + app.getSize() + ")";
+		}
+		graph += "]" + System.getProperty("line.separator") + "P[";
+		for (Platform platform : platforms) {
+			graph += "(" + platform.getId() + "|d" + platform.getDegree() + "|s" + platform.getSize()
+			    + ")";
+		}
+		graph += "]" + System.getProperty("line.separator") + "L[";
+		for (App app : apps) {
+			graph += "(";
+			for (Object edge : bipartiteNetwork.getEdgesIn(app)) {
+				graph += "{" + ((App)((Edge)edge).from()).getId() + "-(" + ((Edge)edge).getWeight() + ")->"
+				    + ((Platform)((Edge)edge).to()).getId() + "}";
+			}
+			graph += ")";
+		}
+		graph += "]";
+	} else {
+		graph += "Graph too big";
+	}
+	System.out.println(graph);
+}
+
 }
