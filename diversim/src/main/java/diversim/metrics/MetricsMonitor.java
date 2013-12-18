@@ -136,7 +136,7 @@ public static final String PLATFORM_COST = "PlatformCost";
 
     public MetricsMonitor(BipartiteGraph graph, List<String> paras) {
         this.graph = graph;
-        this.register = new ArrayList(paras);
+	this.register = new ArrayList<String>(paras);
         _init();
     }
 
@@ -343,7 +343,7 @@ public void writeHistoryToFile(String filePath) {
      * steps. On the hand, it is the average between several runs.
      */
     public static MetricsMonitor calculateAverage() {
-        MetricsMonitor avg = new MetricsMonitor(null);
+	MetricsMonitor avg = new MetricsMonitor(null, null);
 
         List<MetricsMonitor> useful = screenOutIncomplete();
 
@@ -375,7 +375,7 @@ public void writeHistoryToFile(String filePath) {
     }
     
     public static MetricsMonitor combineTotal(){
-		MetricsMonitor tot = new MetricsMonitor(null);
+	MetricsMonitor tot = new MetricsMonitor(null, null);
         tot.filePath = allMetrics.get(0).filePath + "tot/";
 		
 		List<MetricsMonitor> useful = screenOutIncomplete();
