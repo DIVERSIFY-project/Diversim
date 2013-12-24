@@ -9,18 +9,18 @@ public class RobustnessResults {
 
 List<Integer> aliveAppsHistory;
 
-double robustness;
-
-
-public RobustnessResults(List<Integer> aliveAppsHistory, double robustness) {
-	this.aliveAppsHistory = aliveAppsHistory;
-	this.robustness = robustness;
-}
+double robustnessAL; // measured against (initApps x numPlatforms) with relinking
+double robustnessBL; // measured against (numApps x numPlatforms) with relinking
+double robustnessANoL; // measured against (initApps x numPlatforms) with no relinking
+double robustnessBNoL; // measured against (numApps x numPlatforms) with no relinking
 
 
 public RobustnessResults() {
 	aliveAppsHistory = new ArrayList<Integer>();
-	robustness = 0;
+	robustnessAL = 0;
+	robustnessBL = 0;
+	robustnessANoL = 0;
+	robustnessBNoL = 0;
 }
 
 
@@ -34,19 +34,28 @@ public void setAliveAppsHistory(List<Integer> aliveAppsHistory) {
 }
 
 
-public double getRobustness() {
-	return robustness;
+public double getRobustness() { // FIXME what about the other kinds of robustness?
+	return robustnessBL;
 }
 
 
-public void setRobustness(double robustness) {
-	this.robustness = robustness;
+public void setRobustnessL(double robA, double robB) {
+	this.robustnessAL = robA;
+	this.robustnessBL = robB;
+}
+
+
+public void setRobustnessNoL(double robA, double robB) {
+	this.robustnessANoL = robA;
+	this.robustnessBNoL = robB;
 }
 
 
 @Override
 public String toString() {
-	return "Rob=" + robustness + " | " + "Apps=" + aliveAppsHistory;
+	return "Rob_AL=" + robustnessAL + " | " + "Rob_BL=" + robustnessBL + " | " +
+			"Rob_ANoL=" + robustnessANoL + " | " + "Rob_BNoL=" + robustnessBNoL + " | " +
+			"Apps=" + aliveAppsHistory;
 }
 
 }

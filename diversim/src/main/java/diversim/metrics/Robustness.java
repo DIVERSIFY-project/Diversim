@@ -49,11 +49,15 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
     Method killing) {
 	RobustnessResults robustnessResult = new RobustnessResults();
 	// shallow cloning
-	BipartiteGraph clone = graph.extinctionClone();
-	double robustness = 0;
-	double maxRobustness = clone.getNumApps() * clone.getNumPlatforms();
-	for (int i = clone.getNumPlatforms() - 1; i >= 0; i--) {
+	boolean[] relink = {true, false};
+	int max = graph.getNumPlatforms();
+	double robustness;
+	for (int j = 0; j < 2; j++) { // j = 0 -> always relink, j = 1 -> no relink
+		BipartiteGraph clone = graph.extinctionClone();
+		robustness = 0;
+		for (int i = max - 1; i >= 0; i--) {
 		Log.trace("In calculateRobustness, using linking method<" + linking.getName() + ">");
+			if (i == max || relink[j]) {
 		try {
 			linking.invoke(null, clone);
 		}
@@ -62,6 +66,7 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 			e.printStackTrace();
 			return null;
 		}
+			}
 		int aliveAppsCounter = 0;
 		for (App app : clone.apps) {
 			if (app.isAlive()) {
@@ -78,8 +83,15 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 			e.printStackTrace();
 			return null;
 		}
+		}
+		robustness /= max;
+		if (relink[j])
+			robustnessResult.setRobustnessL(robustness / graph.getInitApps(),
+					robustness / graph.getNumApps());
+		else
+			robustnessResult.setRobustnessNoL(robustness / graph.getInitApps(),
+					robustness / graph.getNumApps());
 	}
-	robustnessResult.setRobustness(robustness / maxRobustness);
 	return robustnessResult;
 }
 
@@ -121,7 +133,7 @@ public static Map<String, Map<String, Double>> calculateStatAllRobustness(Bipart
 				}
 				if (linkingMethod != null && killingMethod != null) {
 					RobustnessResults robustnessResult = calculateRobustness(graph, linkingMethod,
-					    killingMethod);
+							killingMethod);
 					statResult.addValue(robustnessResult.getRobustness());
 					for (int j = 0; j < robustnessResult.getAliveAppsHistory().size(); j++) {
 						statHistoryList.get(j).addValue(robustnessResult.getAliveAppsHistory().get(j));
