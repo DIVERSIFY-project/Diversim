@@ -30,7 +30,8 @@ public void evolve(BipartiteGraph graph, Fate agent) {
 	// KillFates.serveOrDie(graph);
 	// KillFates.gasFactory(graph, (int)(graph.getNumServices() * 0.9), 0.1);
 	//
-	KillFates.concentrationRandom(graph);
+	KillFates.concentrationRandom(graph, 0.14);
+	// KillFates.random(graph, 0.15);
 	CreationFates.split(graph, 0.9, 0.15);
 	// mutation
 	// MutationFates.bugCorrected(graph);

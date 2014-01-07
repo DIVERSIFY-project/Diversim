@@ -231,19 +231,22 @@ public static void unattendedExact(BipartiteGraph graph, int amount) {
  * 
  * @param graph
  */
-public static void concentrationRandom(BipartiteGraph graph) {
+public static void concentrationRandom(BipartiteGraph graph, double populationKillRatio) {
 	if (graph.getNumPlatforms() == 0) {
 		Log.debug("No more platforms");
 		return;
 	}
-	Platform condemned = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
-	graph.removeEntity(graph.platforms, condemned);
-	Platform augmented = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
-	for (Service s : condemned.getServices()) {
-		BipartiteGraph.addUnique(augmented.getServices(), s);
+	int counter = (int)(graph.getNumPlatforms() * populationKillRatio);
+	for (int i = counter - 1; i >= 0; i--) {
+		Platform condemned = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
+		graph.removeEntity(graph.platforms, condemned);
+		Platform augmented = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
+		for (Service s : condemned.getServices()) {
+			BipartiteGraph.addUnique(augmented.getServices(), s);
+		}
+		Log.debug("Platform <" + condemned + "> has been killed by Concentration and its Services <"
+		    + condemned.getServices() + "> added to Platform <" + augmented + ">");
 	}
-	Log.debug("Platform <" + condemned + "> has been killed by Concentration and its Services <"
-	        + condemned.getServices() + "> added to Platform <" + augmented + ">");
 }
 
 
