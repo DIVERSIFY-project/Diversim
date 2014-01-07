@@ -826,6 +826,8 @@ public static void main(String[] args) {
 			    + System.getProperty("line.separator")
 			    + "  -resultfolder     folder path to store the result files"
 			    + System.getProperty("line.separator")
+			    + "  -step             number of cycles between 2 evaluation"
+			    + System.getProperty("line.separator")
 			    + "  -configuration    the configuration file path");
 		}
 		if (args[i].equals("-configuration") && (i + 1) < args.length) {
@@ -845,6 +847,10 @@ public static void main(String[] args) {
 		if (args[i].equals("-size") && (i + 1) < args.length) {
 			runsNumber = Integer.parseInt(args[i + 1]);
 			System.err.println("COMMAND LINE PARAMETER: statistical sample size = " + runsNumber);
+		}
+		if (args[i].equals("-step") && (i + 1) < args.length) {
+			dataCycleStep = Integer.parseInt(args[i + 1]);
+			System.err.println("COMMAND LINE PARAMETER: step = " + dataCycleStep);
 		}
 		if (args[i].equals("-title") && (i + 1) < args.length) {
 			title = args[i + 1];
