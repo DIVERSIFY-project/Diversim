@@ -485,6 +485,7 @@ public BipartiteGraph(long seed, Schedule schedule) {
 public BipartiteGraph extinctionClone() {
 	BipartiteGraph clone = new BipartiteGraph(random());
 	clone.bipartiteNetwork = new Network(bipartiteNetwork);
+	clone.schedule = schedule;
 	clone.initPlatforms = initPlatforms;
 	clone.initApps = initApps;
 	clone.initServices = initServices;
@@ -690,7 +691,11 @@ public void start() {
 			changed = false;
 			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
 			if ((getCurCycle() / dataCycleStep) * dataCycleStep == getCurCycle()) {
-				System.out.println("CYCLE " + getCurCycle());
+				int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
+				int minute = Calendar.getInstance().get(Calendar.MINUTE);
+				int second = Calendar.getInstance().get(Calendar.SECOND);
+				System.out.println("CYCLE " + getCurCycle() + "@" + (hour > 9 ? hour : "0" + hour) + ":"
+				    + (minute > 9 ? minute : "0" + minute) + ":" + (second > 9 ? second : "0" + second));
 				LinkStrategyFates.bestFitFirst((BipartiteGraph)state);
 				metricsSnapshotHistory.add(metrics.getSnapshot());
 				robustnessHistory.add(Robustness.calculateRobustness((BipartiteGraph)state,
@@ -704,8 +709,9 @@ public void start() {
 				metricsSnapshot = metrics.getSnapshot();
 				// singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
 				singleRunRobustnessByStrategy = new LinkedHashMap<String, RobustnessResults>();
-				singleRunRobustnessByStrategy.put("BestFitFirst-Unattended", Robustness
-				    .calculateRobustness((BipartiteGraph)state, robustnessLinkingMethod,
+				singleRunRobustnessByStrategy.put(robustnessLinkingMethodName + "-"
+				    + robustnessKillingMethodName, Robustness.calculateRobustness((BipartiteGraph)state,
+				    robustnessLinkingMethod,
 				        robustnessKillingMethod));
 				// multi run seed randomization
 				multiRunSeed = random().nextInt();
@@ -762,7 +768,8 @@ public static String simulate(String[] args, int runsNumber, int currentConfig, 
 	long startTime;
 	for (int j = 0; j < runsNumber; j++) {
 		startTime = System.currentTimeMillis();
-		System.err.println("RUN: starting run " + (currentConfig + 1) + "." + (j + 1));
+		System.err.println("RUN: starting run " + (currentConfig + 1) + "." + (j + 1)
+		    + (title != null ? " (" + title + ")" : ""));
 		// run execution
 		doLoop(BipartiteGraph.class, args);
 		// renewing seed value
@@ -771,7 +778,7 @@ public static String simulate(String[] args, int runsNumber, int currentConfig, 
 		allResults += organizeResults(configFile + "," + ("run" + j) + ",", metricsSnapshotHistory,
 		    robustnessHistory);
 		System.err.println("RUN: ending run " + (currentConfig + 1) + "." + (j + 1) + " | duration = "
-		    + (System.currentTimeMillis() - startTime));
+		    + (System.currentTimeMillis() - startTime) / 1000);
 	}
 	return allResults;
 }
@@ -869,9 +876,6 @@ public static void main(String[] args) {
 		configList.sort();
 		// multi run: #config files X #runs
 		boolean resultsColumnWritten = false;
-		String resultsFileName = "results" + System.currentTimeMillis()
-		    + (title != null ? "_" + title : "") + ".csv";
-		File resultsFile = new File(resultFolderPath + "/" + resultsFileName);
 		String resultsAsText = "";
 		for (int currentConfigNumber = 0; currentConfigNumber < configList.size(); currentConfigNumber++) {
 			configPath = (String)configList.get(currentConfigNumber);
@@ -884,6 +888,9 @@ public static void main(String[] args) {
 			resultsColumnWritten = true;
 		}
 		try {
+			String resultsFileName = "results" + System.currentTimeMillis()
+			    + (title != null ? "_" + title : "") + ".csv";
+			File resultsFile = new File(resultFolderPath + "/" + resultsFileName);
 			FileWriter resultsFileWriter = new FileWriter(resultsFile);
 			resultsFileWriter.write(resultsAsText);
 			resultsFileWriter.flush();

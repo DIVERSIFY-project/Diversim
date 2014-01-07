@@ -56,7 +56,7 @@ public void evolve(BipartiteGraph graph, App a) {
 	}
 	a.setRedundancy(graph);
 	Log.debug("---" + a.getId() + "---" + graph.getCurCycle() + "---" + graph.networkType + "---");
-	graph.displayGraph();
+	// graph.displayGraph();
 }
 
 
