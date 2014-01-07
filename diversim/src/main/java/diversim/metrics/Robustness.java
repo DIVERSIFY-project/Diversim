@@ -55,7 +55,7 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 	for (int j = 0; j < 2; j++) { // j = 0 -> always relink, j = 1 -> no relink
 		BipartiteGraph clone = graph.extinctionClone();
 		robustness = 0;
-		for (int i = max - 1; i >= 0; i--) {
+		for (int i = max; i > 0; i--) {
 		Log.trace("In calculateRobustness, using linking method<" + linking.getName() + ">");
 			if (i == max || relink[j]) {
 		try {
