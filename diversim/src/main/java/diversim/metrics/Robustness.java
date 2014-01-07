@@ -17,6 +17,7 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
+import diversim.model.Platform;
 import diversim.strategy.fate.KillFates;
 import diversim.strategy.fate.LinkStrategyFates;
 import diversim.util.Log;
@@ -48,8 +49,12 @@ public Method getKillingMethod() {
 public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method linking,
     Method killing) {
 	RobustnessResults robustnessResult = new RobustnessResults();
-	// shallow cloning
-	BipartiteGraph clone = graph.extinctionClone();
+	/*
+	 * // shallow cloning // BipartiteGraph clone = graph.extinctionClone();
+	 */
+	// saving platforms
+	List<Platform> platformsSave = new ArrayList<Platform>(graph.platforms);
+	BipartiteGraph clone = graph;
 	double robustness = 0;
 	double maxRobustness = clone.getNumApps() * clone.getNumPlatforms();
 	for (int i = clone.getNumPlatforms() - 1; i >= 0; i--) {
@@ -63,6 +68,7 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 			return null;
 		}
 		int aliveAppsCounter = 0;
+
 		for (App app : clone.apps) {
 			if (app.isAlive()) {
 				aliveAppsCounter++;
@@ -78,6 +84,10 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 			e.printStackTrace();
 			return null;
 		}
+	}
+	// restoring platforms
+	for (Platform platform : platformsSave) {
+		BipartiteGraph.addUnique(graph.platforms, platform);
 	}
 	robustnessResult.setRobustness(robustness / maxRobustness);
 	return robustnessResult;
