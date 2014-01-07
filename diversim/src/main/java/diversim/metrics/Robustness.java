@@ -86,11 +86,11 @@ public static RobustnessResults calculateRobustness(BipartiteGraph graph, Method
 		}
 		robustness /= max;
 		if (relink[j])
-			robustnessResult.setRobustnessL(robustness / graph.getInitApps(),
-					robustness / graph.getNumApps());
+			robustnessResult.setRobustnessL(robustness / graph.getNumApps(),
+					robustness / graph.getAliveAppsNumber());
 		else
-			robustnessResult.setRobustnessNoL(robustness / graph.getInitApps(),
-					robustness / graph.getNumApps());
+			robustnessResult.setRobustnessNoL(robustness / graph.getNumApps(),
+					robustness / graph.getAliveAppsNumber());
 	}
 	return robustnessResult;
 }
