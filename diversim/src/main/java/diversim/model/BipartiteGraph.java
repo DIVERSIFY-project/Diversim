@@ -6,10 +6,12 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Array;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -18,7 +20,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.logging.Logger;
 
 import sim.engine.Schedule;
 import sim.engine.SimState;
@@ -46,6 +47,7 @@ import ec.util.MersenneTwisterFast;
  * @author Marco Biazzini
  * @author Vivek Nallur
  * @author Hui Song
+ * @author Andre Elie
  */
 public class BipartiteGraph extends SimState {
 
@@ -137,6 +139,10 @@ private boolean supervised;
 
 private static String configPath;
 
+private static String resultFolderPath;
+
+private static String experimentTitle;
+
 public int stepsPerCycle;
 
 public String networkType = "Regular";
@@ -173,9 +179,15 @@ static Map<String, RobustnessResults> singleRunRobustnessByStrategy;
 
 static List<RobustnessResults> robustnessHistory;
 
+static List<Double> resistanceHistory;
+
+static int sampleSize;
+
 public static int current_simulation_iteration = 0;
 
 public static int simulation_iteration_limit;
+
+public static double meanAppSize;
 
 
 /**
@@ -336,8 +348,6 @@ public double getRobustness() {
 		        .getLinkingMethods().get(robustnessLinkingMethodName)),
 		    KillFates.class.getDeclaredMethod(robustnessKillingMethodName, KillFates
 		        .getKillingMethods().get(robustnessKillingMethodName))).getRobustness();
-		// LinkStrategyFates.class.getDeclaredMethod("linkingB", BipartiteGraph.class),
-		// KillFates.class.getDeclaredMethod("randomExact", BipartiteGraph.class, int.class))
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -660,12 +670,16 @@ public void start() {
 		robustnessLinkingMethod = LinkStrategyFates.class.getDeclaredMethod(
 		    robustnessLinkingMethodName,
 		    LinkStrategyFates.getLinkingMethods().get(robustnessLinkingMethodName));
+		System.err.println("Config: using " + robustnessLinkingMethodName
+		    + " to link Apps to Platforms");
 		robustnessKillingMethod = KillFates.class.getDeclaredMethod(robustnessKillingMethodName,
 		    KillFates.getKillingMethods().get(robustnessKillingMethodName));
+		System.err.println("Config: using " + robustnessKillingMethodName + " to extinct Apps");
 		metrics = MetricsMonitor.createMetricsInstance(this, robustnessLinkingMethod,
 		    robustnessKillingMethod);
 		metricsSnapshotHistory = new LinkedList<Map<String, Object>>();
 		robustnessHistory = new LinkedList<RobustnessResults>();
+		resistanceHistory = new LinkedList<Double>();
 	}
 	catch (Exception e) {
 		e.printStackTrace();
@@ -689,23 +703,51 @@ public void start() {
 				// printoutNetwork();
 			}
 			changed = false;
-			if (getCurCycle() + 1 == (int)getMaxCycles()) state.schedule.seal();
-			if ((getCurCycle() / dataCycleStep) * dataCycleStep == getCurCycle()) {
+			if (getCurCycle() + 1 == (int)getMaxCycles()) {
+				state.schedule.seal();
+			}
+			if (getCurCycle() == 1 || (getCurCycle() / dataCycleStep) * dataCycleStep == getCurCycle()) {
+				System.out.println();
 				int hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY);
 				int minute = Calendar.getInstance().get(Calendar.MINUTE);
 				int second = Calendar.getInstance().get(Calendar.SECOND);
 				System.out.println("CYCLE " + getCurCycle() + "@" + (hour > 9 ? hour : "0" + hour) + ":"
 				    + (minute > 9 ? minute : "0" + minute) + ":" + (second > 9 ? second : "0" + second));
-				LinkStrategyFates.bestFitFirst((BipartiteGraph)state);
+				// LinkStrategyFates.bestFitFirst((BipartiteGraph)state);
+				try {
+					robustnessLinkingMethod.invoke(null, (BipartiteGraph)state);
+				}
+				catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+				// saveGraphState((BipartiteGraph)state);
 				metricsSnapshotHistory.add(metrics.getSnapshot());
-				robustnessHistory.add(Robustness.calculateRobustness((BipartiteGraph)state,
-				    robustnessLinkingMethod, robustnessKillingMethod));
+				double cumulatedRobustness = 0;
+				for (int i = 0; i < sampleSize; i++) {
+					long time = System.currentTimeMillis();
+					double rob = Robustness.calculateRobustness((BipartiteGraph)state,
+					    robustnessLinkingMethod, robustnessKillingMethod).getRobustness();
+					System.out.print("[" + rob + "(" + (System.currentTimeMillis() - time) + ")]");
+					cumulatedRobustness += rob;
+				}
+				System.out.println();
+				RobustnessResults rr = new RobustnessResults();
+				rr.setRobustnessL(cumulatedRobustness / 30, 0);
+				robustnessHistory.add(rr);
+				// robustnessHistory.add(Robustness.calculateRobustness((BipartiteGraph)state,
+				// robustnessLinkingMethod, robustnessKillingMethod));
+				// resistanceHistory.add(Robustness.calculateResistance((BipartiteGraph)state,
+				// robustnessLinkingMethod));
+			} else {
+				System.out.print(".");
 			}
+
 			if (state.schedule.scheduleComplete()) {
-				// metrics.writeHistoryToFile();
-				// MetricsMonitor.combineTotal().writeHistoryToFile();
-				// BipartiteGraph.this.start(); //startover FIXME check if needed
-				// multi run results save
+                                // metrics.writeHistoryToFile();
+                                // MetricsMonitor.combineTotal().writeHistoryToFile();
+                                // BipartiteGraph.this.start(); //startover FIXME check if needed
+                                // multi run results save
 				metricsSnapshot = metrics.getSnapshot();
 				// singleRunRobustnessByStrategy = Robustness.calculateAllRobustness((BipartiteGraph)state);
 				singleRunRobustnessByStrategy = new LinkedHashMap<String, RobustnessResults>();
@@ -715,20 +757,153 @@ public void start() {
 				        robustnessKillingMethod));
 				// multi run seed randomization
 				multiRunSeed = random().nextInt();
+                                
+				/*
+				 * metrics.writeHistoryToFile(); MetricsMonitor.combineTotal().writeHistoryToFile(); String
+				 * dataPath = Configuration.getString("metrics.filepath"); String linkingMethod =
+				 * Configuration.getString("robustness.linkingStrategy"); String extinctionMethod =
+				 * Configuration.getString("robustness.extinctionStrategy"); String robustnessFileName =
+				 * dataPath + linkingMethod + "-" + extinctionMethod + "/Robustness.data"; double
+				 * robustnessValue = getRobustness(); PrintWriter pw = null; try{ pw = new PrintWriter(new
+				 * BufferedWriter(new FileWriter(robustnessFileName, true)));
+				 * pw.printf("%s,\t",current_simulation_iteration); pw.printf("%s", robustnessValue);
+				 * pw.println(); }catch(FileNotFoundException e){ e.printStackTrace(); }catch(IOException
+				 * e){ e.printStackTrace(); }finally{ if (pw != null){ pw.close(); } }
+				 */
 			}
 		}
 	};
 	schedule.scheduleRepeating(schedule.getTime() + 1.2, print, 1.0);
+}
 
+
+private static void saveGraphState(BipartiteGraph graph) {
+	System.out.println("Writing state");
+	try {
+		String fileName = "graphState_" + graph.getCurCycle() + "_"
+		    + (experimentTitle != null ? "_" + experimentTitle : "") + ".csv";
+		File resultsFile = new File(resultFolderPath + "/" + fileName);
+		FileWriter resultsFileWriter = new FileWriter(resultsFile);
+		String servicesId = ",,";
+		String servicesDemand = ",,";
+		String servicesOffer = ",,";
+		String servicesDiff = ",,";
+		Bag services = new Bag(graph.services);
+		services.sort(new Comparator<Service>() {
+
+			@Override
+			public int compare(Service s1, Service s2) {
+				return s1.id - s2.id;
+			}
+		});
+		for (Object serviceObj : services) {
+			Service service = (Service)serviceObj;
+			servicesId += service.id + ",";
+			double appCounter = 0;
+			for (App app : graph.apps) {
+				if (app.getServices().contains(service)) {
+					appCounter++;
+				}
+			}
+			double demand = appCounter / graph.getNumApps();
+			servicesDemand += demand + ",";
+			double platformCounter = 0;
+			for (Platform platform : graph.platforms) {
+				if (platform.getServices().contains(service)) {
+					platformCounter++;
+				}
+			}
+			double offer = platformCounter / graph.getNumPlatforms();
+			servicesOffer += offer + ",";
+			servicesDiff += (demand - offer > 0 ? demand - offer : "") + ",";
+		}
+		resultsFileWriter.write(servicesId);
+		resultsFileWriter.write(System.getProperty("line.separator"));
+		resultsFileWriter.write(servicesDemand);
+		resultsFileWriter.write(System.getProperty("line.separator"));
+		resultsFileWriter.write(servicesOffer);
+		resultsFileWriter.write(System.getProperty("line.separator"));
+		resultsFileWriter.write(servicesDiff);
+		resultsFileWriter.write(System.getProperty("line.separator"));
+		resultsFileWriter.write(System.getProperty("line.separator"));
+		for (App app : graph.apps) {
+			String appServices = "";
+			int counter = 0;
+			for (Service service : app.getServices()) {
+				if (counter == service.id) {
+					appServices += service.id;
+				} else {
+					for (int i = 0; i < service.id - counter; i++) {
+						appServices += ",";
+					}
+					appServices += service.id;
+					counter = service.id;
+				}
+				appServices += ",";
+				counter++;
+			}
+			resultsFileWriter.write((app.isAlive() ? "+" : "-") + "appl" + app.ID + "," + app.getSize()
+			    + "," + appServices);
+			resultsFileWriter.write(System.getProperty("line.separator"));
+			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+				Platform platform = (Platform)((Edge)edge).getOtherNode(app);
+				String platServices = "";
+				counter = 0;
+				for (Service service : platform.getServices()) {
+					if (counter == service.id) {
+						platServices += service.id;
+					} else {
+						for (int i = 0; i < service.id - counter; i++) {
+							platServices += ",";
+						}
+						platServices += service.id;
+						counter = service.id;
+					}
+					platServices += ",";
+					counter++;
+				}
+				resultsFileWriter.write("plat" + platform.ID + "," + platform.getSize() + ","
+				    + platServices);
+				resultsFileWriter.write(System.getProperty("line.separator"));
+			}
+			resultsFileWriter.write(System.getProperty("line.separator"));
+		}
+		for (App app : graph.apps) {
+			resultsFileWriter.write("appl" + app.ID + ",");
+			for (Service service : app.getServices()) {
+				resultsFileWriter.write(service.id + ",");
+			}
+			resultsFileWriter.write(System.getProperty("line.separator"));
+		}
+		resultsFileWriter.write(System.getProperty("line.separator"));
+		for (Platform platform : graph.platforms) {
+			resultsFileWriter.write("plat" + platform.ID + ",");
+			for (Service service : platform.getServices()) {
+				resultsFileWriter.write(service.id + ",");
+			}
+			resultsFileWriter.write(System.getProperty("line.separator"));
+		}
+		resultsFileWriter.write(System.getProperty("line.separator"));
+		resultsFileWriter.flush();
+		resultsFileWriter.close();
+	}
+	catch (IOException e) {
+		e.printStackTrace();
+	}
 }
 
 
 private static String organizeResults(String header,
-    List<Map<String, Object>> metricsSnapshotHistory, List<RobustnessResults> robustnessHistory) {
+    List<Map<String, Object>> metricsSnapshotHistory, List<RobustnessResults> robustnessHistory,
+    List<Double> resistanceHistory) {
 	String result = "";
 	int cycle;
 	for (int i = 0; i < metricsSnapshotHistory.size(); i++) {
-		cycle = (i + 1) * dataCycleStep;
+		if (i == 0) {
+			cycle = 0;
+		} else {
+			cycle = i * dataCycleStep;
+		}
 		result += header;
 		result += cycle + ",";
 		result += robustnessHistory.get(i).getRobustness() + ",";
@@ -759,10 +934,11 @@ private static String organizeResults(String header,
 public static String simulate(String[] args, int runsNumber, int currentConfig, String configFile,
     String title, String resultFolderPath, boolean resultsColumnWritten) {
 	String allResults = (resultsColumnWritten ? "" : "Configuration," + "Run," + "Cycle,"
-	    + "Robustness," + "Shannon," + "NumPlat," + "NumAppAlive," + "NumSpecies,"
+	    + "Robustness," + "Shannon," + "NumPlat," + "NumAppAlive,"
+	    + "NumSpecies,"
 	    + "MeanSpecieSize," + "MeanPlatSize," + "MeanPlatLoad," + "PlatformCost," + "MaxCycles,"
-	    + "InitNumPlat," + "InitNumApps," + "InitNumServices," + "MaxNumPlat," + "MaxNumApps,"
-	    + "MaxNumServices," + "MaxPlatLoad," + "CostPlat," + "CostService,"
+	    + "InitNumPlat," + "InitNumApps," + "InitNumServices," + "MaxNumPlat,"
+	    + "MaxNumApps," + "MaxNumServices," + "MaxPlatLoad," + "CostPlat," + "CostService,"
 	    + System.getProperty("line.separator"));
 	boolean polarity = true;
 	long startTime;
@@ -776,29 +952,13 @@ public static String simulate(String[] args, int runsNumber, int currentConfig, 
 		multiRunSeed += (polarity ? -1 : 1) * (currentConfig + j + 1);
 		polarity = !polarity;
 		allResults += organizeResults(configFile + "," + ("run" + j) + ",", metricsSnapshotHistory,
-		    robustnessHistory);
+		    robustnessHistory, resistanceHistory);
 		System.err.println("RUN: ending run " + (currentConfig + 1) + "." + (j + 1) + " | duration = "
-		    + (System.currentTimeMillis() - startTime) / 1000);
+		    + (double)(System.currentTimeMillis() - startTime) / 1000d + "s");
 	}
 	return allResults;
 }
 
-
-/*
- * public String standAloneSimulation(String[] args, int runsNumber, int currentConfig, String
- * configFile, String title, String resultFolderPath, boolean metricsColumnWritten, Calendar start,
- * int step, String configuration, int seed) { startingDate = start; dataCycleStep = step;
- * configPath = configuration; multiRunSeed = seed; String allResults =
- * "Configuration,Run,Cycle,Robustness,Shannon,NumPlat,NumAppAlive,NumSpecies,MeanSpecieSize,MeanPlatformSize,MeanPlatformLoad,PlatformCost"
- * + System.getProperty("line.separator"); boolean polarity = true; long startTime; for (int j = 0;
- * j < runsNumber; j++) { startTime = System.currentTimeMillis();
- * System.err.println("RUN: starting run " + (currentConfig + 1) + "." + (j + 1)); // run execution
- * doLoop(BipartiteGraph.class, args); // renewing seed value multiRunSeed += (polarity ? -1 : 1) *
- * (currentConfig + j + 1); polarity = !polarity; allResults += organizeResults(configFile + "," +
- * ("run" + j) + ",", metricsSnapshotHistory, robustnessHistory);
- * System.err.println("RUN: ending run " + (currentConfig + 1) + "." + (j + 1) + " | duration = " +
- * (System.currentTimeMillis() - startTime)); } return allResults; }
- */
 
 public static void main(String[] args) {
 	// loggers levels
@@ -808,11 +968,12 @@ public static void main(String[] args) {
 	dataCycleStep = 10;
 	// configuration files folder path
 	String configFolderPath = null;
-	String resultFolderPath = System.getProperty("user.dir");
+	resultFolderPath = System.getProperty("user.dir");
 	// number of runs for statistical calculation
 	int runsNumber = 1;
 	// experimentation title
-	String title = null;
+	experimentTitle = null;
+	sampleSize = 30;
 	// bag of configuration file names (to be sorted)
 	Bag configList;
 	// reading command line parameters
@@ -827,6 +988,8 @@ public static void main(String[] args) {
 			    + "  -resultfolder     folder path to store the result files"
 			    + System.getProperty("line.separator")
 			    + "  -step             number of cycles between 2 evaluation"
+			    + System.getProperty("line.separator")
+			    + "  -sample           number of samples for Robustness calculation"
 			    + System.getProperty("line.separator")
 			    + "  -configuration    the configuration file path");
 		}
@@ -852,9 +1015,13 @@ public static void main(String[] args) {
 			dataCycleStep = Integer.parseInt(args[i + 1]);
 			System.err.println("COMMAND LINE PARAMETER: step = " + dataCycleStep);
 		}
+		if (args[i].equals("-sample") && (i + 1) < args.length) {
+			sampleSize = Integer.parseInt(args[i + 1]);
+			System.err.println("COMMAND LINE PARAMETER: sample = " + sampleSize);
+		}
 		if (args[i].equals("-title") && (i + 1) < args.length) {
-			title = args[i + 1];
-			System.err.println("COMMAND LINE PARAMETER: title = " + title);
+			experimentTitle = args[i + 1];
+			System.err.println("COMMAND LINE PARAMETER: title = " + experimentTitle);
 		}
 	}
 	// reading config folder to gather config files
@@ -888,14 +1055,14 @@ public static void main(String[] args) {
 			String currentConfigFile = new File(configPath).getName();
 			currentConfigFile = currentConfigFile.substring(0, currentConfigFile.length() - 5);
 			System.err.println("RUN: starting run for configuration " + configPath);
-			resultsAsText += simulate(args, runsNumber, currentConfigNumber, currentConfigFile, title,
+			resultsAsText += simulate(args, runsNumber, currentConfigNumber, currentConfigFile, experimentTitle,
 			    resultFolderPath, resultsColumnWritten);
 			multiRunSeed = -1;
 			resultsColumnWritten = true;
 		}
 		try {
 			String resultsFileName = "results" + System.currentTimeMillis()
-			    + (title != null ? "_" + title : "") + ".csv";
+			    + (experimentTitle != null ? "_" + experimentTitle : "") + ".csv";
 			File resultsFile = new File(resultFolderPath + "/" + resultsFileName);
 			FileWriter resultsFileWriter = new FileWriter(resultsFile);
 			resultsFileWriter.write(resultsAsText);
@@ -1088,7 +1255,9 @@ public void removeAllEdges() {
  */
 public void updateLinks(Entity e) {
 	// the graph is undirected, thus EdgesIn = EdgesOut
-	Bag edges = bipartiteNetwork.getEdgesIn(e); // read-only!
+	// Bag edges = bipartiteNetwork.getEdgesIn(e); // read-only!
+	Bag edges = new Bag();
+	bipartiteNetwork.getEdges(e, edges);
 	int w;
 	Entity rem;
 	Edge edge;
@@ -1280,8 +1449,14 @@ static public void printAny(Object data, String trailer, PrintStream out) {
 
 public <T extends Entity> void removeEntity(ArrayList<T> eList, T entity) {
 	eList.remove(Collections.binarySearch(eList, entity));
-	if (!centralized) entity.stop();
-	Bag edges = bipartiteNetwork.getEdgesIn(entity); // edgesIn = edgesOut
+	if (!centralized){
+		if (!schedule.scheduleComplete()){
+			entity.stop(); //if schedule is complete, no need to call stop. entity has already stopped
+		}
+	}
+	// Bag edges = bipartiteNetwork.getEdgesIn(entity); // edgesIn = edgesOut
+	Bag edges = new Bag();
+	bipartiteNetwork.getEdges(entity, edges);
 	for (Object o : edges) {
 		((Entity)((Edge)o).getOtherNode(entity)).decDegree();
 	}
@@ -1305,7 +1480,9 @@ public void displayGraph() {
 		graph += "]" + System.getProperty("line.separator") + "L[";
 		for (App app : apps) {
 			graph += "(";
-			for (Object edge : bipartiteNetwork.getEdgesIn(app)) {
+			Bag edges = new Bag();
+			bipartiteNetwork.getEdges(app, edges);
+			for (Object edge : edges) {
 				graph += "{" + ((App)((Edge)edge).from()).getId() + "-(" + ((Edge)edge).getWeight() + ")->"
 				    + ((Platform)((Edge)edge).to()).getId() + "}";
 			}
