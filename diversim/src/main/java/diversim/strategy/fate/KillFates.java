@@ -10,7 +10,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import sim.field.network.Edge;
 import sim.util.Bag;
+import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
@@ -41,6 +43,17 @@ public static Map<String, Class[]> getKillingMethods() {
 }
 
 
+private static void killConnectedApps(BipartiteGraph graph, Platform platform) {
+	Bag edges = new Bag();
+	graph.bipartiteNetwork.getEdges(platform, edges);
+	for (Object edge : edges) {
+		App connectedApp = (App)((Edge)edge).getOtherNode(platform);
+		graph.removeEdge(platform, (Edge)edge);
+		connectedApp.dead = true;
+	}
+}
+
+
 public static void disconnected(BipartiteGraph graph) {
 	Set<Platform> platformToKill = new HashSet<Platform>();
 	for (Platform platform : graph.platforms) {
@@ -50,6 +63,7 @@ public static void disconnected(BipartiteGraph graph) {
 	}
 	for (Platform platform : platformToKill) {
 		graph.removeEntity(graph.platforms, platform);
+		killConnectedApps(graph, platform);
 		Log.debug("Platform <" + platform + "> has been killed by disconnected");
 	}
 }
@@ -65,6 +79,7 @@ public static void random(BipartiteGraph graph, double populationKillRatio) {
 	for (int i = 0; i < graph.getNumPlatforms() * populationKillRatio; i++) {
 		Platform killed = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
 		graph.removeEntity(graph.platforms, killed);
+		killConnectedApps(graph, killed);
 		Log.debug("Platform <" + killed + "> has been killed by Random");
 	}
 }
@@ -80,6 +95,7 @@ public static void randomExact(BipartiteGraph graph, int amount) {
 	for (int i = 0; i < amount; i++) {
 		Platform killed = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
 		graph.removeEntity(graph.platforms, killed);
+		killConnectedApps(graph, killed);
 		Log.debug("Platform <" + killed + "> has been killed by RandomExact");
 	}
 }
@@ -99,6 +115,7 @@ public static void backdoor(BipartiteGraph graph, Service backdoor, double popul
 		if (Collections.binarySearch(graph.platforms.get(i).getServices(), backdoor) >= 0) {
 			Platform killed = graph.platforms.get(i);
 			graph.removeEntity(graph.platforms, killed);
+			killConnectedApps(graph, killed);
 			Log.debug("Platform <" + killed + "> has been killed by Backdoor Service <"
 			        + backdoor + ">");
 			if (--counter <= 0) {
@@ -121,6 +138,7 @@ public static void backdoor(BipartiteGraph graph, Service backdoor, int amount) 
 		if (Collections.binarySearch(graph.platforms.get(i).getServices(), backdoor) >= 0) {
 			Platform killed = graph.platforms.get(i);
 			graph.removeEntity(graph.platforms, killed);
+			killConnectedApps(graph, killed);
 			Log.debug("Platform <" + killed + "> has been killed by BackdoorExact Service <" + backdoor
 			    + ">");
 			if (--amount <= 0) {
@@ -151,6 +169,7 @@ public static void obsolescence(BipartiteGraph graph, double populationKillRatio
 	});
 	for (int i = 0; i < counter; i++) {
 		graph.removeEntity(graph.platforms, (Platform)platforms.get(i));
+		killConnectedApps(graph, (Platform)platforms.get(i));
 		Log.debug("Platform <" + (Platform)platforms.get(i) + "> has been killed by Obsolescence");
 	}
 }
@@ -174,6 +193,7 @@ public static void obsolescenceExact(BipartiteGraph graph, int amount) {
 	});
 	for (int i = 0; i < amount; i++) {
 		graph.removeEntity(graph.platforms, (Platform)platforms.get(i));
+		killConnectedApps(graph, (Platform)platforms.get(i));
 		Log.debug("Platform <" + (Platform)platforms.get(i) + "> has been killed by ObsolescenceExact");
 	}
 }
@@ -193,6 +213,7 @@ public static void unattended(BipartiteGraph graph, double populationKillRatio) 
 		if (j >= 0) {
 			Platform killed = graph.platforms.get(i);
 			graph.removeEntity(graph.platforms, killed);
+			killConnectedApps(graph, killed);
 			Log.debug("Platform <" + killed + "> has been killed by Unattended Service <"
 			        + backdoor + ">");
 			if (--counter <= 0) {
@@ -216,6 +237,7 @@ public static void unattendedExact(BipartiteGraph graph, int amount) {
 		if (j >= 0) {
 			Platform killed = graph.platforms.get(i);
 			graph.removeEntity(graph.platforms, killed);
+			killConnectedApps(graph, killed);
 			Log.debug("Platform <" + killed + "> has been killed by Unattended Service <" + backdoor
 			    + ">");
 			if (--amount <= 0) {
@@ -240,6 +262,7 @@ public static void concentrationRandom(BipartiteGraph graph, double populationKi
 	for (int i = counter - 1; i >= 0; i--) {
 		Platform condemned = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
 		graph.removeEntity(graph.platforms, condemned);
+		killConnectedApps(graph, condemned);
 		Platform augmented = graph.platforms.get(graph.random().nextInt(graph.getNumPlatforms()));
 		for (Service s : condemned.getServices()) {
 			BipartiteGraph.addUnique(augmented.getServices(), s);
@@ -253,6 +276,7 @@ public static void concentrationRandom(BipartiteGraph graph, double populationKi
 public static void concentrationSmallInBig(BipartiteGraph graph) {
 	Platform condemned = Metrics.getSmallestPlatform(graph);
 	graph.removeEntity(graph.platforms, condemned);
+	killConnectedApps(graph, condemned);
 	Platform augmented = Metrics.getBiggestPlatform(graph);
 	for (Service s : condemned.getServices()) {
 		BipartiteGraph.addUnique(augmented.getServices(), s);
@@ -265,6 +289,7 @@ public static void concentrationSmallInBig(BipartiteGraph graph) {
 public static void concentrationSmallInSmall(BipartiteGraph graph) {
 	Platform condemned = Metrics.getSmallestPlatform(graph);
 	graph.removeEntity(graph.platforms, condemned);
+	killConnectedApps(graph, condemned);
 	Platform augmented = Metrics.getSmallestPlatform(graph);
 	for (Service s : condemned.getServices()) {
 		BipartiteGraph.addUnique(augmented.getServices(), s);
@@ -288,6 +313,7 @@ public static void gasFactory(BipartiteGraph graph, int maxServices, double popu
 		if (graph.platforms.get(i).getSize() >= maxServices) {
 			Platform killed = graph.platforms.get(i);
 			graph.removeEntity(graph.platforms, killed);
+			killConnectedApps(graph, killed);
 			Log.debug("Platform <" + killed + "> has been killed by GasFactory");
 			if (--counter <= 0) {
 				break;
@@ -309,6 +335,7 @@ public static void gasFactoryExact(BipartiteGraph graph, int maxServices, int am
 		if (graph.platforms.get(i).getSize() >= maxServices) {
 			Platform killed = graph.platforms.get(i);
 			graph.removeEntity(graph.platforms, killed);
+			killConnectedApps(graph, killed);
 			Log.debug("Platform <" + killed + "> has been killed by GasFactory");
 			if (--amount <= 0) {
 				break;
@@ -328,6 +355,7 @@ public static void serveOrDie(BipartiteGraph graph) {
 	for (Object platform : platforms) {
 		if (!((Platform)platform).isAlive()) {
 			graph.removeEntity(graph.platforms, (Platform)platform);
+			killConnectedApps(graph, (Platform)platform);
 			Log.debug("Platform <" + platform + "> has been killed by ServeOrDie");
 		}
 	}
