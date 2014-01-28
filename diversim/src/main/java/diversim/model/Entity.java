@@ -342,4 +342,12 @@ public boolean isAlive() {
 	return !dead;
 }
 
+
+public void setDead(boolean dead) {
+	this.dead = dead;
+	if (dead) {
+		setDegree(0);
+	}
+}
+
 }
