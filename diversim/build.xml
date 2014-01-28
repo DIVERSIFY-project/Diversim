@@ -28,7 +28,7 @@
         <mkdir dir="${classes.dir}"/>
         <javac srcdir="${src.dir}" destdir="${classes.dir}" classpathref="classpath" includeAntRuntime="no" />
         <!-- Ensure that the conf files are copied to the appropriate place -->
-         <copy file="evolveAndSelectModel.conf" tofile="${classes.dir}/bipartiteModel.conf" />
+         <copy file="tcd_evolveModel.conf" tofile="${classes.dir}/bipartiteModel.conf" />
     	
          
     </target>
@@ -81,6 +81,6 @@
 
    <target name="clean-build" depends="clean,jar" />
 
-   <target name="main" depends="clean-build,run-headless, archive" />
+   <target name="main" depends="clean-build,run-headless" />
 
 </project>
