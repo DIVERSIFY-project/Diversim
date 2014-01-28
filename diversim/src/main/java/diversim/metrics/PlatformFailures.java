@@ -5,10 +5,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import sim.field.network.Edge;
+import sim.util.Bag;
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
 import diversim.model.Service;
+
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -24,11 +26,16 @@ public class PlatformFailures {
 		Map<Platform, Integer> dep = new HashMap<Platform, Integer>();
 		
 		for(App app : graph.apps){
-            int degree = graph.bipartiteNetwork.getEdgesOut(app).size();
+		// int degree = graph.bipartiteNetwork.getEdgesOut(app).size();
+		Bag edges = new Bag();
+		graph.bipartiteNetwork.getEdges(app, edges);
+		int degree = edges.size();
 			if(degree == 0)
 				numZeroApp += 1;
 			else if(degree == 1){
-				Platform p = (Platform)((Edge) graph.bipartiteNetwork.getEdgesOut(app).get(0)).to();
+			Bag edges2 = new Bag();
+			graph.bipartiteNetwork.getEdges(app, edges2);
+			Platform p = (Platform)((Edge)edges2.get(0)).to();
 				if(dep.get(p) == null)
 					dep.put(p, 1);
 				else

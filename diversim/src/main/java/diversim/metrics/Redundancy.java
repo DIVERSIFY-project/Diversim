@@ -4,6 +4,7 @@ package diversim.metrics;
 import java.util.HashSet;
 import java.util.Set;
 
+import sim.util.Bag;
 import diversim.model.App;
 import diversim.model.BipartiteGraph;
 import diversim.model.Platform;
@@ -31,7 +32,10 @@ public class Redundancy {
 		int nConnect = 0;
 		
 		for(App app : graph.apps){
-            int degree = graph.bipartiteNetwork.getEdgesOut(app).size();
+		// int degree = graph.bipartiteNetwork.getEdgesOut(app).size();
+		Bag edges = new Bag();
+		graph.bipartiteNetwork.getEdges(app, edges);
+		int degree = edges.size();
 			if(degree > 0){
 				nSupportedApps += 1;
 				nConnect += degree;

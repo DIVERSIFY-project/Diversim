@@ -24,7 +24,9 @@ public LinkingA() {
 
 public void evolve(BipartiteGraph graph, App app) {
 	//Remove all links to app
-	Bag edges = graph.bipartiteNetwork.getEdgesIn(app);
+	// Bag edges = graph.bipartiteNetwork.getEdgesIn(app);
+	Bag edges = new Bag();
+	graph.bipartiteNetwork.getEdges(app, edges);
 	for (Object edge : edges) {
 		graph.removeEdge(app, (Edge)edge);
 	}

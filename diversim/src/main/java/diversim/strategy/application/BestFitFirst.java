@@ -50,7 +50,9 @@ public void evolve(BipartiteGraph graph, App a) {
 	// If app does not have all service needs fulfilled, unlink it and make it dead
 	if (!a.isAlive()) {
 		// indirected network: no edgesOut
-		for (Object edge : graph.bipartiteNetwork.getEdgesIn(a)) {
+		Bag edges = new Bag();
+		graph.bipartiteNetwork.getEdges(a, edges);
+		for (Object edge : edges) {
 			graph.removeEdge(a, (Edge)edge);
 		}
 	}

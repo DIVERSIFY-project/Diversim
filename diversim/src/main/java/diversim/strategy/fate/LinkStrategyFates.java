@@ -2,6 +2,7 @@ package diversim.strategy.fate;
 
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -62,8 +63,8 @@ public static void linkingA(BipartiteGraph graph) {
 		}
 		app.dead = requiredServices.size() != 0;
 		if (!app.isAlive()) {
-			// indirected network: no edgesOut
-			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+			Bag edges = new Bag();
+			for (Object edge : graph.bipartiteNetwork.getEdges(app, edges)) {
 				graph.removeEdge(app, (Edge)edge);
 			}
 		}
@@ -96,8 +97,8 @@ public static void linkingB(BipartiteGraph graph) {
 		}
 		app.dead = requiredServices.size() != 0;
 		if (!app.isAlive()) {
-			// indirected network: no edgesOut
-			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+			Bag edges = new Bag();
+			for (Object edge : graph.bipartiteNetwork.getEdges(app, edges)) {
 				graph.removeEdge(app, (Edge)edge);
 			}
 		}
@@ -130,8 +131,8 @@ public static void linkingC(BipartiteGraph graph) {
 		}
 		app.dead = requiredServices.size() != 0;
 		if (!app.isAlive()) {
-			// indirected network: no edgesOut
-			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+			Bag edges = new Bag();
+			for (Object edge : graph.bipartiteNetwork.getEdges(app, edges)) {
 				graph.removeEdge(app, (Edge)edge);
 			}
 		}
@@ -145,15 +146,14 @@ public static void bestFitFirst(BipartiteGraph graph) {
 	for (App app : graph.apps) {
 		ArrayList<Service> needLinks = new ArrayList<Service>(app.getServices());
 		TreeMap<Integer, Object[]> platformsSorted = sortByConnectable(graph, needLinks, platforms);
-
 		while ((needLinks.size() > 0) && platformsSorted.size() > 0) {
 			Map.Entry<Integer, Object[]> pltSet = platformsSorted.pollFirstEntry();
-			Platform p = (Platform)(pltSet.getValue())[0];
+			Platform platform = (Platform)(pltSet.getValue())[0];
 			@SuppressWarnings("unchecked")
 			ArrayList<Service> removable = (ArrayList<Service>)(pltSet.getValue())[1];
-			if (removable.size() > 0) {
+			if (removable.size() > 0 && platform.getDegree() < graph.getPlatformMaxLoad()) {
 				needLinks.removeAll(removable);
-				graph.addEdge(app, p, removable.size());
+				graph.addEdge(app, platform, removable.size());
 				platformsSorted = sortByConnectable(graph, needLinks, platforms);
 			} else {
 				break;
@@ -163,8 +163,8 @@ public static void bestFitFirst(BipartiteGraph graph) {
 		app.dead = needLinks.size() != 0;
 		// If app does not have all service needs fulfilled, unlink it and make it dead
 		if (!app.isAlive()) {
-			// indirected network: no edgesOut
-			for (Object edge : graph.bipartiteNetwork.getEdgesIn(app)) {
+			Bag edges = new Bag();
+			for (Object edge : graph.bipartiteNetwork.getEdges(app, edges)) {
 				graph.removeEdge(app, (Edge)edge);
 			}
 		}

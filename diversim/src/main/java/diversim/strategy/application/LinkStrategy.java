@@ -39,8 +39,9 @@ public void init(String stratId) {
 
 protected void removeLinkFor(BipartiteGraph graph, App e) {
   // the graph is undirected, thus EdgesIn = EdgesOut
-  Bag edges = graph.bipartiteNetwork.getEdgesIn(e); // read-only!
-
+	// Bag edges = graph.bipartiteNetwork.getEdgesIn(e); // read-only!
+	Bag edges = new Bag();
+	graph.bipartiteNetwork.getEdges(e, edges);
   for (Object edge : edges) {
     graph.removeEdge(e, (Edge)edge);
   }
